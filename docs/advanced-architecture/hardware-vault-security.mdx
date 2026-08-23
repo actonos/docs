@@ -48,8 +48,8 @@ In containerized environments where DMI hardware tables are masked:
 
 Every security-sensitive event (tool invocation, approval grant/rejection, token refresh, login attempt) is recorded in an immutable, forward-secure append-only log:
 
-$$
-\text{Hash}_n = \text{SHA-256}(\text{Hash}_{n-1} \parallel \text{Timestamp}_n \parallel \text{EventPayload}_n)
-$$
+```
+Hash(n) = SHA-256(Hash(n-1) || Timestamp(n) || EventPayload(n))
+```
 
 The system provides an audit verification endpoint (`GET /api/system/audit/verify`) that checks the entire hash chain from the genesis record to detect any tampering, modification, or record deletion.

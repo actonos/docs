@@ -20,7 +20,7 @@ flowchart LR
     G["Agent Retrieval Query"] --> H["Hybrid Fusion Scorer"]
     E --> H
     F --> H
-    H --> I["Ebbinghaus Decay Filter<br/>R(t) = e^(-t/S)"]
+    H --> I["Ebbinghaus Decay Filter"]
     I --> J["Top-K Grounded Context"]
 ```
 
@@ -49,11 +49,11 @@ When an agent or user writes multiple files rapidly, ActonOS queues paths in a p
 
 To prevent irrelevant historical logs from crowding LLM context windows, memories are weighted using the Ebbinghaus exponential decay model:
 
-$$
-R(t) = e^{-\frac{t}{S}}
-$$
+```
+R(t) = exp(-t / S)
+```
 
 Where:
-- $R(t)$ is the memory retention strength.
-- $t$ is the elapsed time since last retrieval or reinforcement.
-- $S$ is the memory stability score (boosted whenever an agent references the memory item).
+- **`R(t)`**: Memory retention strength (0.0 to 1.0).
+- **`t`**: Elapsed time since last retrieval or reinforcement.
+- **`S`**: Memory stability score (boosted whenever an agent references the memory item).
