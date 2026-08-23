@@ -66,11 +66,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'ActonOS',
       logo: {
-        alt: 'ActonOS Logo',
+        alt: 'ActonOS',
         src: 'img/actonos_logo.png',
-        width: 32,
         height: 32,
       },
       items: [
