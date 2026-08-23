@@ -43,12 +43,13 @@ const config: Config = {
       'classic',
       {
         docs: {
+          routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/actonos/docs/tree/main/',
           lastVersion: '0.1',
           versions: {
             current: {
-              label: 'v0.2',
+              label: 'v0.2 (Next)',
               path: 'next',
               banner: 'unreleased',
             },
@@ -94,12 +95,12 @@ const config: Config = {
           label: 'Documentation',
         },
         {
-          to: '/docs/getting-started/overview',
+          to: '/getting-started/overview',
           label: 'Quickstart',
           position: 'left',
         },
         {
-          to: '/docs/developer-reference/api-endpoints',
+          to: '/developer-reference/api-endpoints',
           label: 'API Reference',
           position: 'left',
         },
@@ -127,19 +128,19 @@ const config: Config = {
           items: [
             {
               label: 'Getting Started',
-              to: '/docs/getting-started/overview',
+              to: '/getting-started/overview',
             },
             {
               label: 'User Guides',
-              to: '/docs/user-guide/dashboard',
+              to: '/user-guide/dashboard',
             },
             {
               label: 'Advanced Architecture',
-              to: '/docs/advanced-architecture/dual-runtime-hal',
+              to: '/advanced-architecture/dual-runtime-hal',
             },
             {
               label: 'API & Developer Reference',
-              to: '/docs/developer-reference/rest-api-overview',
+              to: '/developer-reference/rest-api-overview',
             },
           ],
         },

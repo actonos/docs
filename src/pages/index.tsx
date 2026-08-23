@@ -25,17 +25,17 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className={clsx('button button--action-yellow button--lg', styles.heroBtnPrimary)}
-            to="/docs/getting-started/overview">
+            to="/getting-started/overview">
             Get Started (Quickstart) →
           </Link>
           <Link
             className={clsx('button button--secondary-dark button--lg', styles.heroBtnSecondary)}
-            to="/docs/user-guide/dashboard">
+            to="/user-guide/dashboard">
             Explore User Guide
           </Link>
           <Link
             className={clsx('button button--outline button--lg', styles.heroBtnOutline)}
-            to="/docs/developer-reference/api-endpoints">
+            to="/developer-reference/api-endpoints">
             API Reference
           </Link>
         </div>
@@ -59,7 +59,7 @@ const FeatureList: FeatureItem[] = [
     icon: '⚡',
     description:
       'Auto-detects runtime environment. Runs on Bare-metal MiniPCs with Bubblewrap sandboxing or inside Docker containers with a batteries-included toolchain.',
-    link: '/docs/advanced-architecture/dual-runtime-hal',
+    link: '/advanced-architecture/dual-runtime-hal',
   },
   {
     title: 'Universal Agent Swarm',
@@ -67,7 +67,7 @@ const FeatureList: FeatureItem[] = [
     icon: '🤖',
     description:
       'Create unlimited AI agents with custom personas, LLM cascade routers (OpenAI, Claude, Gemini, Ollama), tool scopes, and Goroutine-based swarm delegation.',
-    link: '/docs/user-guide/agent-studio',
+    link: '/user-guide/agent-studio',
   },
   {
     title: 'Dynamic Tooling Hub',
@@ -75,7 +75,7 @@ const FeatureList: FeatureItem[] = [
     icon: '🔌',
     description:
       'Hot-load Model Context Protocol (MCP) servers, pure Go WASM plugins (wazero), and Skill-as-a-Folder scripts at runtime without restarting the daemon.',
-    link: '/docs/user-guide/tools-and-skills',
+    link: '/user-guide/tools-and-skills',
   },
   {
     title: 'Hybrid Semantic Memory (RAG)',
@@ -83,7 +83,7 @@ const FeatureList: FeatureItem[] = [
     icon: '🧠',
     description:
       'SQLite FTS5 full-text search paired with Chromem-go local ONNX vector embeddings (multilingual-e5-small) and Ebbinghaus forgetting curve decay.',
-    link: '/docs/advanced-architecture/hybrid-memory-rag',
+    link: '/advanced-architecture/hybrid-memory-rag',
   },
   {
     title: 'Hardware-Bound Vault',
@@ -91,7 +91,7 @@ const FeatureList: FeatureItem[] = [
     icon: '🔒',
     description:
       'Zero-trust security with cryptographic keys bound to hardware UUID & CPU serial. Bubblewrap cgroups namespace isolation and SHA-256 chained audit logs.',
-    link: '/docs/advanced-architecture/hardware-vault-security',
+    link: '/advanced-architecture/hardware-vault-security',
   },
   {
     title: 'Zero-Config Remote Access',
@@ -99,7 +99,7 @@ const FeatureList: FeatureItem[] = [
     icon: '🌐',
     description:
       'Embedded Tailscale tsnet provides encrypted end-to-end remote access without port forwarding. First-boot Captive Portal Wi-Fi onboarding at 192.168.4.1.',
-    link: '/docs/advanced-architecture/tailscale-remote-access',
+    link: '/advanced-architecture/tailscale-remote-access',
   },
 ];
 
