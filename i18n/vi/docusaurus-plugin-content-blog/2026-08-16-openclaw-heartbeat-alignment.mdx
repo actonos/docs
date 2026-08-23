@@ -1,0 +1,26 @@
+---
+slug: openclaw-heartbeat-alignment
+title: "Tương Thích Chuẩn OpenClaw: Nhịp Tim Tiết Kiệm Token & Tự Động Hóa Không Người"
+authors: [actonos]
+tags: [openclaw, swarm, architecture]
+date: 2026-08-16T00:00:00Z
+---
+
+ActonOS chính thức cập nhật động cơ Heartbeat tương thích hoàn toàn với [Chuẩn OpenClaw Heartbeat Gateway](https://docs.openclaw.ai/vi/gateway/heartbeat). Bản cập nhật này loại bỏ triệt để lãng phí token khi hệ thống rảnh rỗi và tăng cường độ tin cậy khi chạy tự động hóa ngầm.
+
+<!-- truncate -->
+
+## Vấn đề: Lãng phí Token trong các Chu kỳ Đánh thức
+
+Các hệ thống tự động hóa AI thông thường liên tục gọi model để hỏi *"Có việc gì cần làm không?"*. Khi không có việc, model thường phản hồi các câu chào hỏi xã giao, gây lãng phí hàng nghìn token mỗi ngày và làm phiền người dùng.
+
+---
+
+## Giải pháp từ ActonOS & Chuẩn OpenClaw
+
+1. **Chu kỳ Rảnh rỗi 0 Token**: Nếu hàng đợi nhiệm vụ trống và không có chỉ thị trong `HEARTBEAT.md`, hệ thống **không** gọi mô hình AI mà lập tức trả về tín hiệu nội bộ `HEARTBEAT_OK`.
+2. **Quy tắc Thực thi Không Người (Headless Mode)**: Nhắc nhở mô hình chỉ trả về `HEARTBEAT_OK` nếu không cần hành động gì thêm.
+3. **Bộ lọc Chống Tán gẫu (`looksLikeIdleChatter`)**: Chặn các câu chào hỏi ngoài ý muốn.
+4. **Khung giờ Hoạt động (Active Hours)**: Giới hạn tác vụ ngầm trong khung giờ quy định (ví dụ 08:00 – 22:00).
+
+Đọc thêm tại [Tài liệu Tự động hóa & Heartbeat](/docs/user-guide/automations-heartbeat).

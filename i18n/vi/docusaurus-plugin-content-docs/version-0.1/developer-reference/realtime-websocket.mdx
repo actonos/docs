@@ -1,0 +1,57 @@
+---
+id: realtime-websocket
+title: Giao thức WebSocket Thời gian thực (/api/realtime)
+sidebar_label: Giao thức WebSocket
+sidebar_position: 3
+---
+
+# Giao thức WebSocket Thời gian thực (`/api/realtime`)
+
+Cổng WebSocket `/api/realtime` cung cấp luồng dữ liệu telemetry và trạng thái hệ thống với tần suất phát **2 giây một lần**.
+
+---
+
+## 1. Kết nối & Bắt tay (Handshake)
+
+```javascript
+const socket = new WebSocket('ws://localhost:8080/api/realtime');
+
+socket.onopen = () => {
+  console.log('Đã kết nối luồng telemetry ActonOS');
+};
+
+socket.onmessage = (event) => {
+  const telemetry = JSON.parse(event.data);
+  console.log('Dữ liệu hệ thống mới:', telemetry);
+};
+```
+
+---
+
+## 2. Cấu trúc Khung Dữ liệu Telemetry (JSON Schema)
+
+```json
+{
+  "type": "TELEMETRY_SNAPSHOT",
+  "timestamp": "2026-08-23T14:35:00Z",
+  "system": {
+    "runtime_mode": "baremetal",
+    "cpu_usage_pct": 14.5,
+    "memory_used_mb": 1820,
+    "memory_total_mb": 15800,
+    "disk_used_mb": 4200,
+    "disk_total_mb": 120000,
+    "cpu_temp_celsius": 42.0
+  },
+  "active_swarms": [
+    {
+      "agent_id": "research-bot",
+      "status": "executing_tool",
+      "current_tool": "native_web_search",
+      "iterations": 3
+    }
+  ],
+  "pending_approvals_count": 0,
+  "tokens_today": 45210
+}
+```

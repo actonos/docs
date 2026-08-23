@@ -1,0 +1,77 @@
+---
+id: agent-studio
+title: Agent Studio & Cấu hình Swarm
+sidebar_label: Agent Studio
+sidebar_position: 3
+---
+
+# Agent Studio & Cấu hình Swarm
+
+**Agent Studio** là không gian làm việc trực quan giúp tạo, cấu hình và quản trị các tác nhân AI và nhóm tác nhân tự trị (Multi-Agent Swarms) trong ActonOS.
+
+```mermaid
+graph LR
+    A["Nhận diện Agent<br/>Tên · Avatar · Mô tả"] --> B["System Prompt<br/>Persona & Chỉ thị hành vi"]
+    B --> C["Bộ định tuyến Cascade<br/>Mô hình chính · Dự phòng · Temp"]
+    C --> D["Quản trị & Phân quyền<br/>Giới hạn vòng lặp · Đường dẫn · Phê duyệt"]
+    D --> E["Cấp quyền Công cụ<br/>Native · MCP · WASM · Skills"]
+    E --> F["Kênh chat & Ủy quyền<br/>Trigger đầu vào · Nhóm Agent con"]
+    F --> G["Lưu Manifest Agent<br/>agent_manifests.json"]
+```
+
+---
+
+## 1. Nhận diện Agent & Persona
+
+- **Tên & Định danh (Slug)**: Tên định danh duy nhất (ví dụ: `devops-architect`, `data-analyst`).
+- **Avatar & Biểu tượng**: Hình ảnh hiển thị trong Chat, Kênh thông báo và Bảng điều khiển.
+- **Mô tả**: Tóm tắt vai trò để con người và các Agent khác hiểu nhiệm vụ của nó.
+
+---
+
+## 2. Thiết kế System Prompt Chuẩn mực
+
+System prompt định hình phong cách suy luận và quy tắc làm việc của Agent:
+
+```markdown
+# Vai trò & Mục tiêu
+Bạn là chuyên gia DevOps chịu trách nhiệm giám sát dịch vụ ActonOS, phân tích sức khỏe container và tạo script triển khai.
+
+# Quy tắc Vận hành
+1. Luôn kiểm tra lệnh ở chế độ dry-run trước khi áp dụng cấu hình.
+2. Lưu các tệp kết quả tạm thời trong thư mục `/workspace/scratch/`.
+3. Nếu thao tác cần khởi động lại dịch vụ hệ thống, hãy yêu cầu phê duyệt từ người dùng.
+```
+
+---
+
+## 3. Bộ định tuyến Mô hình (LLM Cascade Router)
+
+ActonOS tích hợp bộ định tuyến mô hình thông minh nhằm tối ưu độ tin cậy và chi phí:
+
+| Thiết lập | Mô tả | Ví dụ |
+|:---|:---|:---|
+| **Mô hình Chính** | Mô hình được ưu tiên gọi đầu tiên | `anthropic:claude-3-7-sonnet` |
+| **Mô hình Dự phòng 1** | Tự động chuyển sang khi mô hình chính chạm rate limit hoặc lỗi | `openai:gpt-4o` |
+| **Mô hình Dự phòng 2** | Mô hình chi phí thấp hoặc chạy cục bộ | `google:gemini-2.0-flash` hoặc `ollama:qwen2.5-coder` |
+| **Temperature** | Độ biến thiên sáng tạo (0.0 = chính xác, 1.0 = ngẫu hứng) | `0.2` (dùng cho lập trình/phân tích) |
+
+---
+
+## 4. Phân quyền Công cụ & Giới hạn Ngân sách
+
+- **Phân quyền Công cụ**: Chọn từng công cụ hoặc dùng cú pháp wildcard:
+  - `*` - Cho phép toàn bộ công cụ.
+  - `native_*` - Chỉ cho phép các công cụ lõi hệ thống.
+  - `mcp_github_*` - Chỉ cho phép các công cụ thuộc MCP GitHub.
+- **Ngưỡng Phê duyệt**:
+  - `Luôn hỏi`: Bắt buộc con người phê duyệt mọi thao tác ghi/sửa.
+  - `Chỉ thao tác nguy cơ cao`: Yêu cầu phê duyệt khi sửa file, chạy lệnh shell hoặc gọi API bên ngoài.
+  - `Tự trị hoàn toàn`: Tự động thực thi không cần ngắt quãng.
+- **Giới hạn Vòng lặp (Iteration Budget)**: Số bước suy luận tối đa cho một tác vụ (mặc định: `25`).
+
+---
+
+## 5. Cơ chế Ủy quyền Đa tác nhân (Swarm Delegation)
+
+Kích hoạt tính năng **Ủy quyền Tác nhân (Agent Delegation)** cho phép một Agent cha phân rã công việc và giao cho các Agent con chuyên môn hóa chạy song song qua các Goroutine độc lập.

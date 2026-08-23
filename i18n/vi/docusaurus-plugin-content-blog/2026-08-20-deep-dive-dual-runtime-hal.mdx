@@ -1,0 +1,22 @@
+---
+slug: deep-dive-dual-runtime-hal
+title: "Phân Tích Chuyên Sâu: Xây Dựng Lớp Trừu Tượng Phần Cứng Kép (Dual-Runtime HAL)"
+authors: [bieber]
+tags: [architecture, security]
+date: 2026-08-20T00:00:00Z
+---
+
+Làm thế nào ActonOS có thể chạy mượt mà trên cả phần cứng MiniPC thực tế lẫn trong container Docker mà vẫn duy trì ranh giới cách ly zero-trust an toàn tuyệt đối? Cùng khám phá kiến trúc bên trong của **Hardware Abstraction Layer (HAL)**.
+
+<!-- truncate -->
+
+## Thách thức khi Triển khai Đa Môi trường
+
+1. **Trải nghiệm Thiết bị Chuyên dụng (Appliance)**: Người dùng muốn mua MiniPC Intel N100 $150, cắm điện là chạy, tự cấu hình qua Wi-Fi Hotspot và tự phục hồi khi cập nhật OTA.
+2. **Linh hoạt trong Hạ tầng (Docker / NAS)**: Các kỹ sư muốn triển khai ActonOS trong cụm Docker Compose có sẵn mà không cần quyền root đặc quyền.
+
+ActonOS giải quyết bằng interface HAL thuần Go:
+- **Trên Bare-metal**: Tận dụng Linux D-Bus NetworkManager, Bubblewrap (`bwrap`) và Cgroups v2 (khống chế 512 MB RAM, 50% CPU, 30 PIDs).
+- **Trong Docker**: Chạy dưới quyền user không có root `acton` (UID 1000) và đọc tài nguyên chính xác từ `/sys/fs/cgroup`.
+
+Đọc thêm tại [Tài liệu Kiến trúc Nâng cao](/docs/advanced-architecture/dual-runtime-hal).

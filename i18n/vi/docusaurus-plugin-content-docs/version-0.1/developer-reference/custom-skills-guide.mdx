@@ -1,0 +1,79 @@
+---
+id: custom-skills-guide
+title: Hướng dẫn Phát triển Kỹ năng Tùy chỉnh (Skill-as-a-Folder)
+sidebar_label: Kỹ năng Tùy chỉnh (Skills)
+sidebar_position: 4
+---
+
+# Hướng dẫn Phát triển Kỹ năng Tùy chỉnh (Skill-as-a-Folder)
+
+Kỹ năng trong ActonOS được định nghĩa dưới dạng một thư mục chứa tệp khai báo schema `skill.json` và script thực thi (`run.sh` hoặc `run.py`).
+
+---
+
+## 1. Cấu trúc Thư mục Kỹ năng
+
+Tạo thư mục mới tại `/data/skills/<skill_name>/`:
+
+```
+/data/skills/dns_lookup/
+├── skill.json
+└── run.py
+```
+
+---
+
+## 2. File Khai báo `skill.json`
+
+```json
+{
+  "name": "dns_lookup",
+  "version": "1.0.0",
+  "description": "Tra cứu bản ghi DNS (A, AAAA, MX, TXT) cho một tên miền.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "domain": {
+        "type": "string",
+        "description": "Tên miền cần tra cứu, ví dụ: google.com"
+      },
+      "record_type": {
+        "type": "string",
+        "enum": ["A", "AAAA", "MX", "TXT"],
+        "default": "A"
+      }
+    },
+    "required": ["domain"]
+  },
+  "execution": {
+    "entrypoint": "python3 run.py",
+    "timeout_seconds": 15
+  }
+}
+```
+
+---
+
+## 3. File Thực thi `run.py`
+
+Tham số đầu vào được truyền qua biến môi trường hoặc tham số JSON qua `sys.stdin`:
+
+```python
+import sys
+import json
+import socket
+
+def main():
+    payload = json.loads(sys.stdin.read() or "{}")
+    domain = payload.get("domain", "")
+    
+    try:
+        ip = socket.gethostbyname(domain)
+        print(json.dumps({"domain": domain, "ip_address": ip, "status": "success"}))
+    except Exception as e:
+        print(json.dumps({"error": str(e), "status": "failed"}))
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+```

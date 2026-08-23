@@ -1,0 +1,54 @@
+---
+id: connectors
+title: Kết nối Dịch vụ SaaS & OAuth 2.1
+sidebar_label: Kết nối SaaS (OAuth 2.1)
+sidebar_position: 8
+---
+
+# Kết nối Dịch vụ SaaS & OAuth 2.1
+
+Phân hệ **Kết nối (Connectors)** cho phép các Agent trong ActonOS truy cập các dịch vụ đám mây một cách an toàn qua chuẩn **OAuth 2.1 PKCE (S256)** mà không cần lưu trữ mật khẩu văn bản thô.
+
+```mermaid
+sequenceDiagram
+    participant User as Người dùng
+    participant UI as Giao diện ActonOS
+    participant Auth as Daemon OAuth
+    participant SaaS as Google / GitHub
+    participant Vault as Két phần cứng
+
+    User->>UI: Bấm "Kết nối Google Workspace"
+    UI->>Auth: Khởi tạo luồng PKCE (S256)
+    Auth->>SaaS: Chuyển hướng đến trang cấp quyền
+    User->>SaaS: Phê duyệt quyền hạn (Gmail, Drive)
+    SaaS-->>Auth: Callback với Authorization Code
+    Auth->>SaaS: Trao đổi Code lấy Token
+    SaaS-->>Auth: Access Token + Refresh Token
+    Auth->>Vault: Mã hóa & Lưu trữ trong oauth_tokens.vault
+    Auth-->>UI: Hiển thị trạng thái Đã kết nối
+    
+    loop Mỗi 45 phút (Daemon chạy ngầm)
+        Auth->>Vault: Lấy Refresh Token
+        Auth->>SaaS: Làm mới Access Token
+        Auth->>Vault: Lưu Access Token mới
+    end
+```
+
+---
+
+## 1. Các Dịch vụ Hỗ trợ Kết nối 1-Click
+
+| Dịch vụ | Khả năng của Agent | Quyền yêu cầu (Scopes) |
+|:---|:---|:---|
+| **Google Workspace** | Đọc/gửi Gmail, tạo lịch hẹn Google Calendar, đọc/ghi tệp Google Drive | `gmail.readonly`, `gmail.send`, `drive.file`, `calendar.events` |
+| **GitHub** | Tìm kiếm code, tạo issue, tạo pull request, duyệt commit | `repo`, `read:user`, `workflow` |
+| **Notion** | Truy vấn cơ sở dữ liệu Notion, tạo trang mới, cập nhật bảng tác vụ | `read_content`, `update_content` |
+| **Slack** | Đọc lịch sử kênh, đăng tin nhắn báo cáo, gửi tệp | `channels:history`, `chat:write` |
+
+---
+
+## 2. Tự động Làm mới Token Chạy ngầm
+
+ActonOS có daemon chạy ngầm định kỳ kiểm tra hạn sử dụng của token:
+- Tự động làm mới Access Token trước khi hết hạn.
+- Nếu token bị hủy quyền từ phía nhà cung cấp, hệ thống sẽ phát cảnh báo yêu cầu kết nối lại trên Bảng thông báo.

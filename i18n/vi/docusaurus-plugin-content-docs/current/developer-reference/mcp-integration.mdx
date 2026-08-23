@@ -1,0 +1,38 @@
+---
+id: mcp-integration
+title: Tích hợp Máy chủ MCP (Model Context Protocol)
+sidebar_label: Tích hợp Máy chủ MCP
+sidebar_position: 5
+---
+
+# Tích hợp Máy chủ MCP (Model Context Protocol)
+
+ActonOS hỗ trợ tích hợp các máy chủ **Model Context Protocol (MCP)** chuẩn hóa qua cả giao thức `stdio` cục bộ và `http`/`sse` từ xa.
+
+---
+
+## 1. Cấu hình Máy chủ MCP qua `stdio`
+
+Thêm cấu hình vào `/data/mcp-servers/config.json`:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/data/workspace"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "vault:secrets/github_token"
+      }
+    }
+  }
+}
+```
+
+:::tip Bảo mật qua Vault
+Giá trị bắt đầu bằng `vault:` sẽ được ActonOS tự động giải mã an toàn từ Két bảo mật phần cứng khi khởi chạy tiến trình, không bao giờ lộ token ra tệp cấu hình thô.
+:::

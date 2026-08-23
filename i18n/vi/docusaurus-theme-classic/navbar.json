@@ -1,0 +1,22 @@
+{
+  "logo.alt": {
+    "message": "ActonOS",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.Documentation": {
+    "message": "Tài liệu",
+    "description": "Navbar item with label Documentation"
+  },
+  "item.label.Quickstart": {
+    "message": "Bắt đầu nhanh",
+    "description": "Navbar item with label Quickstart"
+  },
+  "item.label.API Reference": {
+    "message": "Tra cứu API",
+    "description": "Navbar item with label API Reference"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  }
+}

@@ -1,0 +1,45 @@
+---
+id: hybrid-memory-rag
+title: Bộ nhớ Ngữ nghĩa Lai & Cơ chế RAG
+sidebar_label: Bộ nhớ Lai RAG
+sidebar_position: 2
+---
+
+# Bộ nhớ Ngữ nghĩa Lai & Cơ chế RAG
+
+ActonOS tích hợp hệ thống **Bộ nhớ Ngữ nghĩa Lai (Hybrid RAG)**, kết hợp giữa tìm kiếm từ khóa chính xác (FTS5) và tìm kiếm ngữ nghĩa sâu (Vector Embeddings) cùng thuật toán suy giảm nhận thức Ebbinghaus.
+
+```mermaid
+flowchart TD
+    A["Tệp mới trong /data/workspace/"] --> B["Hàng đợi Debounce (60 giây)"]
+    B --> C["Phân đoạn Văn bản (Chunking 512 tokens)"]
+    C --> D["Tìm kiếm Toàn văn SQLite FTS5 (BM25)"]
+    C --> E["Tạo Vector Cục bộ: embeddingd (ONNX multilingual-e5-small)"]
+    D --> F["Kho Lưu trữ Lai (storage/app.db)"]
+    E --> F
+    
+    G["Agent Truy vấn: memory_search(query)"] --> H["Tìm kiếm Kết hợp (Hybrid RRF Scoring)"]
+    F --> H
+    H --> I["Áp dụng Hệ số Suy giảm Nhận thức Ebbinghaus"]
+    I --> J["Top K Đoạn văn bản liên quan nhất gửi về Agent"]
+```
+
+---
+
+## 1. Công thức Suy giảm Nhận thức Ebbinghaus
+
+Để cân bằng giữa kiến thức mới và dữ liệu cũ, ActonOS áp dụng công thức:
+
+```
+R(t) = exp(-t / S)
+```
+Trong đó:
+- $t$: Thời gian đã trôi qua kể từ lần tương tác gần nhất.
+- $S$: Độ bền ghi nhớ của đoạn dữ liệu (tự động tăng khi Agent tái sử dụng đoạn thông tin đó nhiều lần).
+
+---
+
+## 2. Mô hình Vector Cục bộ Hoàn toàn (Embedding Daemon)
+
+- Sử dụng mô hình ONNX siêu nhẹ **`multilingual-e5-small`** (chỉ 130 MB RAM).
+- Chạy trực tiếp trên CPU qua daemon `embeddingd`, không cần GPU rời và không gửi dữ liệu ra bên ngoài.

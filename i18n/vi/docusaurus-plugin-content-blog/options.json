@@ -1,0 +1,14 @@
+{
+  "title": {
+    "message": "Bản tin Kỹ thuật ActonOS",
+    "description": "The title for the blog used in SEO"
+  },
+  "description": {
+    "message": "Bản tin phát hành, kiến trúc và bài viết kỹ thuật từ nhóm phát triển ActonOS.",
+    "description": "The description for the blog used in SEO"
+  },
+  "sidebar.title": {
+    "message": "Bài viết gần đây",
+    "description": "The label for the left sidebar"
+  }
+}

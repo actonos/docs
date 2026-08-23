@@ -1,0 +1,32 @@
+---
+id: terminal
+title: Web Terminal & Dòng Lệnh Sandboxed
+sidebar_label: Web Terminal
+sidebar_position: 12
+---
+
+# Web Terminal & Dòng Lệnh Sandboxed
+
+**Web Terminal** cung cấp một cửa sổ dòng lệnh tương tác an toàn trực tiếp trên trình duyệt web.
+
+---
+
+## 1. Cơ chế Cách ly An toàn Sandbox
+
+Mọi câu lệnh chạy trong terminal đều được kiểm soát nghiêm ngặt:
+
+### Trên MiniPC Bare-Metal:
+- Chạy qua **Bubblewrap (`bwrap`)** và Linux **Cgroups v2**.
+- Các thư mục hệ thống (`/usr`, `/lib`, `/bin`) được gắn kết ở chế độ **Chỉ Đọc (Read-Only)**.
+- Thư mục duy nhất được phép ghi là `/data/workspace`.
+- Giới hạn cứng: **512 MB RAM**, **50% CPU** và tối đa **30 tiến trình đồng thời**.
+
+### Trên Docker Container:
+- Chạy dưới quyền user không có root `acton` (UID 1000) trong môi trường subshell jail.
+
+---
+
+## 2. Tính năng Hỗ trợ
+
+- Hỗ trợ màu sắc ANSI đầy đủ, tương thích các công cụ dòng lệnh như `htop`, `vim`, `nano`, `git`.
+- Tự động lưu lịch sử lệnh giữa các lần tải lại trang.

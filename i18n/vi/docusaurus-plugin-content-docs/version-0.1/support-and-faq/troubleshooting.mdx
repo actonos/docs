@@ -1,0 +1,36 @@
+---
+id: troubleshooting
+title: Cẩm nang Xử lý Sự cố & Khắc phục Lỗi
+sidebar_label: Cẩm nang Xử lý Sự cố
+sidebar_position: 1
+---
+
+# Cẩm nang Xử lý Sự cố & Khắc phục Lỗi
+
+Hướng dẫn chẩn đoán và khắc phục nhanh các tình huống lỗi thường gặp trong quá trình vận hành ActonOS.
+
+---
+
+## 1. Sự cố Mạng & Wi-Fi Captive Portal
+
+### Không thấy Wi-Fi Hotspot `ActonOS-XXXX`:
+- **Nguyên nhân**: MiniPC đã nhận IP qua cổng mạng LAN hoặc card Wi-Fi chưa được nhận diện.
+- **Cách xử lý**:
+  1. Nếu có cắm mạng dây, truy cập trực tiếp `http://acton.local:8080`.
+  2. Rút cáp mạng LAN và khởi động lại máy để kích hoạt Hotspot.
+
+---
+
+## 2. Lỗi Gọi Mô hình LLM & API Rate Limits
+
+### Lỗi `RATE_LIMIT_EXCEEDED` hoặc `429 Too Many Requests`:
+- **Nguyên nhân**: API key của nhà cung cấp chính chạm ngưỡng giới hạn.
+- **Giải pháp**: ActonOS tự động chuyển sang Mô hình Dự phòng (Fallback Model). Bạn có thể cấu hình thêm các model giá rẻ hoặc local LLM (Ollama) trong **Agent Studio**.
+
+---
+
+## 3. Lỗi Sandbox & Tràn Bộ nhớ
+
+### Tiến trình con bị dừng đột ngột (`Exit code 137 / SIGKILL`):
+- **Nguyên nhân**: Tiến trình do Agent chạy vượt quá giới hạn cứng **512 MB RAM** của Cgroups v2.
+- **Giải pháp**: Tối ưu hóa script để xử lý dữ liệu dạng stream hoặc tăng giới hạn trong cấu hình daemon nếu phần cứng cho phép.

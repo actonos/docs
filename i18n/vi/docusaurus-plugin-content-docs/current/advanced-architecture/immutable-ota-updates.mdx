@@ -1,0 +1,43 @@
+---
+id: immutable-ota-updates
+title: Hệ điều hành Bất biến & Cập nhật OTA Tự phục hồi
+sidebar_label: Cập nhật OTA Tự phục hồi
+sidebar_position: 6
+---
+
+# Hệ điều hành Bất biến & Cập nhật OTA Tự phục hồi
+
+ActonOS sử dụng kiến trúc **Hệ điều hành Bất biến (Immutable OS)** kết hợp cơ chế hoán đổi liên kết mềm nguyên tử (**Atomic Symlink Swap**) và **Bộ theo dõi Sức khỏe (30-second Watchdog)** để đảm bảo an toàn tuyệt đối khi nâng cấp phần mềm từ xa.
+
+```mermaid
+sequenceDiagram
+    participant Cloud as Máy chủ Phát hành ActonOS
+    participant Daemon as Daemon Cập nhật (OTA)
+    participant Disk as Phân vùng /data/bin/
+    participant Watchdog as Giám sát Watchdog (30s)
+
+    Daemon->>Cloud: Kiểm tra bản phát hành mới (manifest.json)
+    Cloud-->>Daemon: Thông tin phiên bản mới + Chữ ký số
+    Daemon->>Cloud: Tải binary actond.new
+    Daemon->>Daemon: Xác thực chữ ký số SHA-256
+    Daemon->>Disk: Lưu vào /data/bin/actond.v0.2
+    Daemon->>Disk: Đổi liên kết mềm nguyên tử (/data/bin/actond -> v0.2)
+    Daemon->>Daemon: Khởi động lại dịch vụ hệ thống
+    
+    Watchdog->>Daemon: Bắt đầu đếm ngược 30 giây
+    Daemon->>Daemon: Tự kiểm tra sức khỏe (/api/health == 200)
+    alt Kiểm tra Sức khỏe Thành công
+        Daemon->>Watchdog: Gửi tín hiệu Hoàn tất Thành công
+        Watchdog-->>Daemon: Xác nhận Phiên bản Mới Ổn định
+    else Gặp lỗi hoặc Treo quá 30 giây
+        Watchdog->>Disk: Tự động đảo ngược liên kết mềm về v0.1 cũ
+        Watchdog->>Daemon: Khởi động lại với phiên bản an toàn trước đó
+    end
+```
+
+---
+
+## 1. Không Bao giờ Bị Lỗi Hệ Thống (Zero-Bricking)
+
+- **Phân vùng Gốc Chỉ Đọc**: Không thể bị ghi đè hay hỏng do virus hoặc lỗi phần mềm.
+- **Tự Động Rollback**: Nếu bản cập nhật mới gặp lỗi không thể khởi động trong vòng 30 giây, Watchdog sẽ tự động khôi phục về phiên bản trước đó ngay lập tức.

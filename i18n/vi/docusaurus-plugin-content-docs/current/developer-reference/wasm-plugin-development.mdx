@@ -1,0 +1,43 @@
+---
+id: wasm-plugin-development
+title: Phát triển Plugin WebAssembly (WASM) với wazero
+sidebar_label: Plugin WebAssembly (WASM)
+sidebar_position: 6
+---
+
+# Phát triển Plugin WebAssembly (WASM) với wazero
+
+ActonOS sử dụng **wazero** (môi trường thực thi WebAssembly thuần Go không cần CGO) để chạy các plugin mở rộng siêu nhanh, an toàn bộ nhớ và không phụ thuộc hệ điều hành.
+
+---
+
+## 1. Viết Plugin WASM bằng Go
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("Vui lòng cung cấp tham số đầu vào.")
+		return
+	}
+	name := os.Args[1]
+	fmt.Printf("Xin chào %s từ Plugin WebAssembly trên ActonOS!\n", name)
+}
+```
+
+Biên dịch sang WASI:
+```bash
+GOOS=wasip1 GOARCH=wasm go build -o my_plugin.wasm main.go
+```
+
+---
+
+## 2. Đặt Plugin vào ActonOS
+
+Sao chép tệp `my_plugin.wasm` vào thư mục `/data/plugins/`. Hệ thống sẽ tự động đăng ký plugin thành một công cụ mới có thể gọi trực tiếp từ Agent.

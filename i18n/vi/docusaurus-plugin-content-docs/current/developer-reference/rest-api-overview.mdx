@@ -1,0 +1,50 @@
+---
+id: rest-api-overview
+title: Tổng quan về REST API & Xác thực
+sidebar_label: Tổng quan REST API
+sidebar_position: 1
+---
+
+# Tổng quan về REST API & Xác thực
+
+Toàn bộ các chức năng trong ActonOS đều có thể được điều khiển thông qua hệ thống **REST API chuẩn mực** và **WebSocket Thời gian thực**.
+
+---
+
+## 1. Định dạng Phản hồi Chuẩn (Envelopes)
+
+Mọi API response trong ActonOS đều được đóng gói theo định dạng nhất quán:
+
+### Phản hồi Thành công (2xx):
+```json
+{
+  "data": { ... },
+  "error": null,
+  "meta": {
+    "timestamp": "2026-08-23T14:30:00Z",
+    "version": "v0.1.0"
+  }
+}
+```
+
+### Phản hồi Khi gặp Lỗi (4xx / 5xx):
+```json
+{
+  "data": null,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "Trường 'agent_id' là bắt buộc.",
+    "details": null
+  },
+  "meta": {
+    "timestamp": "2026-08-23T14:30:00Z"
+  }
+}
+```
+
+---
+
+## 2. Xác thực & Phân quyền (Authentication)
+
+- **Cookie Phiên Đăng nhập (Web UI)**: Trình duyệt tự động đính kèm cookie bảo mật `acton_session` sau khi nhập Admin PIN thành công.
+- **Bearer Token (API bên ngoài / CI/CD)**: Thêm header `Authorization: Bearer <API_TOKEN>` vào mỗi request.

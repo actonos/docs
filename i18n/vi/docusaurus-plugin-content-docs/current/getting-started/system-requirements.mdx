@@ -1,0 +1,57 @@
+---
+id: system-requirements
+title: Yêu cầu Hệ thống
+sidebar_label: Yêu cầu Hệ thống
+sidebar_position: 2
+---
+
+# Yêu cầu Hệ thống
+
+ActonOS được tối ưu hóa để hoạt động hiệu quả trên các dòng MiniPC x86_64 nhỏ gọn, máy chủ gia đình, cloud VPS và thiết bị lưu trữ NAS.
+
+## Cấu hình Phần cứng Bare-Metal MiniPC
+
+Đối với việc cài đặt trực tiếp qua file ISO:
+
+| Thành phần | Cấu hình Tối thiểu | Cấu hình Khuyến nghị |
+|:---|:---|:---|
+| **Bộ vi xử lý (CPU)** | Intel Celeron N5105 / N95 hoặc AMD tương đương (x86_64, 4 nhân) | Intel Processor N100 / Core i3 / Core i5 hoặc AMD Ryzen 5 / 7 |
+| **Bộ nhớ RAM** | 2 GB DDR4 / LPDDR4 | 8 GB – 16 GB DDR4/DDR5 |
+| **Ổ cứng Lưu trữ** | 32 GB eMMC hoặc SATA SSD | 128 GB+ NVMe SSD (PCIe 3.0 / 4.0) |
+| **Kết nối Mạng** | 1× Cổng mạng Gigabit Ethernet (RJ-45) | 1× 2.5 GbE LAN + Wi-Fi 6 (802.11ax) & Bluetooth 5.2 |
+| **Màn hình (Tùy chọn)**| HDMI / DisplayPort (chỉ dùng khi gỡ lỗi) | Headless (cài đặt hoàn toàn tự động qua Wi-Fi) |
+| **Chuẩn Boot** | UEFI 64-bit | UEFI hỗ trợ Secure Boot |
+
+:::tip Thiết bị Khuyến nghị
+Các dòng MiniPC giá rẻ sử dụng chip **Intel N100** (như Beelink EQ12, Minisforum UN100, GMKtec NucBox G2) mang lại sự cân bằng hoàn hảo giữa tiết kiệm điện (6W–15W TDP), khả năng điều phối đa tác nhân mạnh mẽ và độ bền bỉ 24/7.
+:::
+
+---
+
+## Cấu hình Máy chủ Docker Host
+
+Đối với việc chạy ActonOS trong container trên máy chủ Linux, macOS hoặc Windows WSL2:
+
+| Thông số | Cấu hình Tối thiểu | Cấu hình Khuyến nghị |
+|:---|:---|:---|
+| **Hệ điều hành Host** | Linux Kernel 5.15+ / macOS 12+ / Windows 10/11 WSL2 | Linux Kernel 6.1+ (Debian 12 / Ubuntu 22.04 LTS / Arch) |
+| **Docker Engine** | Docker Engine 24.0+ hoặc Docker Desktop 4.25+ | Docker Engine 26.0+ với Docker Compose v2 |
+| **CPU cấp phát** | 2 Virtual CPUs | 4+ Virtual CPUs |
+| **RAM cấp phát** | 1.5 GB RAM | 4 GB+ RAM |
+| **Dung lượng Đĩa** | 10 GB trống cho thư mục `/data` | 50 GB+ SSD |
+
+---
+
+## Yêu cầu Mạng & Cổng Tường lửa
+
+| Cổng / Giao thức | Hướng | Mục đích | Bắt buộc? |
+|:---|:---|:---|:---|
+| `8080/TCP` | Đến (LAN nội bộ) | Bảng điều khiển Web & REST/WebSocket API | **Có** (trừ khi dùng reverse proxy) |
+| `443/TCP` | Đi | Kết nối HTTPS đến API LLM, OAuth và Tool Hub | **Có** |
+| `41641/UDP` | Đến / Đi | Kết nối ngang hàng WireGuard cho Tailscale `tsnet` | Tùy chọn (tự chuyển tiếp qua relay) |
+| `53/UDP & 53/TCP` | Đến | Điều hướng DNS cho Captive Portal trên Wi-Fi Hotspot | Chỉ Bare-metal |
+| `67/UDP & 68/UDP` | Đến | Cấp phát IP DHCP cho thiết bị kết nối vào Hotspot | Chỉ Bare-metal |
+
+:::note Không cần Mở Cổng Modem (Port Forwarding)
+Khi kích hoạt tính năng **Tailscale tsnet**, bạn **không** cần phải mở bất kỳ cổng nào trên router hoặc cấu hình Dynamic DNS. ActonOS sẽ tự động tạo đường hầm VPN mã hóa đầu-cuối an toàn.
+:::

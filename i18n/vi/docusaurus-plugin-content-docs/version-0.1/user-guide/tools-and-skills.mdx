@@ -1,0 +1,49 @@
+---
+id: tools-and-skills
+title: Bộ Công cụ, MCP & Môi trường Thực thi Kỹ năng
+sidebar_label: Công cụ & Kỹ năng
+sidebar_position: 9
+---
+
+# Bộ Công cụ, MCP & Môi trường Thực thi Kỹ năng
+
+ActonOS cung cấp một hệ thống thực thi đa giao thức mạnh mẽ, hỗ trợ **Công cụ Lõi Tích hợp Sẵn**, **Máy chủ MCP (Model Context Protocol)**, **Plugin WebAssembly (WASM)** và **Mô hình Kỹ năng Dạng Thư mục (Skill-as-a-Folder)**.
+
+---
+
+## 1. Công cụ Lõi Tích hợp Sẵn (Native Tools)
+
+Được biên dịch sẵn trực tiếp trong binary `actond` cho tốc độ thực thi tối đa:
+- `native_web_search`: Tìm kiếm thông tin web mới nhất.
+- `native_browser_headless`: Tự động hóa trình duyệt Chromium qua `chromedp` (duyệt trang, chụp ảnh, trích xuất dữ liệu).
+- `native_workspace_read` & `native_workspace_write`: Đọc và ghi tệp trong môi trường sandbox `/workspace`.
+- `native_exec`: Thực thi lệnh shell trong môi trường cách ly an toàn.
+- `native_sql_query`: Truy vấn cơ sở dữ liệu SQLite trong hệ thống.
+
+---
+
+## 2. Giao thức Model Context Protocol (MCP)
+
+ActonOS đóng vai trò là một **MCP Host** hoàn chỉnh:
+- **`stdio`**: Chạy các công cụ CLI hoặc container giao tiếp qua stdin/stdout JSON-RPC.
+- **`http` / `sse`**: Kết nối đến các máy chủ MCP từ xa qua mạng.
+- **Bảo mật Biến Môi trường**: Mọi API key hoặc token cấu hình cho máy chủ MCP được lưu mã hóa an toàn trong Hardware Vault (`mcp.env.<id>`).
+
+---
+
+## 3. Plugin WebAssembly (WASM) qua `wazero`
+
+- Các plugin được biên dịch ra định dạng `.wasm` và chạy trong runtime thuần Go `wazero`.
+- An toàn bộ nhớ tuyệt đối, không phụ thuộc CGO và khởi chạy chỉ trong vài mili-giây.
+
+---
+
+## 4. Mô hình Kỹ năng Dạng Thư mục (Skill-as-a-Folder)
+
+Bạn có thể tạo một kỹ năng mới chỉ bằng cách tạo thư mục trong `/data/skills/`:
+```
+/data/skills/my_custom_skill/
+├── skill.json      # Khai báo schema & tham số công cụ
+└── run.sh          # Script thực thi (hoặc run.py)
+```
+Hệ thống tự động theo dõi và nạp nóng kỹ năng mới ngay khi bạn lưu file mà không cần khởi động lại ActonOS.

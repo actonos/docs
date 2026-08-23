@@ -1,0 +1,44 @@
+---
+id: automations-heartbeat
+title: Tự động hóa & Nhịp tim OpenClaw
+sidebar_label: Tự động hóa & Heartbeat
+sidebar_position: 6
+---
+
+# Tự động hóa & Nhịp tim OpenClaw
+
+ActonOS kết hợp **Lập lịch Tự động (Cron/Interval Triggers)** với **Daemon Nhịp tim Heartbeat** tuân thủ nghiêm ngặt theo [Chuẩn OpenClaw Heartbeat Contract](https://docs.openclaw.ai/vi/gateway/heartbeat).
+
+```mermaid
+flowchart TD
+    A["Bộ đếm Heartbeat / Sự kiện Cron"] --> B{"Trong Khung giờ Hoạt động?<br/>(ví dụ: 08:00 - 20:00)"}
+    B -->|Không| C["Tạm dừng / Đi ngủ"]
+    B -->|Có| D{"Có công việc tồn đọng hoặc trong HEARTBEAT.md?"}
+    D -->|Không (Rảnh rỗi)| E["Trả về HEARTBEAT_OK<br/>(Không gọi Model / 0 Token)"]
+    D -->|Có việc| F["Thực thi Tác vụ qua Agent"]
+    F --> G{"Kết quả Model"}
+    G -->|Mã HEARTBEAT_OK| H["Xác nhận & Đi ngủ"]
+    G -->|Có nội dung cần báo| I["Gửi Thông báo đến Kênh chat"]
+```
+
+---
+
+## 1. Chuẩn Nhịp tim Không Tốn Token (Zero-Waste Heartbeat)
+
+- **Không Gọi Model Khi Rảnh Rỗi**: Nếu không có tác vụ nào đang chờ xử lý, Heartbeat **không** gọi mô hình AI, giúp tiết kiệm 100% chi phí token.
+- **Quy tắc Thực thi Không Người (Headless Mode)**: Khi có việc cần làm, hệ thống tự động chèn quy tắc nhắc mô hình không chào hỏi xã giao vô ích mà tập trung làm việc.
+- **Bộ lọc Chống Tán gẫu (`looksLikeIdleChatter`)**: Tự động lọc bỏ các câu chào hỏi xã giao ngoài ý muốn.
+- **Khung giờ Hoạt động (Active Hours)**: Giới hạn thời gian kích hoạt tác vụ nền trong ngày (ví dụ `08:00` đến `22:00`).
+
+---
+
+## 2. Tạo Lịch trình Tự động Mới
+
+1. Bấm vào mục **Tự động (Automations)** trên menu.
+2. Bấm **+ Tạo Tự động hóa Mới**.
+3. Chọn loại kích hoạt:
+   - **Biểu thức Cron**: Cron 5 trường (ví dụ `0 9 * * 1-5` chạy lúc 9h sáng các ngày trong tuần).
+   - **Khoảng thời gian (Interval)**: Chạy định kỳ mỗi $N$ phút hoặc giờ.
+   - **Sự kiện (Event)**: Kích hoạt khi có sự kiện hệ thống (ví dụ: tệp mới được tạo).
+   - **Webhook**: Kích hoạt khi có HTTP POST request.
+4. Chọn Agent xử lý và Kênh nhận thông báo báo cáo.

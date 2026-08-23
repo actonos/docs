@@ -1,0 +1,26 @@
+{
+  "version.label": {
+    "message": "v0.2.0 (Tiếp theo / Đang phát triển)",
+    "description": "The label for version current"
+  },
+  "sidebar.docsSidebar.category.🚀 1. Getting Started": {
+    "message": "🚀 1. Bắt đầu & Cài đặt",
+    "description": "The label for category '🚀 1. Getting Started' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.📖 2. User Guide": {
+    "message": "📖 2. Hướng dẫn sử dụng",
+    "description": "The label for category '📖 2. User Guide' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.🧠 3. Advanced Architecture": {
+    "message": "🧠 3. Kiến trúc nâng cao",
+    "description": "The label for category '🧠 3. Advanced Architecture' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.🛠️ 4. Developer & API Reference": {
+    "message": "🛠️ 4. Lập trình & Tra cứu API",
+    "description": "The label for category '🛠️ 4. Developer & API Reference' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.💡 5. Support & FAQ": {
+    "message": "💡 5. Hỗ trợ & FAQ",
+    "description": "The label for category '💡 5. Support & FAQ' in sidebar 'docsSidebar'"
+  }
+}

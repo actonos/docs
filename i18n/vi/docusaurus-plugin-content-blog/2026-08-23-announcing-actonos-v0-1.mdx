@@ -1,0 +1,33 @@
+---
+slug: announcing-actonos-v0-1
+title: "Công bố Phát hành ActonOS v0.1: Hệ Điều Hành AI Bản Địa"
+authors: [actonos, bieber]
+tags: [release, architecture, swarm]
+date: 2026-08-23T00:00:00Z
+---
+
+Chúng tôi vui mừng chính thức công bố bản phát hành **ActonOS v0.1** — hệ điều hành mã nguồn mở, AI bản địa được thiết kế chuyên biệt để vận hành các nhóm tác nhân tự trị (Multi-Agent Swarms) liên tục 24/7 trên phần cứng MiniPC và môi trường Docker Container.
+
+<!-- truncate -->
+
+## Tại sao Cần một Hệ Điều Hành AI Bản Địa?
+
+Các framework AI hiện nay thường hoạt động như các script Python bọc ngoài chạy trực tiếp trên máy người dùng. Cách làm này gặp nhiều hạn chế:
+1. **Thiếu Cách ly An toàn**: Script chạy có thể vô tình xóa nhầm dữ liệu hoặc chiếm dụng hết RAM/CPU.
+2. **Lộ API Key & Token**: Bí mật thường lưu dưới dạng văn bản thô trong file `.env`.
+3. **Mất Trạng thái Khi Gặp Sự cố**: Máy khởi động lại làm mất toàn bộ tiến trình nhiệm vụ đang chạy dở.
+
+**ActonOS giải quyết triệt để các vấn đề trên** bằng cách đưa trực tiếp động cơ tác nhân, môi trường sandbox cách ly, bộ nhớ lai RAG và két bảo mật phần cứng vào tầng lõi của hệ thống.
+
+---
+
+## Các Điểm Nổi bật trong Bản v0.1
+
+- ⚡ **Dual-Runtime HAL**: Tự động nhận diện và chuyển đổi giữa chế độ MiniPC Bare-Metal (Bubblewrap + Cgroups v2) và Docker Container.
+- 🤖 **Điều phối Multi-Agent Swarm**: Phân rã mục tiêu lớn thành đồ thị DAG và phân công qua Goroutines.
+- 🔌 **Nạp nóng Công cụ Đa Giao thức**: Hỗ trợ đồng thời Model Context Protocol (MCP), WebAssembly thuần Go (`wazero`) và Skill-as-a-Folder.
+- 🧠 **Bộ nhớ Ngữ nghĩa Lai (Hybrid RAG)**: Kết hợp SQLite FTS5 với vector embeddings cục bộ và đường cong quên lãng Ebbinghaus.
+- 🔒 **Két Bảo mật Phần cứng Vault**: Mã hóa AES-256-GCM + Argon2id gắn liền với UUID máy và CPU serial.
+- 🌐 **Truy cập Từ xa qua Tailscale tsnet**: Kết nối Mesh VPN an toàn không cần mở cổng modem.
+
+Bắt đầu trải nghiệm ngay tại [Tài liệu Hướng dẫn Bắt đầu](/docs/getting-started/overview)!

@@ -1,0 +1,31 @@
+---
+id: sandbox-isolation
+title: Cách ly Sandbox & Kiểm soát Tài nguyên Cgroups v2
+sidebar_label: Cách ly Sandbox & Cgroups
+sidebar_position: 4
+---
+
+# Cách ly Sandbox & Kiểm soát Tài nguyên Cgroups v2
+
+Để ngăn chặn các Agent tự trị vô tình làm hỏng hệ điều hành hoặc bị lợi dụng thực thi mã độc, ActonOS triển khai cơ chế cách ly tầng nhân Linux bằng **Bubblewrap (`bwrap`)** kết hợp **Cgroups v2 Resource Slices**.
+
+---
+
+## 1. Giới hạn Tài nguyên (Cgroups v2 Hard Caps)
+
+Mỗi tiến trình con được khởi tạo bởi Agent đều bị khống chế nghiêm ngặt:
+
+| Tham số Cgroups v2 | Giá trị Giới hạn | Tác dụng Bảo vệ |
+|:---|:---|:---|
+| `memory.max` | **512 MB** | Tránh cạn kiệt RAM hệ thống (Out-of-Memory chỉ dừng tiến trình vi phạm) |
+| `cpu.max` | **50000 100000** | Tối đa 50% một nhân CPU (chống chiếm dụng CPU toàn bộ hệ thống) |
+| `pids.max` | **30 tiến trình** | Ngăn chặn hoàn toàn các cuộc tấn công Fork-bomb |
+| `io.max` | **50 MB/s** | Ngăn chặn ghi đĩa liên tục gây nghẽn I/O |
+
+---
+
+## 2. Phân quyền Hệ thống Tệp (Bubblewrap Mounts)
+
+- `/usr`, `/lib`, `/bin`: Gắn kết **Chỉ Đọc (Read-Only)**.
+- `/etc`, `/data/config`, `/data/tokens`: **Hoàn toàn bị ẩn và chặn truy cập**.
+- `/data/workspace`: Thư mục duy nhất được phép đọc/ghi.

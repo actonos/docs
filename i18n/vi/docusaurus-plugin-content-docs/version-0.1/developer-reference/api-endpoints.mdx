@@ -1,0 +1,67 @@
+---
+id: api-endpoints
+title: Danh mục Tra cứu REST API Endpoints
+sidebar_label: Tra cứu API Endpoints
+sidebar_position: 2
+---
+
+# Danh mục Tra cứu REST API Endpoints
+
+Danh sách đầy đủ các API endpoints được cung cấp bởi ActonOS Core Daemon (`actond`).
+
+---
+
+## 1. Hệ thống & Giám sát (System & Telemetry)
+
+| Phương thức | Đường dẫn Endpoint | Mô tả |
+|:---|:---|:---|
+| `GET` | `/api/health` | Kiểm tra tình trạng hoạt động (Healthcheck) |
+| `GET` | `/api/system/telemetry` | Lấy chỉ số CPU, RAM, Disk, Nhiệt độ và Uptime |
+| `POST` | `/api/system/backup` | Tạo và tải về gói snapshot sao lưu toàn diện |
+| `POST` | `/api/system/restore` | Phục hồi hệ thống từ tệp sao lưu `.tar.gz` |
+| `POST` | `/api/system/ota/check` | Kiểm tra các bản cập nhật OTA mới |
+
+---
+
+## 2. Quản lý Tác nhân (Agents API)
+
+| Phương thức | Đường dẫn Endpoint | Mô tả |
+|:---|:---|:---|
+| `GET` | `/api/agents` | Danh sách toàn bộ Agent manifests |
+| `POST` | `/api/agents` | Tạo một Agent mới |
+| `GET` | `/api/agents/{id}` | Lấy chi tiết cấu hình của một Agent |
+| `PUT` | `/api/agents/{id}` | Cập nhật cấu hình Agent |
+| `DELETE` | `/api/agents/{id}` | Xóa bỏ một Agent |
+
+---
+
+## 3. Trò chuyện & Luồng SSE (Chat API)
+
+| Phương thức | Đường dẫn Endpoint | Mô tả |
+|:---|:---|:---|
+| `GET` | `/api/chat/conversations` | Danh sách các cuộc trò chuyện |
+| `POST` | `/api/chat/conversations` | Tạo cuộc trò chuyện mới |
+| `POST` | `/api/chat/messages` | Gửi tin nhắn và nhận phản hồi SSE trực tiếp |
+| `GET` | `/api/chat/conversations/{id}/messages` | Lấy lịch sử tin nhắn của một cuộc trò chuyện |
+
+---
+
+## 4. Nhiệm vụ & Phê duyệt (Missions & Approvals)
+
+| Phương thức | Đường dẫn Endpoint | Mô tả |
+|:---|:---|:---|
+| `GET` | `/api/missions` | Danh sách các nhiệm vụ đang chạy và lịch sử |
+| `POST` | `/api/missions` | Khởi chạy một mục tiêu nhiệm vụ DAG mới |
+| `GET` | `/api/approvals/pending` | Danh sách các yêu cầu đang chờ phê duyệt |
+| `POST` | `/api/approvals/{id}/resolve` | Phê duyệt hoặc Từ chối hành động của Agent |
+
+---
+
+## 5. Quản lý Tệp (Workspace API)
+
+| Phương thức | Đường dẫn Endpoint | Mô tả |
+|:---|:---|:---|
+| `GET` | `/api/workspace/tree` | Lấy cây thư mục và danh sách tệp |
+| `GET` | `/api/workspace/file?path={path}` | Đọc nội dung tệp tin |
+| `POST` | `/api/workspace/file` | Tạo hoặc ghi nội dung tệp tin |
+| `DELETE` | `/api/workspace/file?path={path}` | Xóa tệp hoặc thư mục |

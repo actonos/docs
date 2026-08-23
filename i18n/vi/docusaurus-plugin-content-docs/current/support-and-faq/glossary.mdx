@@ -1,0 +1,24 @@
+---
+id: glossary
+title: Thuật ngữ Kỹ thuật ActonOS
+sidebar_label: Bảng Thuật ngữ Kỹ thuật
+sidebar_position: 3
+---
+
+# Bảng Thuật ngữ Kỹ thuật ActonOS
+
+Định nghĩa chính xác các khái niệm và thành phần trong hệ sinh thái ActonOS.
+
+---
+
+| Thuật ngữ | Khái niệm & Giải thích |
+|:---|:---|
+| **`actond`** | Daemon lõi duy nhất bằng Go (`CGO_ENABLED=0`) quản lý toàn bộ hệ sinh thái ActonOS. |
+| **HAL** | *Hardware Abstraction Layer* - Lớp trừu tượng phần cứng tự động chuyển đổi giữa Bare-Metal và Docker. |
+| **Swarm** | Nhóm các tác nhân AI làm việc phối hợp, ủy quyền và giải quyết các mục tiêu DAG phức tạp. |
+| **Hardware Vault** | Cơ chế mã hóa bí mật bằng AES-256-GCM kết hợp Argon2id dựa trên UUID phần cứng. |
+| **Hybrid RAG** | Tìm kiếm lai kết hợp SQLite FTS5 (từ khóa BM25) và Vector embeddings cục bộ (`multilingual-e5-small`). |
+| **MCP** | *Model Context Protocol* - Giao thức chuẩn hóa của Anthropic kết nối mô hình AI với công cụ và dữ liệu. |
+| **`wazero`** | Động cơ thực thi WebAssembly (WASM) thuần Go giúp chạy plugin độc lập và an toàn. |
+| **Bubblewrap (`bwrap`)** | Công cụ tạo môi trường cách ly namespace không đặc quyền trên nhân Linux. |
+| **`tsnet`** | Thư viện nhúng của Tailscale cho phép tạo kết nối Mesh VPN WireGuard trực tiếp trong mã nguồn Go. |

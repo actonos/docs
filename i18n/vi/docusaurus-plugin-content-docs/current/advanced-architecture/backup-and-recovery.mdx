@@ -1,0 +1,39 @@
+---
+id: backup-and-recovery
+title: Sao lưu & Phục hồi Thảm họa
+sidebar_label: Sao lưu & Phục hồi
+sidebar_position: 7
+---
+
+# Sao lưu & Phục hồi Thảm họa
+
+ActonOS cung cấp các công cụ tích hợp sẵn để tạo bản sao lưu snapshot cơ sở dữ liệu nhất quán và phục hồi toàn bộ hệ thống khi gặp sự cố phần cứng.
+
+---
+
+## 1. Snapshot Nhất quán Transactional (`VACUUM INTO`)
+
+ActonOS sử dụng lệnh `VACUUM INTO` trực tiếp trên SQLite để tạo bản sao lưu mà **không cần dừng dịch vụ** hay ngắt kết nối của các Agent:
+
+```bash
+# Tạo bản sao lưu tức thì qua REST API
+curl -X POST http://localhost:8080/api/system/backup \
+  -H "Authorization: Bearer <ADMIN_TOKEN>" \
+  -o actonos_backup_$(date +%Y%m%d_%H%M%S).tar.gz
+```
+
+Gói sao lưu bao gồm:
+- Toàn bộ cơ sở dữ liệu SQLite (`storage/app.db`).
+- Cấu hình Két mã hóa (`config/vault.db`).
+- Manifest các Agent (`agents/agent_manifests.json`).
+- Danh sách công cụ và không gian làm việc (`skills/`, `workspace/`).
+
+---
+
+## 2. Quy trình Phục hồi Sau Thảm họa (Disaster Recovery)
+
+Khi chuyển sang một MiniPC mới:
+1. Cài đặt ActonOS sạch từ file ISO hoặc Docker.
+2. Tải bản sao lưu `.tar.gz` lên qua màn hình Cài đặt Hệ thống.
+3. Nhập mật khẩu khôi phục hoặc mã PIN cũ để mở khóa Két.
+4. Toàn bộ Agent, cấu hình và tệp dữ liệu được phục hồi hoàn chỉnh trong 10 giây.

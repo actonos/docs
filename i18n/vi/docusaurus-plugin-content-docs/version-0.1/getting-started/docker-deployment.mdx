@@ -1,0 +1,191 @@
+---
+id: docker-deployment
+title: Triển khai với Docker
+sidebar_label: Triển khai với Docker
+sidebar_position: 3
+---
+
+# Triển khai ActonOS với Docker
+
+Triển khai ActonOS bằng Docker là phương pháp nhanh nhất để chạy toàn bộ hệ sinh thái tác nhân AI trên máy chủ đám mây VPS, máy chủ gia đình (NAS, server cá nhân) hoặc máy tính làm việc cục bộ.
+
+---
+
+## Bắt đầu Nhanh trong 1 Phút
+
+Chạy lệnh sau trong terminal để khởi chạy container ActonOS với dữ liệu được lưu trữ bền vững:
+
+```bash
+docker run -d \
+  --name actonos \
+  -p 8080:8080 \
+  -v acton-data:/data \
+  -e RUNTIME_MODE=docker \
+  --restart unless-stopped \
+  ghcr.io/actonos/actonos:latest
+```
+
+Sau khi khởi chạy, mở trình duyệt và truy cập:
+```
+http://localhost:8080
+```
+
+---
+
+## Cấu hình Nâng cao với Docker Compose
+
+Để quản lý dễ dàng trong môi trường production, hãy sử dụng `docker-compose.yml`.
+
+### 1. Tạo thư mục dự án
+
+```bash
+mkdir -p ~/actonos && cd ~/actonos
+```
+
+### 2. Tạo file `docker-compose.yml`
+
+```yaml
+version: '3.8'
+
+services:
+  actonos:
+    image: ghcr.io/actonos/actonos:latest
+    container_name: actonos
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - RUNTIME_MODE=docker
+      - LOG_LEVEL=info
+      - LISTEN_ADDR=:8080
+      - DATA_DIR=/data
+      - TZ=Asia/Ho_Chi_Minh
+      # Tùy chọn: Nhập mã Tailscale Auth Key để tự động kết nối VPN
+      # - TAILSCALE_AUTH_KEY=tskey-auth-xxxxxx-xxxxxx
+    volumes:
+      - ./acton-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    security_opt:
+      - no-new-privileges:true
+```
+
+### 3. Khởi động dịch vụ
+
+```bash
+docker compose up -d
+```
+
+Theo dõi log thời gian thực:
+```bash
+docker compose logs -f actonos
+```
+
+---
+
+## Triển khai Tự động cấp Chứng chỉ HTTPS với Caddy
+
+Nếu bạn triển khai ActonOS trên VPS hoặc domain công khai ngoài internet:
+
+```yaml
+version: '3.8'
+
+services:
+  actonos:
+    image: ghcr.io/actonos/actonos:latest
+    container_name: actonos
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      - RUNTIME_MODE=docker
+      - DATA_DIR=/data
+    volumes:
+      - ./acton-data:/data
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: actonos-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=agent.yourdomain.com
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - actonos
+
+volumes:
+  caddy_data:
+  caddy_config:
+```
+
+Tạo file `Caddyfile` đi kèm:
+
+```caddy
+{$DOMAIN} {
+    encode gzip zstd
+
+    # Hỗ trợ WebSocket cho telemetry & terminal trực tiếp
+    @websockets {
+        header Connection *Upgrade*
+        header Upgrade    websocket
+    }
+    reverse_proxy @websockets actonos:8080
+
+    # REST API & Web Dashboard
+    reverse_proxy actonos:8080
+}
+```
+
+Khởi chạy stack:
+```bash
+DOMAIN=agent.yourdomain.com docker compose up -d
+```
+
+---
+
+## Bộ Công cụ Tích hợp Sẵn (Batteries-Included)
+
+Image Docker chính thức của ActonOS được tích hợp đầy đủ công cụ phục vụ tự động hóa:
+
+| Nhóm | Công cụ & Thư viện | Mục đích |
+|:---|:---|:---|
+| **Tìm kiếm & Tệp** | `ripgrep` (`rg`), `jq`, `tree`, `findutils`, `tar`, `gzip`, `unzip` | Tìm kiếm mã nguồn & xử lý JSON có cấu trúc |
+| **Môi trường Thực thi** | Python 3.11+, Node.js 22 LTS, npm, npx, Go | Chạy code an toàn trong subshell cách ly |
+| **Thư viện Python** | `requests`, `httpx`, `beautifulsoup4`, `pydantic`, `pyyaml` | Thu thập dữ liệu web & tương tác API |
+| **Mạng & Quản lý Mã** | `curl`, `wget`, `git`, `sqlite3`, `openssh-client` | Quản lý phiên bản & tải dữ liệu từ xa |
+| **Trình duyệt Tự động** | Headless `chromium`, `font-noto`, `font-noto-cjk` | Tự động duyệt web, chụp ảnh màn hình & trích xuất DOM qua `chromedp` |
+| **Bảo mật** | User không có quyền root `acton` (UID 1000), `tini` PID 1 | Thu hồi tiến trình zombie và hạn chế quyền |
+
+---
+
+## Cấu trúc Thư mục Lưu trữ Dữ liệu (`/data`)
+
+Toàn bộ cấu hình, database và workspace được lưu trữ tại `/data`:
+
+```
+/data/
+├── config/
+│   └── vault.db           # Két mã hóa API keys & OAuth secrets
+├── agents/
+│   └── agent_manifests.json # Danh sách cấu hình Agent
+├── tokens/
+│   └── oauth_tokens.vault # Tokens OAuth 2.1 đã mã hóa
+├── storage/
+│   └── app.db             # SQLite database, FTS5 index, vector embeddings
+├── logs/
+│   └── audit.jsonl        # Nhật ký kiểm toán chuỗi băm SHA-256
+├── plugins/               # Plugin WebAssembly (.wasm)
+├── skills/                # Thư mục chứa Custom Skills
+├── mcp-servers/           # Cấu hình máy chủ MCP
+└── workspace/             # Không gian làm việc đọc/ghi của Agent
+```

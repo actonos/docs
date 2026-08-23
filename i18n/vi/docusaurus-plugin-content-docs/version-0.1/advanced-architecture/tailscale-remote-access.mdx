@@ -1,0 +1,24 @@
+---
+id: tailscale-remote-access
+title: Truy cập Từ xa Không cần Mở cổng Modem qua Tailscale (tsnet)
+sidebar_label: Truy cập Từ xa Tailscale
+sidebar_position: 5
+---
+
+# Truy cập Từ xa Không cần Mở cổng Modem qua Tailscale (tsnet)
+
+ActonOS nhúng trực tiếp thư viện **`tailscale.com/tsnet`** (triển khai WireGuard thuần Go) vào bên trong daemon `actond`, cung cấp kết nối mạng riêng ảo Mesh VPN an toàn mà không cần cài đặt thêm phần mềm phụ trợ.
+
+---
+
+## 1. Ưu điểm Vượt trội của `tsnet`
+
+- **Không cần Mở Cổng Router (Zero Port Forwarding)**: Tự động xuyên NAT qua giao thức WireGuard và mạng chuyển tiếp DERP.
+- **Tự động cấp Chứng chỉ HTTPS**: Tự động nhận tên miền và chứng chỉ SSL hợp lệ (ví dụ `https://acton.your-tailnet.ts.net`).
+- **Mã hóa Đầu-Cuối (End-to-End Encryption)**: Toàn bộ dữ liệu được bảo vệ an toàn với mật mã ChaCha20-Poly1305.
+
+---
+
+## 2. Kích hoạt Kết nối
+
+Chỉ cần nhập **Tailscale Auth Key** (`tskey-auth-...`) trong phần Cài đặt Hệ thống hoặc qua biến môi trường `TAILSCALE_AUTH_KEY`. ActonOS sẽ tự động tham gia vào mạng Tailnet của bạn trong vài giây.

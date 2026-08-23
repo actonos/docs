@@ -1,0 +1,46 @@
+---
+id: ai-chat
+title: Chat AI Đa phương thức
+sidebar_label: Chat Đa phương thức
+sidebar_position: 2
+---
+
+# Chat AI Đa phương thức & Tương tác
+
+Giao diện **Chat trong ActonOS** hỗ trợ trò chuyện với từng Agent hoặc nhóm Swarm, tải lên phân tích tài liệu/hình ảnh, xem thẻ thực thi công cụ trực tiếp và luồng dữ liệu thời gian thực qua Server-Sent Events (SSE).
+
+---
+
+## 1. Bắt đầu Cuộc trò chuyện
+
+1. Bấm vào mục **Chat** trên thanh điều hướng bên trái.
+2. Bấm **+ Cuộc trò chuyện mới**.
+3. Chọn Agent từ menu thả xuống (ví dụ: `Trợ lý Chung`, `Agent Nghiên cứu`, `Coder Swarm`).
+4. Nhập nội dung vào khung soạn thảo và bấm **Enter** (hoặc `Shift + Enter` để xuống dòng).
+
+---
+
+## 2. Tải Tệp & Phân tích Đa phương thức
+
+ActonOS tích hợp bộ tiền xử lý tự động trích xuất nội dung từ các định dạng tệp phổ biến:
+
+| Loại tệp | Định dạng hỗ trợ | Phương thức xử lý |
+|:---|:---|:---|
+| **Văn bản & Mã nguồn** | `.txt`, `.md`, `.py`, `.go`, `.js`, `.ts`, `.json`, `.yaml`, `.sql` | Trích xuất văn bản UTF-8 với highlight cú pháp |
+| **Tài liệu văn phòng** | `.pdf`, `.docx`, `.doc` | Chuyển đổi thành định dạng Markdown có phân trang |
+| **Bảng tính & Dữ liệu**| `.csv`, `.tsv`, `.xlsx`, `.xls` | Chuyển đổi thành bảng dữ liệu Markdown kèm phân tích lược đồ |
+| **Hình ảnh** | `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg` | Tối ưu hóa kích thước cho các mô hình thị giác (Claude 3.7 / GPT-4o / Gemini 2.0) |
+
+Để đính kèm tệp:
+- Bấm vào biểu tượng 📎 **Kẹp ghim** trong khung soạn thảo.
+- Hoặc **kéo và thả** tệp trực tiếp vào cửa sổ chat.
+
+---
+
+## 3. Thẻ Thực thi Công cụ Trực tiếp (Live Tool Cards)
+
+Khi một Agent gọi công cụ bên ngoài (ví dụ: chạy script Python, duyệt web, truy vấn cơ sở dữ liệu), một **Thẻ Thực thi Công cụ** sẽ xuất hiện ngay trong dòng thời gian:
+
+- **Chỉ báo Trạng thái**: Cho biết công cụ đang `Chạy`, `Hoàn tất` hoặc `Gặp lỗi`.
+- **Kiểm tra Tham số**: Bấm mở rộng thẻ để xem chi tiết tham số đầu vào dạng JSON và dữ liệu đầu ra trả về.
+- **Nút Xác nhận Nhanh**: Nếu công cụ đòi hỏi phê duyệt, thẻ sẽ chuyển màu vàng kèm nút **Phê duyệt** và **Từ chối** trực tiếp.

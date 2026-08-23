@@ -1,0 +1,74 @@
+---
+id: quickstart-tutorial
+title: Hướng dẫn Nhanh 5 Phút
+sidebar_label: Hướng dẫn Nhanh 5 Phút
+sidebar_position: 6
+---
+
+# Hướng dẫn Nhanh 5 Phút
+
+Hướng dẫn thực hành từng bước giúp bạn tạo tác nhân AI đầu tiên, cấp quyền công cụ và xem Agent thực thi nhiệm vụ trong ActonOS.
+
+---
+
+## Bước 1: Mở Bảng điều khiển ActonOS
+
+1. Truy cập vào trang quản trị:
+   - **Mạng LAN**: `http://acton.local:8080` (hoặc `http://localhost:8080`)
+   - **Từ xa**: `https://acton.your-tailnet.ts.net`
+2. Nhập mã **Admin PIN** đã tạo khi cài đặt.
+3. Bạn sẽ thấy giao diện **Bảng điều khiển** hiển thị trạng thái CPU, RAM, Agent và các luồng sự kiện.
+
+---
+
+## Bước 2: Tạo Agent Mới trong Agent Studio
+
+1. Trên menu bên trái, bấm vào mục **Agents** (hoặc bấm tổ hợp phím `Ctrl + K` và gõ `Tạo agent mới`).
+2. Bấm nút màu vàng **+ Agent Mới**.
+3. Điền thông tin nhận diện Agent:
+   - **Tên Agent**: `Trợ lý Nghiên cứu`
+   - **Slug / Định danh**: `research-bot`
+   - **Mô tả**: `Tác nhân tự trị có khả năng duyệt web và tạo báo cáo Markdown.`
+4. Trong mục **System Prompt**, nhập chỉ thị hành vi:
+   ```markdown
+   Bạn là một trợ lý nghiên cứu tự trị trong ActonOS.
+   Nhiệm vụ của bạn là tìm kiếm thông tin trên web, tổng hợp số liệu và tạo các bản tóm tắt định dạng Markdown rõ ràng.
+   Luôn sử dụng công cụ tìm kiếm và trình duyệt để kiểm chứng thông tin trước khi trả lời.
+   ```
+5. Trong mục **Mô hình & LLM Cascade**:
+   - **Mô hình Chính**: Chọn `anthropic:claude-3-7-sonnet` hoặc `openai:gpt-4o`.
+   - **Mô hình Dự phòng**: Chọn `google:gemini-2.0-flash`.
+   - **Temperature**: `0.3` (cho kết quả chính xác, chuẩn mực).
+6. Trong mục **Phân quyền Công cụ**:
+   - Tích chọn `native_web_search` (tìm kiếm web).
+   - Tích chọn `native_browser_headless` (trình duyệt Chromium tự động).
+   - Tích chọn `native_workspace_write` (ghi tệp vào không gian làm việc).
+7. Bấm **Lưu Manifest Agent**.
+
+---
+
+## Bước 3: Trò chuyện và Xem Agent Gọi Công cụ
+
+1. Bấm vào mục **Chat** trên thanh menu.
+2. Chọn **Trợ lý Nghiên cứu** từ danh sách chọn Agent phía trên.
+3. Nhập câu lệnh sau vào khung chat:
+   ```
+   Hãy tra cứu các điểm mới trong bản phát hành Go 1.26. Tóm tắt 3 tính năng quan trọng nhất và lưu bản tóm tắt vào file 'go_126_summary.md' trong workspace.
+   ```
+4. Bấm **Gửi** (hoặc nhấn phím `Enter`).
+
+### Những gì diễn ra ngầm phía sau:
+1. **Phân tích yêu cầu**: ActonOS gửi prompt đến mô hình LLM qua luồng Server-Sent Events (SSE).
+2. **Gọi công cụ**: Agent quyết định gọi `native_web_search("Go 1.26 release notes")`.
+3. **Thẻ thực thi trực tiếp**: Một thẻ hiển thị trực tiếp xuất hiện trong khung chat cho thấy tham số đầu vào, thời gian chạy và kết quả trả về.
+4. **Ghi tệp tự trị**: Agent gọi `native_workspace_write` để tạo file `/workspace/go_126_summary.md`.
+5. **Phản hồi hoàn tất**: Agent hiển thị tóm tắt trực tiếp trong chat.
+
+---
+
+## Bước 4: Kiểm tra Tệp trong Không gian Làm việc
+
+1. Bấm vào mục **Tệp (Workspace)** trên menu.
+2. Bạn sẽ thấy tệp `go_126_summary.md` vừa được tạo.
+3. Bấm vào tệp để xem nội dung với trình soạn thảo **CodeMirror** và bản xem trước Markdown trực quan.
+4. Hệ thống cũng đã tự động phân tích và đưa nội dung này vào **Bộ nhớ ngữ nghĩa (Semantic Memory)** để các agent khác cùng tra cứu.

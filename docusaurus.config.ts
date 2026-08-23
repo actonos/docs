@@ -1,5 +1,5 @@
-import {themes as prismThemes} from 'prism-react-renderer';
-import type {Config} from '@docusaurus/types';
+import { themes as prismThemes } from 'prism-react-renderer';
+import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
@@ -46,12 +46,12 @@ const config: Config = {
           lastVersion: '0.1',
           versions: {
             current: {
-              label: 'v0.2.0 (Next)',
+              label: 'v0.2',
               path: 'next',
               banner: 'unreleased',
             },
             '0.1': {
-              label: 'v0.1.0 (Stable)',
+              label: 'v0.1 (Stable)',
               banner: 'none',
             },
           },

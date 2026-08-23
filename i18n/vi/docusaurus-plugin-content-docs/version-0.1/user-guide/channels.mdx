@@ -1,0 +1,45 @@
+---
+id: channels
+title: Kênh Chat & Tích hợp Tin nhắn
+sidebar_label: Kênh Chat (Telegram/Discord)
+sidebar_position: 7
+---
+
+# Kênh Chat & Tích hợp Tin nhắn Đa nền tảng
+
+Phân hệ **Kênh chat (Channels)** cho phép người dùng trò chuyện với các Agent của ActonOS trực tiếp từ các ứng dụng nhắn tin quen thuộc như Telegram, Discord và Slack.
+
+---
+
+## 1. Tích hợp Bot Telegram
+
+### Các bước cài đặt:
+1. Mở Telegram và tìm bot **[@BotFather](https://t.me/botfather)**.
+2. Gửi lệnh `/newbot` và đặt tên cho bot theo hướng dẫn.
+3. Sao chép chuỗi **HTTP API Bot Token** (ví dụ: `123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ`).
+4. Trong ActonOS, vào mục **Kênh chat** → **Telegram** → chọn **Kết nối tài khoản**.
+5. Dán Bot Token và bấm **Khởi tạo Bộ điều hợp**.
+
+### Mã PIN Ghép nối (Pairing PIN):
+- Khi bạn nhắn tin lần đầu tiên đến bot Telegram, bot sẽ phản hồi một mã xác thực 6 số.
+- Nhập mã này trên giao diện ActonOS để xác thực tài khoản Telegram của bạn là người quản trị hợp lệ.
+
+---
+
+## 2. Tích hợp Bot Discord
+
+### Các bước cài đặt:
+1. Truy cập **[Discord Developer Portal](https://discord.com/developers/applications)**.
+2. Tạo Application mới và chuyển sang tab **Bot**.
+3. Bật quyền **Message Content Intent** trong mục Privileged Gateway Intents.
+4. Bấm **Reset Token** và sao chép Bot Token.
+5. Tạo link mời bot vào máy chủ Discord của bạn qua mục **OAuth2** → **URL Generator** (chọn scope `bot`).
+6. Dán token vào trang cấu hình Discord trong ActonOS.
+
+---
+
+## 3. Tự phục hồi Kết nối (Auto-Recovery)
+
+ActonOS tự động giám sát kết nối:
+- Nếu mất mạng hoặc gateway bị ngắt, hệ thống sẽ tự động kết nối lại theo chu kỳ backoff.
+- Nếu token bị thu hồi, hệ thống sẽ gửi thông báo cảnh báo trực tiếp trên giao diện để người quản trị cập nhật lại token.

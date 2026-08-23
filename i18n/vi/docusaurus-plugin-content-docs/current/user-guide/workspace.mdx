@@ -1,0 +1,38 @@
+---
+id: workspace
+title: Không gian Làm việc & Bộ nhớ Ngữ nghĩa
+sidebar_label: Workspace & Bộ nhớ RAG
+sidebar_position: 11
+---
+
+# Không gian Làm việc & Bộ nhớ Ngữ nghĩa (Workspace)
+
+Trang **Tệp (Workspace)** cung cấp một môi trường quản lý tệp tin tích hợp trình soạn thảo mã nguồn và động cơ lập chỉ mục **Bộ nhớ Ngữ nghĩa (Semantic Memory RAG)** tự động.
+
+---
+
+## 1. Trình Soạn thảo & Xem trước Đa năng
+
+ActonOS tích hợp sẵn các trình xem chuyên dụng:
+- **Trình soạn thảo Code (CodeMirror)**: Đầy đủ tính năng đánh dấu cú pháp, thụt đầu dòng, số dòng cho hơn 50 ngôn ngữ lập trình.
+- **Xem trước Markdown Trực tiếp**: Hiển thị bảng biểu, danh sách tác vụ và công thức.
+- **Trình đọc JSON Tương tác**: Cây dữ liệu thu gọn/mở rộng trực quan.
+- **Trình xem Bảng Tính**: Xem bảng dữ liệu `.csv` và `.tsv` dạng lưới dễ theo dõi.
+- **Trình phát Đa phương tiện**: Xem trước hình ảnh, nghe audio, xem video và tài liệu PDF.
+
+---
+
+## 2. Quản lý Tệp trong Môi trường Cách ly
+
+- **Tải lên & Tải nén Zip**: Tải lên tệp đơn lẻ hoặc tải về toàn bộ thư mục dưới dạng file `.zip`.
+- **Thao tác nhanh**: Chuột phải để Đổi tên, Nhân bản (`_copy`), Di chuyển hoặc Xóa tệp.
+
+---
+
+## 3. Lập Chỉ mục Bộ nhớ Ngữ nghĩa Tự động (Vector RAG)
+
+Mọi tệp văn bản và mã nguồn trong `/data/workspace/` đều được tự động đưa vào bộ nhớ vector:
+1. **Hàng đợi Giảm tải Debounce (60s)**: Gom các lần sửa đổi liên tiếp để tránh tính toán thừa.
+2. **Phân đoạn Ngữ nghĩa (Chunking)**: Cắt văn bản thành các đoạn có ngữ cảnh phù hợp.
+3. **Mã hóa Vector Cục bộ**: Vector hóa qua mô hình ONNX `multilingual-e5-small` chạy nội bộ.
+4. **Tìm kiếm Lai**: Agent có thể truy vấn đồng thời cả từ khóa chính xác và ý nghĩa ngữ nghĩa.

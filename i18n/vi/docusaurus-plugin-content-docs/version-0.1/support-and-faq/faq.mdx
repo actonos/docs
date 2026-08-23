@@ -1,0 +1,30 @@
+---
+id: faq
+title: Câu hỏi Thường gặp (FAQ)
+sidebar_label: Câu hỏi Thường gặp
+sidebar_position: 2
+---
+
+# Câu hỏi Thường gặp (FAQ)
+
+Tổng hợp các câu hỏi phổ biến từ người dùng, quản trị viên hệ thống và lập trình viên.
+
+---
+
+## 1. Dành cho Người dùng Mới
+
+### ActonOS có cần kết nối Internet liên tục không?
+- **Trả lời**: Nếu bạn sử dụng các mô hình đám mây (OpenAI, Claude, Gemini), ActonOS cần Internet để gọi API. Nếu bạn sử dụng mô hình AI cục bộ chạy trên **Ollama**, hệ thống có thể hoạt động hoàn toàn offline (kèm theo tính năng tìm kiếm ngữ nghĩa cục bộ qua `embeddingd`).
+
+### Tôi có thể cài ActonOS song song với Windows được không?
+- **Trả lời**: Trình cài đặt ISO tự động sẽ xóa toàn bộ ổ đĩa để thiết lập phân vùng bảo mật. Nếu muốn chạy chung máy tính, hãy sử dụng giải pháp **Docker Container** trên WSL2.
+
+---
+
+## 2. Dành cho Quản trị viên & Lập trình viên
+
+### Dữ liệu và API Key của tôi có an toàn không?
+- **Trả lời**: Hoàn toàn an toàn. ActonOS sử dụng **Hardware-Bound Vault** (AES-256-GCM + Argon2id) gắn chặt với số định danh phần cứng của máy. Key không bao giờ được lưu dạng văn bản thô.
+
+### Làm thế nào để thêm công cụ mới cho Agent?
+- **Trả lời**: Bạn có thể cài đặt 1-click từ **Tool Hub**, thêm máy chủ **MCP**, tạo thư mục **Skill-as-a-Folder** hoặc tải lên plugin **WASM**.
