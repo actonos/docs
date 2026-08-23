@@ -7,11 +7,13 @@ const config: Config = {
   tagline: 'The AI-Native Autonomous Operating System & Multi-Agent Swarm Hub',
   favicon: 'img/favicon.ico',
 
-  url: 'https://docs.actonos.org',
-  baseUrl: '/',
+  url: process.env.URL || 'https://docs.actonos.org',
+  baseUrl: process.env.BASE_URL || '/',
 
   organizationName: 'actonos',
-  projectName: 'actonos-docs',
+  projectName: 'docs',
+  deploymentBranch: 'gh-pages',
+  trailingSlash: false,
 
   onBrokenLinks: 'throw',
 
