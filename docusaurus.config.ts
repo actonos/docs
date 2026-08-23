@@ -8,7 +8,7 @@ const config: Config = {
   favicon: 'img/favicon.ico',
 
   url: process.env.URL || 'https://docs.actonos.org',
-  baseUrl: process.env.BASE_URL || '/',
+  baseUrl: process.env.BASE_URL || '/docs',
 
   organizationName: 'actonos',
   projectName: 'docs',
