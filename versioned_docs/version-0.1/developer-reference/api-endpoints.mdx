@@ -1,0 +1,171 @@
+---
+id: api-endpoints
+title: API Endpoints Reference
+sidebar_label: API Endpoints
+sidebar_position: 2
+---
+
+# API Endpoints Reference
+
+A complete reference of all core REST endpoints exposed by the ActonOS daemon.
+
+---
+
+## 1. System & Health
+
+### `GET /api/health`
+Returns system status, active version, uptime, runtime mode, and resource load. No auth required.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "version": "0.1.0",
+  "uptime_seconds": 3600,
+  "runtime_mode": "baremetal",
+  "agents_active": 3,
+  "memory_usage_mb": 42.5,
+  "cpu_percent": 1.8,
+  "disk_usage_percent": 12.4,
+  "tailscale_connected": true
+}
+```
+
+### `GET /api/system/audit/verify`
+Validates the cryptographic SHA-256 hash chain of `/data/logs/audit.jsonl` to detect tampering.
+
+### `GET /api/system/backup`
+Streams a transactionally consistent SQLite database backup created using `VACUUM INTO`.
+
+---
+
+## 2. Agents Management
+
+### `GET /api/agents`
+Lists all registered agent manifests.
+
+### `POST /api/agents`
+Creates a new agent definition.
+
+**Request Body:**
+```json
+{
+  "id": "researcher",
+  "name": "Research Agent",
+  "description": "Performs deep web research and generates markdown reports",
+  "system_prompt": "You are a professional research agent...",
+  "primary_model": "anthropic:claude-3-7-sonnet",
+  "fallback_model": "google:gemini-2.0-flash",
+  "temperature": 0.2,
+  "tools": ["native_web_search", "native_browser_headless", "native_workspace_write"],
+  "allowed_paths": ["docs/*", "research/*"]
+}
+```
+
+### `PUT /api/agents/{id}`
+Updates an existing agent manifest.
+
+### `DELETE /api/agents/{id}`
+Removes an agent from the registry.
+
+---
+
+## 3. Chat & Execution Streams
+
+### `POST /api/agents/{id}/chat`
+Synchronously sends a message to an agent.
+
+### `GET /api/agents/{id}/chat/stream`
+Initiates a Server-Sent Events (SSE) stream for real-time token streaming and live tool execution cards.
+
+---
+
+## 4. Approvals Ledger
+
+### `GET /api/approvals?status=pending`
+Lists pending mutation approval requests (`pending`, `approved`, `rejected`, `all`).
+
+### `POST /api/approvals/{id}/approve`
+Approves the exact action recorded in the approval entry and resumes the agent run.
+
+**Request Body:**
+```json
+{
+  "reason": "Reviewed and cleared by administrator"
+}
+```
+
+### `POST /api/approvals/{id}/reject`
+Safely rejects the pending mutation without executing the action.
+
+---
+
+## 5. Workspace File Management
+
+### `GET /api/workspace/files?dir=docs`
+Lists files and directories under the specified relative workspace path with AI semantic indexing status.
+
+### `GET /api/workspace/file?path=docs/notes.md`
+Returns the content and metadata of a specific text file.
+
+### `GET /api/workspace/raw?path=docs/diagram.png`
+Streams raw binary bytes (with HTTP Range support) for media, image, and PDF previews.
+
+### `POST /api/workspace/file`
+Creates or updates a file and automatically enqueues it for semantic vector indexing.
+
+**Request Body:**
+```json
+{
+  "path": "reports/summary.md",
+  "content": "# Research Summary\nKey findings..."
+}
+```
+
+### `DELETE /api/workspace/file?path=reports/old.md`
+Deletes a file or directory from the workspace.
+
+### `GET /api/workspace/zip?paths=docs,reports`
+Downloads specified folders or files as a compressed `.zip` archive.
+
+### `GET /api/workspace/chunks?path=docs/notes.md`
+Returns the semantic chunks and embedding vector metadata generated for a file.
+
+---
+
+## 6. Tools & Marketplace Hub
+
+### `GET /api/tools`
+Lists all active tools across Native, MCP, WASM, and Skill categories.
+
+### `GET /api/tools/hub/catalog`
+Fetches the live Community Tool Hub catalog with ratings, categories, and tags.
+
+### `POST /api/tools/hub/install`
+Downloads and installs a community skill package into `/data/skills/<slug>/`.
+
+**Request Body:**
+```json
+{
+  "skill_id": "tavily"
+}
+```
+
+### `POST /api/tools/hub/uninstall`
+Removes an installed skill package.
+
+---
+
+## 7. Notifications Center
+
+### `GET /api/notifications`
+Returns paginated system and mission notifications (`page`, `limit`, `type`, `unread_only`).
+
+### `POST /api/notifications/mark-read`
+Marks notifications as read (`{ "id": "notif_..." }` or `{ "all": true }`).
+
+### `GET /api/notifications/push/vapid-key`
+Returns the server's VAPID public key for browser push subscriptions.
+
+### `POST /api/notifications/push/subscribe`
+Registers a browser Service Worker push subscription for OS-level alerts.

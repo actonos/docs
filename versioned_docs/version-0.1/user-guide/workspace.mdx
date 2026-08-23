@@ -1,0 +1,42 @@
+---
+id: workspace
+title: Workspace & Semantic Memory
+sidebar_label: Workspace & Semantic Memory
+sidebar_position: 11
+---
+
+# Workspace & Semantic Memory
+
+The **Workspace** provides a full-featured, sandboxed file management environment and integrated IDE combined with an automated **Semantic Memory (RAG)** indexing engine.
+
+---
+
+## 1. Integrated IDE & Viewers
+
+ActonOS includes specialized viewers tailored for different file formats:
+
+- **Code Editor (CodeMirror)**: Syntax highlighting, auto-indentation, line numbers, and error linting for 50+ programming languages.
+- **Markdown Live Preview**: Split-pane or full-width rendering with GitHub-flavored tables, task lists, and LaTeX equations.
+- **Interactive JSON Viewer**: Collapsible tree navigation with key search and type annotations.
+- **Data Table Viewer**: Spreadsheet-like tabular viewer for `.csv` and `.tsv` files with sorting and filtering.
+- **Media & Document Viewer**: Inline previewing of images (`.png`, `.jpg`, `.svg`), audio, video, and PDF documents.
+
+---
+
+## 2. File Operations & Batch Management
+
+- **Upload & Download**: Upload single files or entire folders. Download individual items or export multi-file selections as a compressed `.zip` archive.
+- **Context Menus**: Right-click any file to Rename, Duplicate (`_copy`), Move, or Delete.
+- **Storage Statistics**: The Workspace stats bar displays total storage used, file counts, and storage breakdown by category (Code, Documents, Data, Media).
+
+---
+
+## 3. Automated Semantic Memory (Local Vector RAG)
+
+Every text document, markdown file, or source code file placed in `/data/workspace/` is automatically processed into the **Hybrid Semantic Memory** index:
+
+1. **Debounce Queue (1-Minute)**: Edits are enqueued in a durable SQLite debounce table to avoid thrashing during rapid file modifications.
+2. **Chunking**: Text is split into semantic paragraphs with sliding window overlaps.
+3. **Local ONNX Embeddings**: Chunks are vectorized using the local `multilingual-e5-small` model running in the loopback `embeddingd` daemon.
+4. **Hybrid Retrieval**: Agents can query `/api/workspace/chunks` or execute hybrid search across SQLite FTS5 (lexical) and Chromem-go (vector).
+5. **Manual Reindex**: Click the **Reindex Semantic Memory** button anytime to force a complete re-embedding of the workspace.

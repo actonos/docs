@@ -1,0 +1,35 @@
+---
+id: terminal
+title: Web Terminal & Sandboxed CLI
+sidebar_label: Web Terminal
+sidebar_position: 12
+---
+
+# Web Terminal & Sandboxed CLI
+
+The **Web Terminal** gives operators and agents an interactive, sandboxed command-line shell directly within the browser interface.
+
+---
+
+## 1. Sandbox Isolation Architecture
+
+To ensure safety, commands executed in the terminal do not run with root privileges directly on the host OS:
+
+### Bare-Metal MiniPC Mode
+- Powered by **Bubblewrap (`bwrap`)** and Linux **Cgroups v2**.
+- Operates inside an unprivileged user namespace with a private mount table.
+- System root directories (`/usr`, `/lib`, `/bin`) are mounted **Read-Only**.
+- The only writable partition is `/data/workspace`.
+- Strictly capped at **512 MB RAM**, **50% CPU quota**, and a maximum of **30 concurrent PIDs**.
+
+### Docker Container Mode
+- Operates as a non-root unprivileged user (`acton`, UID 1000).
+- Encapsulated within a restricted subshell execution jail.
+
+---
+
+## 2. Interactive Features
+
+- **Full ANSI Color & xterm Emulation**: Supports `vim`, `nano`, `htop`, `tmux`, `git`, and standard terminal utilities.
+- **Copy & Paste**: Native clipboard integration with right-click context menu.
+- **History & Session Persistence**: Command history persists across page reloads.

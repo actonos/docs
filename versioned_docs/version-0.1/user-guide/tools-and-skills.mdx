@@ -1,0 +1,73 @@
+---
+id: tools-and-skills
+title: Tools, MCP & Skill Runtimes
+sidebar_label: Tools & Skills
+sidebar_position: 9
+---
+
+# Tools, MCP & Skill Runtimes
+
+ActonOS provides an extensible, multi-protocol execution engine supporting **Native Built-in Tools**, **Model Context Protocol (MCP) Servers**, **Pure Go WASM Plugins**, and **Skill-as-a-Folder Scripts**.
+
+---
+
+## 1. Native Built-in Tools
+
+Pre-compiled directly into the `actond` static daemon for maximum speed:
+
+- `native_web_search`: Query DuckDuckGo, Brave Search, or Tavily for current web information.
+- `native_browser_headless`: Full Chromium web automation via `chromedp` (renders JavaScript, navigates pages, extracts text/DOM, captures screenshots).
+- `native_workspace_read` & `native_workspace_write`: Sandboxed file operations under `/workspace`.
+- `native_exec`: Execute shell commands inside the isolated Bubblewrap/Subshell sandbox.
+- `native_sql_query`: Query structured application databases and workspace SQLite files.
+
+---
+
+## 2. Model Context Protocol (MCP) Integration
+
+ActonOS acts as a native MCP Host implementing the open standard by Anthropic:
+
+### Supported Transports
+- **`stdio`**: Spawns local CLI tools or containerized processes communicating over stdin/stdout JSON-RPC.
+- **`http` / `sse`**: Connects to remote or network-accessible MCP endpoints over Server-Sent Events.
+
+### Configuring an MCP Server
+1. Navigate to **Tools** → **MCP Servers** → click **+ Add MCP Server**.
+2. Provide server metadata:
+   ```json
+   {
+     "id": "github-mcp",
+     "name": "GitHub Official MCP",
+     "transport": "stdio",
+     "command": "npx",
+     "args": ["-y", "@modelcontextprotocol/server-github"],
+     "env": {
+       "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxxxxxxxxx"
+     }
+   }
+   ```
+3. ActonOS stores sensitive environment variables in the encrypted Hardware Vault under `mcp.env.<id>`.
+4. The server is discovered and its tools are registered dynamically into the Agent Tool Registry.
+
+---
+
+## 3. WebAssembly (WASM) Plugins via `wazero`
+
+For sandboxed, high-performance extensions without external dependencies:
+- Plugins compile to `.wasm` binaries and run inside the pure-Go `wazero` runtime.
+- Absolute memory safety, zero CGO requirements, and instant millisecond execution.
+
+---
+
+## 4. Skill-as-a-Folder Architecture
+
+Users and developers can author custom skills simply by dropping a folder into `/data/skills/`:
+
+```
+/data/skills/my_custom_skill/
+├── skill.json      # Tool schema & parameter definitions
+└── run.sh          # Executable script (or run.py)
+```
+
+### Hot-Reloading with `fsnotify`
+The ActonOS skill watcher monitors `/data/skills/`. Creating, editing, or deleting a skill directory triggers an automatic registration update without requiring a daemon restart.

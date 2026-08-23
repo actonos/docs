@@ -1,0 +1,41 @@
+---
+id: notifications
+title: Notification Center & Web Push
+sidebar_label: Notification Center
+sidebar_position: 13
+---
+
+# Notification Center & Web Push
+
+The **Notification Center** keeps operators informed of critical system events, mission milestones, pending approvals, and integration status transitions.
+
+---
+
+## 1. Notification Types & Categories
+
+| Type | Badge | Description |
+|:---|:---|:---|
+| **Approval Required** | 🟠 `Approval` | An agent requires human confirmation for a sensitive action. Clicking takes you to the approval ledger. |
+| **Mission Milestone** | 🟢 `Success` | An autonomous mission or scheduled automation completed successfully. |
+| **Integration Warning** | 🟡 `Warning` | A channel bot (Telegram/Discord) or OAuth token encountered a transient disconnect. |
+| **System Error** | 🔴 `Error` | A fatal daemon error, disk space alert, or sandbox violation occurred. |
+| **Info / Telemetry** | 🔵 `Info` | General system updates, OTA release availability, or backup completion. |
+
+---
+
+## 2. Web Push Notifications (VAPID)
+
+Receive real-time desktop or smartphone push notifications even when the ActonOS tab is closed:
+
+1. Navigate to **Notifications** → click **Enable Browser Push Notifications**.
+2. Click **Allow** on your browser permission prompt.
+3. ActonOS generates a unique cryptographic subscription using the server's **VAPID Public Key** (`GET /api/notifications/push/vapid-key`).
+4. You will receive immediate OS-level push notifications whenever high-priority approvals or mission warnings occur.
+
+---
+
+## 3. Notification Management & Filtering
+
+- **Filter by Category**: Toggle views for `All`, `Unread Only`, `Approvals`, or `Errors`.
+- **Mark as Read**: Mark individual notifications or click **Mark All as Read**.
+- **Clear History**: Delete old alerts with one click.

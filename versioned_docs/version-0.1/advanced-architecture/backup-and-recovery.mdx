@@ -1,0 +1,53 @@
+---
+id: backup-and-recovery
+title: Backup, Restore & Disaster Recovery
+sidebar_label: Backup & Recovery
+sidebar_position: 7
+---
+
+# Backup, Restore & Disaster Recovery
+
+ActonOS features atomic, transactionally consistent backup generation using SQLite's native `VACUUM INTO` engine. This captures all committed Write-Ahead Logging (WAL) transactions without requiring downtime or service restarts.
+
+---
+
+## 1. Creating a Live Backup
+
+### Method A: Via Web Dashboard
+1. Navigate to **Settings** → **Backup & Storage**.
+2. Click the yellow **Download Full Backup** button.
+3. ActonOS generates a consistent snapshot archive and streams it directly to your browser.
+
+### Method B: Via REST API
+```bash
+curl -u "admin:YOUR_PIN" -o actonos_backup_$(date +%Y%m%d).db \
+  http://localhost:8080/api/system/backup
+```
+
+---
+
+## 2. Restoring from a Backup
+
+### On Docker Deployments:
+```bash
+# 1. Stop the container
+docker stop actonos
+
+# 2. Extract backup archive into data volume
+tar -xzf actonos-backup-20260823.tar.gz -C ./acton-data/
+
+# 3. Start the container
+docker start actonos
+```
+
+### On Bare-Metal MiniPC:
+```bash
+# 1. Stop system service
+sudo systemctl stop actond
+
+# 2. Restore data directory
+sudo tar -xzf actonos-backup-20260823.tar.gz -C /data/
+
+# 3. Restart daemon
+sudo systemctl start actond
+```

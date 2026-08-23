@@ -43,6 +43,18 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/actonos/actonos-docs/tree/main/',
+          lastVersion: '0.1',
+          versions: {
+            current: {
+              label: 'v0.2.0 (Next)',
+              path: 'next',
+              banner: 'unreleased',
+            },
+            '0.1': {
+              label: 'v0.1.0 (Stable)',
+              banner: 'none',
+            },
+          },
         },
         blog: {
           showReadingTime: true,
@@ -88,6 +100,11 @@ const config: Config = {
           to: '/docs/developer-reference/api-endpoints',
           label: 'API Reference',
           position: 'left',
+        },
+        {
+          type: 'docsVersionDropdown',
+          position: 'right',
+          dropdownActiveClassDisabled: true,
         },
         {
           type: 'localeDropdown',

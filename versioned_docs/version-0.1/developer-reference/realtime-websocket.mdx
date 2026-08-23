@@ -1,0 +1,71 @@
+---
+id: realtime-websocket
+title: Realtime WebSocket Protocol (/api/realtime)
+sidebar_label: Realtime WebSocket
+sidebar_position: 3
+---
+
+# Realtime WebSocket Protocol (`/api/realtime`)
+
+The `/api/realtime` endpoint upgrades standard HTTP connections to an authenticated, same-origin WebSocket for continuous telemetry, durable run tracking, and live monitoring.
+
+---
+
+## 1. Connection & Handshake
+
+- **Endpoint**: `ws://localhost:8080/api/realtime` (or `wss://acton.<tailnet>.ts.net/api/realtime`)
+- **Authentication**: Automatically validated via the HttpOnly `actonos_token` cookie during the WebSocket HTTP Upgrade handshake.
+
+---
+
+## 2. Telemetry Frame Payload (Every 2 Seconds)
+
+Upon connection, the server broadcasts an aggregated `snapshot` frame every 2 seconds:
+
+```json
+{
+  "type": "snapshot",
+  "timestamp": "2026-08-23T14:30:00Z",
+  "data": {
+    "metrics": {
+      "cpu_percent": 2.4,
+      "memory_used_mb": 1420.0,
+      "memory_total_mb": 16384.0,
+      "disk_used_percent": 15.2,
+      "chip_temp_celsius": 41.5,
+      "runtime_mode": "baremetal",
+      "canvas_url": "http://localhost:8080/preview/index.html"
+    },
+    "runs": [
+      {
+        "id": "run_01j68v9a",
+        "agent_id": "security-bot",
+        "status": "running",
+        "iteration": 4,
+        "tokens_total": 3120,
+        "started_at": "2026-08-23T14:28:10Z"
+      }
+    ],
+    "approvals": [
+      {
+        "id": "appr_99bf21",
+        "tool_name": "native_workspace_write",
+        "target": "config/app.json",
+        "requested_at": "2026-08-23T14:29:55Z"
+      }
+    ],
+    "tokens": {
+      "today": 124500,
+      "month": 2450000,
+      "estimated_cost_usd": 3.42
+    }
+  }
+}
+```
+
+---
+
+## 3. Client-Side Reconnection Best Practices
+
+- The React frontend connects via a singleton `RealtimeProvider`.
+- In case of network disconnection, the client reconnects with bounded exponential backoff and jitter (initial 1s, max 30s).

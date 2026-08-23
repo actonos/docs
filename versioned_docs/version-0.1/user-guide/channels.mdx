@@ -1,0 +1,55 @@
+---
+id: channels
+title: Channels & Omnichannel Messaging
+sidebar_label: Channels (Telegram/Discord)
+sidebar_position: 7
+---
+
+# Channels & Omnichannel Messaging
+
+The **Channels** subsystem allows ActonOS agents to communicate seamlessly across popular messaging platforms. Users can converse with agents, issue commands, and receive automated mission alerts directly from their favorite chat apps.
+
+---
+
+## 1. Telegram Bot Integration
+
+### Setup Steps:
+1. Open Telegram and message **[@BotFather](https://t.me/botfather)**.
+2. Send `/newbot` and follow the prompts to choose a name and username.
+3. Copy the generated **HTTP API Bot Token** (e.g., `123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ`).
+4. In ActonOS, navigate to **Channels** → **Telegram** → click **Connect Account**.
+5. Paste the Bot Token and click **Initialize Adapter**.
+
+### Pairing Security PIN:
+- By default, ActonOS uses a **Pairing PIN** handshake to prevent unauthorized users from chatting with your bot.
+- When you first send a message to your Telegram bot, it will reply with a 6-digit verification code.
+- Enter this code in the ActonOS Channels UI to bind your Telegram User ID as an authorized operator.
+
+---
+
+## 2. Discord Bot Integration
+
+### Setup Steps:
+1. Navigate to the **[Discord Developer Portal](https://discord.com/developers/applications)**.
+2. Click **New Application**, name your bot, and go to the **Bot** tab.
+3. Under **Privileged Gateway Intents**, enable **Message Content Intent**.
+4. Click **Reset Token** and copy your Discord Bot Token.
+5. Under **OAuth2** → **URL Generator**, select `bot` scope with permissions: `Send Messages`, `Read Message History`, `Attach Files`.
+6. Use the generated invite link to add the bot to your Discord server.
+7. In ActonOS, go to **Channels** → **Discord** → click **Connect Account** and paste the token.
+
+---
+
+## 3. Slack & Custom Webhook Adapters
+
+- **Slack App**: Ingest team messages via Socket Mode or Incoming Webhooks.
+- **Custom Webhooks**: Configure incoming/outgoing HTTP webhooks with HMAC-SHA256 signature verification for integration with bespoke internal systems.
+
+---
+
+## 4. Channel Health Monitoring & Auto-Recovery
+
+ActonOS continuously monitors channel adapter health:
+- **Long-Polling & WebSocket Watchdog**: If a Telegram poll loop stalls or a Discord gateway socket drops, the system logs the state transition and attempts automatic reconnection with exponential backoff.
+- **State Notifications**: If an adapter encounters an unrecoverable error (such as a revoked bot token), ActonOS immediately publishes an alert in the Notification Center linking directly to the Channels configuration screen.
+- **Health Badges**: The Channels overview page displays live status badges: 🟢 `Connected`, 🟡 `Reconnecting`, or 🔴 `Error`.

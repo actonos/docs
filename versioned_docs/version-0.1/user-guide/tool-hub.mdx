@@ -1,0 +1,40 @@
+---
+id: tool-hub
+title: Tool Hub & Community Marketplace
+sidebar_label: Tool Hub Marketplace
+sidebar_position: 10
+---
+
+# Tool Hub & Community Marketplace
+
+The **Tool Hub** is an integrated online registry where users can browse, discover, and install community-verified skills, MCP servers, and automation plugins with a single click.
+
+---
+
+## 1. Browsing the Catalog
+
+1. Navigate to **Tools** → **Tool Hub** in the left sidebar.
+2. Filter tools by category:
+   - 🌐 **Web & Search** (Tavily, Brave Search, Puppeteer)
+   - 📁 **Files & Data Analysis** (Pandas Runner, PDF Parser, CSV Analyzer)
+   - 💻 **DevOps & Cloud** (Kubernetes, AWS CLI, Docker Manager, Git Automation)
+   - 💬 **Messaging & Social** (Twitter/X Poster, Reddit Scraper, Telegram Notify)
+   - 🔒 **Security & Cryptography** (Vulnerability Scanner, Certificate Checker)
+3. Use the search bar to find tools by name, author, or keyword tags.
+
+---
+
+## 2. 1-Click Installation
+
+1. Click on any catalog entry (e.g., **Tavily AI Search**).
+2. Review the tool description, required API keys, execution permissions, and parameter schemas.
+3. Click the yellow **Install Skill** button.
+4. If the skill requires credentials (e.g., `TAVILY_API_KEY`), a prompt will ask for the key and store it securely in the encrypted Vault.
+5. ActonOS downloads the package into `/data/skills/<slug>/` and registers its functions immediately.
+
+---
+
+## 3. Managing & Uninstalling Skills
+
+- **Toggle Enable/Disable**: Temporarily disable a skill without removing its configuration.
+- **Uninstall**: Click **Uninstall** to cleanly delete the skill folder and its associated Vault keys.

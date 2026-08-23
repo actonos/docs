@@ -1,0 +1,57 @@
+---
+id: automations-heartbeat
+title: Automations & OpenClaw Heartbeat
+sidebar_label: Automations & Heartbeat
+sidebar_position: 6
+---
+
+# Automations & OpenClaw Heartbeat
+
+ActonOS features a robust automation framework combining **Standard Cron/Interval Triggers** with an **Autonomous Heartbeat Daemon** built in strict alignment with the [OpenClaw Heartbeat Contract](https://docs.openclaw.ai/vi/gateway/heartbeat).
+
+```mermaid
+flowchart TD
+    A["Heartbeat Timer / Cron Event"] --> B{"Within Active Hours Window?<br/>(e.g., 08:00 - 20:00)"}
+    B -->|No| C["Skip Pulse / Sleep"]
+    B -->|Yes| D{"Actionable Items in Backlog or HEARTBEAT.md?"}
+    D -->|No (Idle)| E["Emit HEARTBEAT_OK<br/>(Zero Model Invocations / Zero Cost)"]
+    D -->|Yes| F["Execute Task via Assigned Agent"]
+    F --> G{"Model Output"}
+    G -->|HEARTBEAT_OK token| H["Acknowledge & Sleep"]
+    G -->|Actionable Output| I["Dispatch Alert to Target Channel"]
+```
+
+---
+
+## 1. OpenClaw-Aligned Heartbeat Contract
+
+The ActonOS Heartbeat daemon runs periodic system checkups to maintain proactive agent vigilance without burning unnecessary token budgets:
+
+### Idle Heartbeat Token Optimization
+- When there are **no active backlog tasks** and no actionable directives in `HEARTBEAT.md`, the heartbeat does **not** invoke the LLM at all.
+- It returns an immediate internal `HEARTBEAT_OK` acknowledgement, ensuring zero token waste during quiescent periods.
+
+### Headless Autonomous Execution Mode
+- When an actionable directive is present, the routine cycle injects an explicit rule block informing the model that execution is unattended and no human is present to greet.
+- A built-in `looksLikeIdleChatter` safety filter automatically discards accidental conversational greetings (e.g., "Hello, how can I help you today?") and only forwards genuine alerts.
+
+### Active Hours & Trigger Cooldowns
+- **Active Hours Window**: Configure daily operating hours (e.g., `08:00` to `22:00` in timezone `Asia/Ho_Chi_Minh`) so non-critical background routines sleep overnight.
+- **Trigger Cooldown (15s)**: Coalesces rapid successive triggers (e.g., multiple file changes or task updates) into a single batch cycle.
+- **Manual Pulse**: Operators can trigger an immediate checkup anytime via the **Pulse Now** button.
+
+---
+
+## 2. Setting Up Automated Routines
+
+1. Navigate to **Automations** in the left sidebar.
+2. Click **+ New Automation**.
+3. Choose the **Trigger Type**:
+   - **Cron Expression**: Standard 5-field cron (e.g., `0 9 * * 1-5` for 9:00 AM every weekday).
+   - **Interval**: Run every $N$ minutes or hours.
+   - **Event Trigger**: Triggered when specific bus events occur (e.g., `file.created`, `channel.message`).
+   - **Webhook Trigger**: Expose an authenticated HTTP webhook endpoint.
+4. Define the **Action**:
+   - Assign an agent and provide the standing instruction (e.g., `Check open GitHub pull requests, summarize reviews, and post to Slack`).
+   - Select the target output channel for completed reports.
+5. Click **Save Automation**.

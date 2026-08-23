@@ -1,0 +1,108 @@
+---
+id: overview
+title: Overview & Core Philosophy
+sidebar_label: Overview & Philosophy
+sidebar_position: 1
+---
+
+# ActonOS: The AI-Native Autonomous Operating System
+
+**ActonOS** is a purpose-built, secure operating system and orchestration engine engineered to run autonomous AI agents and multi-agent swarms 24/7 on dedicated hardware or within containerized environments.
+
+Unlike conventional operating systems retrofitted with AI wrappers, ActonOS places the **Agent Engine**, **Sandboxed Tool Runtime**, **Hardware-Bound Security Vault**, and **Hybrid Memory System** directly into the core system layer.
+
+```mermaid
+graph TB
+    subgraph "Layer 1 - Connectivity & Access"
+        TSNET["Tailscale tsnet<br/>E2E Encrypted Mesh VPN"]
+        WEBUI["Web UI SPA<br/>React 19 + Tailwind v4 + Soft Meadow"]
+        CHANNELS["Omnichannel Adapters<br/>Telegram · Discord · Slack · Webhook"]
+        PORTAL["Zero-Config Portal<br/>Captive DNS @ 192.168.4.1"]
+    end
+
+    subgraph "Layer 2 - Autonomous Agent Engine"
+        STUDIO["Agent Studio & Manifests"]
+        SWARM["Swarm Orchestrator<br/>Goroutine Delegation"]
+        DELEGATION["Zero-Trust Scope & Budget"]
+        HEARTBEAT["OpenClaw Heartbeat Daemon"]
+    end
+
+    subgraph "Layer 3 - Dynamic Tooling Hub"
+        MCP["MCP Host Engine<br/>stdio / SSE Transports"]
+        WASM["WASM Runtime<br/>wazero Pure Go"]
+        SKILLS["Skill-as-a-Folder<br/>fsnotify Hot-Reload"]
+        NATIVE["Native Built-in Tools<br/>Chromium · Ripgrep · Shell"]
+    end
+
+    subgraph "Layer 4 - Core Daemon & Memory"
+        BUS["Unified Event Bus"]
+        REACT["ReAct Orchestrator & Planner"]
+        CASCADE["LLM Cascade Router"]
+        MEMORY["Hybrid Memory RAG<br/>SQLite FTS5 + ONNX Vector + Decay"]
+        VAULT["Hardware-Bound Vault<br/>AES-256-GCM + Argon2id"]
+    end
+
+    subgraph "Layer 5 - Hardware Abstraction Layer (HAL)"
+        BARE["Bare-Metal Mode<br/>NetworkManager · Bubblewrap · Cgroups v2"]
+        DOCKER["Docker Container Mode<br/>Batteries-Included Toolchain · Subshell Jail"]
+    end
+
+    WEBUI --> STUDIO
+    CHANNELS --> BUS
+    TSNET --> WEBUI
+    PORTAL --> WEBUI
+    STUDIO --> SWARM
+    SWARM --> DELEGATION
+    SWARM --> REACT
+    REACT --> MCP
+    REACT --> WASM
+    REACT --> SKILLS
+    REACT --> NATIVE
+    REACT --> CASCADE
+    REACT --> MEMORY
+    CASCADE --> VAULT
+    MEMORY --> VAULT
+    BUS --> BARE
+    BUS --> DOCKER
+```
+
+---
+
+## Core Pillars & Design Principles
+
+### 1. Dual-Runtime Hardware Abstraction Layer (HAL)
+ActonOS automatically detects its environment at startup:
+- **Bare-Metal MiniPC Mode**: Bootable immutable OS image on dedicated hardware (e.g., Intel N100 / AMD Ryzen). Integrates with Linux D-Bus, NetworkManager for Wi-Fi hotspot management, Bubblewrap for kernel namespace isolation, and Cgroups v2 for resource governance.
+- **Docker Container Mode**: Standard Linux container packaging with a pre-configured, batteries-included development toolchain (Python, Node.js, Chromium, Ripgrep, SQLite).
+
+### 2. Universal Agent Framework & Multi-Agent Swarm
+Create unlimited AI agents with custom personas, system directives, model cascade preferences, tool scopes, and delegation budgets. Agents can operate independently or form **Swarms** where parent orchestrators decompose complex goals into dependency-aware DAGs and delegate subtasks across specialized child agents via concurrent Goroutines.
+
+### 3. Dynamic Hot-Swappable Tooling
+ActonOS supports three pluggable tool protocols with zero daemon restarts:
+- **Model Context Protocol (MCP)**: Native stdio and HTTP/SSE JSON-RPC client for external tool servers.
+- **Pure Go WebAssembly (WASM)**: Ultra-fast, sandboxed plugins executed with `wazero`.
+- **Skill-as-a-Folder**: Hot-reloading directory scripts containing `skill.json` and executable Bash/Python code monitored via `fsnotify`.
+
+### 4. Hybrid Semantic Memory (RAG)
+Long-term context and workspace files are indexed using a hybrid approach:
+- **Lexical Search**: SQLite FTS5 with BM25 ranking for exact keyword retrieval.
+- **Vector Search**: `chromem-go` local vector store paired with a dedicated loopback `embeddingd` daemon running the `multilingual-e5-small` ONNX model.
+- **Cognitive Decay**: Ebbinghaus forgetting curve modeling to balance recent interactions against enduring knowledge.
+
+### 5. Hardware-Bound Security & Immutable Filesystem
+- **AES-256-GCM Vault**: Credentials, API keys, and OAuth tokens are encrypted with keys derived from hardware identifiers (DMI UUID + CPU serial) via Argon2id.
+- **Sandboxed Execution**: Agent tool executions run with strict resource quotas (512 MB RAM, 50% CPU, 30 PIDs) and restricted filesystem namespaces.
+- **Cryptographic Audit Ledger**: Every tool execution, token spend, and security event is appended to an immutable, SHA-256 chained audit trail (`audit.jsonl`).
+
+### 6. Zero-Config Connectivity
+- **Captive Portal**: On first boot, bare-metal MiniPCs broadcast an `ActonOS-XXXX` Wi-Fi hotspot guiding you through a 1-minute setup wizard.
+- **Embedded Tailscale `tsnet`**: Secure, end-to-end encrypted remote mesh access without opening inbound firewall ports or configuring dynamic DNS.
+
+---
+
+## Next Steps
+
+- Check the [System Requirements](system-requirements) to prepare your hardware or server.
+- Deploy with [Docker](docker-deployment) for quick evaluation on existing infrastructure.
+- Install on a [Bare-metal MiniPC](baremetal-installation) for a dedicated, appliance-grade experience.

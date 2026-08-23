@@ -1,0 +1,45 @@
+---
+id: faq
+title: Frequently Asked Questions (FAQ)
+sidebar_label: Frequently Asked Questions
+sidebar_position: 2
+---
+
+# Frequently Asked Questions (FAQ)
+
+Answers to common questions about ActonOS architecture, privacy, capabilities, and hardware.
+
+---
+
+## General & Capabilities
+
+### What makes ActonOS different from standard AI agent frameworks?
+Unlike Python-based CLI frameworks that run unconstrained scripts, ActonOS is a **complete operating system and orchestration engine**. It provides:
+1. Kernel-level sandboxing (Bubblewrap & Cgroups v2).
+2. Hardware-encrypted credential vaults.
+3. Pluggable tool protocols (MCP, WASM, Skills).
+4. Durable checkpointing and self-healing OTA updates.
+5. Dual-runtime support (dedicated MiniPCs & Docker).
+
+### Can ActonOS run 100% offline without internet access?
+**Yes.** When configured with local LLM runtimes (such as **Ollama**, **vLLM**, or local **ONNX** models), ActonOS operates entirely on your local area network with zero data leaving your machine.
+
+---
+
+## Hardware & Deployment
+
+### Which MiniPC is best for running ActonOS?
+Any x86_64 MiniPC with an **Intel Processor N100** (e.g., Beelink EQ12, Minisforum UN100, GMKtec G2) with 8 GB to 16 GB of RAM and 128 GB+ NVMe SSD offers the best balance of low power draw (6W–15W) and 24/7 autonomous swarm performance.
+
+### Can I install ActonOS on a Raspberry Pi?
+Currently, ActonOS v0.1 targets **x86_64 architecture**. ARM64 support (including Raspberry Pi 5 and Apple Silicon Docker containers) is in active development for the v0.2 release.
+
+---
+
+## Security & Data Privacy
+
+### Where are my API keys and OAuth tokens stored?
+All sensitive secrets are encrypted using **AES-256-GCM** inside `/data/config/vault.db` and `/data/tokens/oauth_tokens.vault`. The master key is derived from the machine's hardware UUID and CPU serial via **Argon2id**. Plaintext credentials never exist on disk.
+
+### Can agents accidentally delete my operating system files?
+**No.** On Bare-Metal MiniPCs, the system root partition is mounted **Read-Only**. Furthermore, all tool executions run inside an unprivileged Bubblewrap namespace where system folders cannot be modified.

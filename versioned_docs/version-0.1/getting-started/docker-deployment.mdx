@@ -1,0 +1,195 @@
+---
+id: docker-deployment
+title: Docker Deployment
+sidebar_label: Docker Deployment
+sidebar_position: 3
+---
+
+# Deploying ActonOS with Docker
+
+Deploying ActonOS via Docker provides the fastest path to running the complete agent ecosystem on cloud VPS instances, home servers (NAS, Raspberry Pi 5 / x86 servers), or local workstations.
+
+---
+
+## 1-Minute Quick Start
+
+Run the following command in your terminal to start an ActonOS container with persistent data:
+
+```bash
+docker run -d \
+  --name actonos \
+  -p 8080:8080 \
+  -v acton-data:/data \
+  -e RUNTIME_MODE=docker \
+  --restart unless-stopped \
+  ghcr.io/actonos/actonos:latest
+```
+
+After launching, open your browser and navigate to:
+```
+http://localhost:8080
+```
+
+---
+
+## Production Docker Compose Setup
+
+For production stability, log aggregation, and automated maintenance, use `docker-compose.yml`.
+
+### 1. Create a Project Directory
+
+```bash
+mkdir -p ~/actonos && cd ~/actonos
+```
+
+### 2. Create the `docker-compose.yml` File
+
+```yaml
+version: '3.8'
+
+services:
+  actonos:
+    image: ghcr.io/actonos/actonos:latest
+    container_name: actonos
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - RUNTIME_MODE=docker
+      - LOG_LEVEL=info
+      - LISTEN_ADDR=:8080
+      - DATA_DIR=/data
+      - TZ=UTC
+      # Optional: Provide Tailscale auth key for instant headless VPN join
+      # - TAILSCALE_AUTH_KEY=tskey-auth-xxxxxx-xxxxxx
+    volumes:
+      - ./acton-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    security_opt:
+      - no-new-privileges:true
+```
+
+### 3. Start the Service
+
+```bash
+docker compose up -d
+```
+
+To monitor real-time startup logs:
+```bash
+docker compose logs -f actonos
+```
+
+---
+
+## Automated HTTPS Deployment with Caddy Reverse Proxy
+
+If you are exposing ActonOS to the public internet on a VPS or cloud server, use the Caddy reverse proxy recipe for automatic Let's Encrypt SSL/TLS certificates:
+
+```yaml
+version: '3.8'
+
+services:
+  actonos:
+    image: ghcr.io/actonos/actonos:latest
+    container_name: actonos
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      - RUNTIME_MODE=docker
+      - DATA_DIR=/data
+    volumes:
+      - ./acton-data:/data
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: actonos-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=agent.yourdomain.com
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - actonos
+
+volumes:
+  caddy_data:
+  caddy_config:
+```
+
+Create the accompanying `Caddyfile`:
+
+```caddy
+{$DOMAIN} {
+    encode gzip zstd
+
+    # WebSocket support for realtime telemetry & live terminal
+    @websockets {
+        header Connection *Upgrade*
+        header Upgrade    websocket
+    }
+    reverse_proxy @websockets actonos:8080
+
+    # REST API & Static UI Assets
+    reverse_proxy actonos:8080
+}
+```
+
+Start the stack:
+```bash
+DOMAIN=agent.yourdomain.com docker compose up -d
+```
+
+---
+
+## Batteries-Included Agent Runtime Environment
+
+The official ActonOS container image ships with a pre-configured, batteries-included development and execution environment. AI agents have immediate access to standard tools without requiring manual host package installation:
+
+| Category | Included Tools & Libraries | Purpose |
+|:---|:---|:---|
+| **Text & Search** | `ripgrep` (`rg`), `jq`, `tree`, `findutils`, `tar`, `gzip`, `unzip` | Fast source code navigation & structured JSON processing |
+| **Runtimes** | Python 3.11+, Node.js 22 LTS, npm, npx, Go toolchain (optional) | Multi-language code execution in sandboxed subshells |
+| **Python Libraries** | `requests`, `httpx`, `beautifulsoup4`, `pydantic`, `pyyaml` | Data extraction, web scraping, and API integration |
+| **Network & VCS** | `curl`, `wget`, `git`, `sqlite3`, `openssh-client` | Version control & remote HTTP data retrieval |
+| **Browser Automation** | Headless `chromium`, `font-noto`, `font-noto-cjk` | Agent-controlled web browsing, screenshots & DOM inspection via `chromedp` |
+| **Security & Isolation** | Non-root `acton` user (UID 1000), `tini` PID 1 init | Graceful zombie process reaping and privilege restriction |
+
+---
+
+## Data Volume Layout (`/data`)
+
+All persistent database tables, encrypted API keys, agent manifests, and custom skills are stored inside the `/data` directory:
+
+```
+/data/
+├── config/
+│   └── vault.db           # Hardware/Env-encrypted API keys & OAuth secrets
+├── agents/
+│   └── agent_manifests.json # User-created agent definitions
+├── tokens/
+│   └── oauth_tokens.vault # Encrypted OAuth 2.1 refresh tokens
+├── storage/
+│   └── app.db             # SQLite relational database, FTS5 index, vector embeddings
+├── logs/
+│   └── audit.jsonl        # Cryptographically chained SHA-256 audit ledger
+├── plugins/               # Sandboxed WASM plugin binaries (.wasm)
+├── skills/                # Custom skill directories (JSON + scripts)
+├── mcp-servers/           # Model Context Protocol server configurations
+└── workspace/             # Sandboxed workspace for agent file I/O
+```
+
+:::warning Backup Your Volume
+To backup your entire ActonOS instance, simply archive the `./acton-data` directory while the container is paused, or trigger the live transactional snapshot endpoint at `GET /api/system/backup`.
+:::
