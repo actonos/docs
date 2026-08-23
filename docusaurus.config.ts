@@ -42,7 +42,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/actonos/actonos-docs/tree/main/',
+          editUrl: 'https://github.com/actonos/docs/tree/main/',
           lastVersion: '0.1',
           versions: {
             current: {
@@ -62,7 +62,7 @@ const config: Config = {
             type: ['rss', 'atom'],
             xslt: true,
           },
-          editUrl: 'https://github.com/actonos/actonos-docs/tree/main/',
+          editUrl: 'https://github.com/actonos/docs/tree/main/',
         },
         theme: {
           customCss: './src/css/custom.css',
