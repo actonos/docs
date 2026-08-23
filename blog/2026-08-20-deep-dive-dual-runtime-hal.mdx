@@ -1,0 +1,60 @@
+---
+slug: deep-dive-dual-runtime-hal
+title: "Deep Dive: Building a Dual-Runtime HAL with Linux Namespaces and Cgroups v2"
+authors: [bieber]
+tags: [architecture, security]
+date: 2026-08-20T00:00:00Z
+---
+
+How does ActonOS run seamlessly on both bare-metal MiniPC hardware and inside nested Docker containers while maintaining zero-trust execution boundaries? In this engineering deep dive, we explore the architecture of the **Hardware Abstraction Layer (HAL)**.
+
+<!-- truncate -->
+
+## The Challenge of Dual Deployments
+
+When designing an autonomous AI operating system, two competing developer requirements emerge:
+1. **Appliance Experience**: Users want to buy a $150 Intel N100 MiniPC, flash an ISO, and have a turnkey, dedicated server that self-heals over OTA and configures via Wi-Fi captive portal.
+2. **Infrastructure Flexibility**: Cloud operators, NAS users, and home-lab tinkerers want to run ActonOS inside existing Docker Compose or Kubernetes stacks without privileged root access.
+
+Attempting to force container mechanics onto bare metal (or vice versa) results in brittle scripts. Instead, ActonOS implements a clean **Dual-Runtime HAL interface** in Go:
+
+```go
+type HardwareAbstractionLayer interface {
+    GetRuntimeMode() RuntimeMode
+    GetSystemTelemetry() (TelemetrySnapshot, error)
+    SpawnSandbox(ctx context.Context, cmd Spec) (ProcessHandle, error)
+    ConfigureNetwork(cfg NetworkConfig) error
+    ApplyOTAUpdate(releaseVersion string) error
+}
+```
+
+---
+
+## Bare-Metal Mode: Kernel Namespaces & Cgroups v2
+
+On physical hardware, the HAL activates the **Bare-Metal Driver**:
+
+- **Bubblewrap (`bwrap`) Sandboxing**: Rather than running scripts as root or a generic user, tool calls spawn an unprivileged Bubblewrap namespace. The root filesystem is mounted strictly read-only, `/etc` and `/data/config` are unmounted, and only `/data/workspace` is writable.
+- **Cgroups v2 Resource Governance**: Each sandboxed execution is assigned to a dynamic Cgroups v2 slice with hard caps:
+  - `memory.max`: **512 MB** (Kernel OOM terminates only the rogue process).
+  - `cpu.max`: **50000 100000** (Max 50% single-core quota).
+  - `pids.max`: **30** (Guarantees protection against fork-bombs).
+- **D-Bus Integration**: Direct communication with Linux `NetworkManager` for captive portal hotspot creation (`192.168.4.1`) and thermal sensors.
+
+---
+
+## Docker Mode: Jailed Subshell & Container Telemetry
+
+When running inside a container (detected via `/.dockerenv` or `RUNTIME_MODE=docker`):
+
+- **Non-Root Execution**: The daemon runs under the unprivileged `acton` user (UID 1000).
+- **Subshell Jailing**: Commands are executed within a constrained subshell environment with strict path scoping and environment sanitization.
+- **Container Telemetry**: Real-time CPU and memory metrics are read dynamically from `/sys/fs/cgroup/` to reflect accurate container resource utilization rather than misleading host totals.
+
+---
+
+## Summary
+
+By decoupling hardware management from higher-level agent reasoning, ActonOS delivers identical tool and multi-agent capabilities across both home MiniPCs and enterprise cloud servers.
+
+Read more in our [Advanced Architecture Guide](/docs/advanced-architecture/dual-runtime-hal).

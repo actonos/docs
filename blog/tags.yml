@@ -1,19 +1,19 @@
-facebook:
-  label: Facebook
-  permalink: /facebook
-  description: Facebook tag description
+release:
+  label: Release Notes
+  description: Major and minor version release announcements and changelogs.
 
-hello:
-  label: Hello
-  permalink: /hello
-  description: Hello tag description
+architecture:
+  label: System Architecture
+  description: Deep technical explorations into operating system internals and daemon design.
 
-docusaurus:
-  label: Docusaurus
-  permalink: /docusaurus
-  description: Docusaurus tag description
+swarm:
+  label: Multi-Agent Swarms
+  description: Agent orchestration, ReAct loops, DAG decomposition, and Goroutine delegation.
 
-hola:
-  label: Hola
-  permalink: /hola
-  description: Hola tag description
+security:
+  label: Security & Sandboxing
+  description: Zero-trust isolation, Bubblewrap, Cgroups v2, and Hardware Vault cryptography.
+
+openclaw:
+  label: OpenClaw Standards
+  description: Integrations and protocol alignments with OpenClaw contracts.

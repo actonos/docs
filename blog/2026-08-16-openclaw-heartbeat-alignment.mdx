@@ -1,0 +1,48 @@
+---
+slug: openclaw-heartbeat-alignment
+title: "Aligning with OpenClaw: Zero-Waste Heartbeat and Autonomous Execution"
+authors: [actonos]
+tags: [openclaw, swarm, architecture]
+date: 2026-08-16T00:00:00Z
+---
+
+We have officially updated the ActonOS Heartbeat daemon to align with the [OpenClaw Heartbeat Gateway Contract](https://docs.openclaw.ai/vi/gateway/heartbeat). In this post, we explain how this update eliminates token waste during idle periods and hardens autonomous multi-agent execution.
+
+<!-- truncate -->
+
+## The Problem: Token Bleed During Idle Pulses
+
+In traditional AI automation systems, background polling jobs repeatedly invoke LLMs on a timer to ask: *"Is there any work to do?"*. 
+
+When no tasks are pending, weaker or faster models frequently respond with generic conversational chatter (e.g., *"Hello! I am ready to help you today"*), burning API tokens 24 hours a day and generating unwanted notification spam.
+
+---
+
+## The Solution: The OpenClaw Zero-Waste Contract
+
+ActonOS v0.1 implements three key safeguards:
+
+### 1. Zero-Model Idle Pulse
+If the task backlog is empty and there is no actionable directive in `HEARTBEAT.md`, the Heartbeat engine does **not** invoke the LLM at all. It returns an instantaneous, cost-free internal `HEARTBEAT_OK` acknowledgement.
+
+### 2. Autonomous Headless System Prompt Rules
+When an actionable task is present, the routine cycle injects an explicit rule block into the model's system prompt:
+```
+[AUTONOMOUS HEADLESS EXECUTION MODE]
+There is no human in the loop for this turn. Do not greet or ask how you can help.
+If the directive is satisfied or no action is required, output ONLY: HEARTBEAT_OK
+```
+
+### 3. Idle Chatter Safety Filter (`looksLikeIdleChatter`)
+If a model disregards the directive and outputs conversational small talk without calling any tools, ActonOS intercepts the response, classifies it as nominal, and suppresses the notification.
+
+### 4. Active Hours & Trigger Cooldown
+Operators can define active operating windows (e.g., `08:00` to `22:00`), ensuring background agents do not trigger pulses during sleeping hours. A 15-second trigger cooldown prevents trigger storms from generating duplicate notification bursts.
+
+---
+
+## Conclusion
+
+By adopting the OpenClaw Heartbeat contract, ActonOS allows agents to remain vigilant 24/7 with zero idle token consumption.
+
+Explore the [Automations & Heartbeat Guide](/docs/user-guide/automations-heartbeat) for complete configuration instructions.
