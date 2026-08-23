@@ -7,8 +7,8 @@ const config: Config = {
   tagline: 'The AI-Native Autonomous Operating System & Multi-Agent Swarm Hub',
   favicon: 'img/favicon.ico',
 
-  url: process.env.URL || 'https://actonos.github.io/docs/',
-  baseUrl: process.env.BASE_URL || '/',
+  url: 'https://actonos.github.io',
+  baseUrl: '/docs/',
 
   organizationName: 'actonos',
   projectName: 'docs',
