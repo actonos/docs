@@ -1,0 +1,64 @@
+---
+id: ai-chat
+title: Multimodal AI Chat
+sidebar_label: Multimodal Chat
+sidebar_position: 2
+---
+
+# Multimodal AI Chat & Interactions
+
+The **ActonOS Chat Interface** provides an interactive conversational environment supporting single-agent dialogues, multi-agent collaborations, document and image analysis, live tool execution cards, and real-time streaming deltas via Server-Sent Events (SSE).
+
+---
+
+## 1. Starting a Conversation
+
+1. Navigate to **Chat** in the left sidebar.
+2. In the top-left conversation rail, click **+ New Chat**.
+3. Select the target agent from the **Agent Selector** dropdown (e.g., `General Assistant`, `Research Agent`, `Coder Swarm`).
+4. Type your message into the rich prompt editor and press **Enter** (or `Shift + Enter` for multi-line inputs).
+
+---
+
+## 2. Multimodal Attachments & Document Ingestion
+
+ActonOS features a client-side document and image preprocessor that parses attachments before ingestion:
+
+| File Type | Supported Formats | Processing Method |
+|:---|:---|:---|
+| **Text & Code** | `.txt`, `.md`, `.py`, `.go`, `.js`, `.ts`, `.json`, `.yaml`, `.sql` | UTF-8 plain text extraction with syntax highlighting |
+| **Documents** | `.pdf`, `.docx`, `.doc` | Extracted into clean structured Markdown text with page markers |
+| **Tabular Data** | `.csv`, `.tsv`, `.xlsx`, `.xls` | Converted into Markdown data tables with schema extraction |
+| **Visual Media** | `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg` | Resized & optimized for vision models (Claude 3.7 / GPT-4o / Gemini 2.0 Flash) |
+
+To attach files:
+- Click the 📎 **Paperclip icon** in the composer.
+- Or simply **drag and drop** files directly onto the chat window.
+
+---
+
+## 3. Real-Time Tool Execution Cards
+
+When an agent invokes external tools (e.g., executing a Python script, browsing a website, or querying an SQLite database), ActonOS renders an interactive **Tool Execution Card** directly in the message timeline:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ⚡ native_browser_headless                                   │
+│ Target: https://github.com/actonos/actonos                   │
+├─────────────────────────────────────────────────────────────┤
+│ Status: Completed in 1.42s · Extracted 2,840 bytes           │
+│ [▶ Click to inspect JSON input & output parameters]         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+- **Live Status Indicator**: Shows whether the tool is `Executing`, `Completed`, or `Failed`.
+- **Parameter Inspection**: Click the disclosure chevron to review the exact JSON arguments passed to the tool and the returned output payload.
+- **Safety Flags**: If a tool requires human confirmation, the card turns amber with direct **Approve** and **Reject** controls.
+
+---
+
+## 4. Message Branching & Context Management
+
+- **Copy Code Blocks**: One-click copy buttons on all code snippets with automatic language detection.
+- **Regenerate / Fork**: Click the regenerate button on any agent response to switch to a different model in the Cascade router or adjust the prompt.
+- **Context Compaction**: For long multi-turn sessions, ActonOS automatically creates semantic snapshots in `context_snapshots` to preserve token budgets while maintaining critical conversational memory.

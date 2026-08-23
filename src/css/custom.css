@@ -1,0 +1,315 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* -----------------------------------------------------------------------------
+ * ActonOS Design System Tokens (Soft Meadow & Deep Ink)
+ * ----------------------------------------------------------------------------- */
+:root {
+  /* Brand Core Colors */
+  --color-deep-ink: #130e30;
+  --color-hi-yellow: #ffe228;
+  --color-moss-green: #59e25d;
+  --color-fuchsia: #e261e5;
+  --color-slate: #5f5c6e;
+  --color-canvas: #f9fbf2;
+  --color-soft-meadow: #eff2e5;
+  --color-charcoal: #222222;
+  --color-onyx: #000000;
+
+  /* Docusaurus Standard Theme Mapping (Light) */
+  --ifm-color-primary: #130e30;
+  --ifm-color-primary-dark: #100c29;
+  --ifm-color-primary-darker: #0c0920;
+  --ifm-color-primary-darkest: #060510;
+  --ifm-color-primary-light: #221a50;
+  --ifm-color-primary-lighter: #2c2269;
+  --ifm-color-primary-lightest: #4536a3;
+
+  --ifm-background-color: #f9fbf2;
+  --ifm-background-surface-color: #eff2e5;
+  --ifm-card-background-color: #eff2e5;
+
+  --ifm-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --ifm-heading-font-family: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --ifm-heading-color: #130e30;
+  --ifm-font-color-base: #130e30;
+  --ifm-color-content: #130e30;
+  --ifm-color-content-secondary: #5f5c6e;
+
+  --ifm-global-radius: 16px;
+  --ifm-card-border-radius: 24px;
+  --ifm-button-border-radius: 1440px;
+  --ifm-pagination-nav-border-radius: 20px;
+  --ifm-code-border-radius: 12px;
+
+  --ifm-navbar-background-color: rgba(249, 251, 242, 0.88);
+  --ifm-navbar-shadow: 0 1px 3px rgba(19, 14, 48, 0.05);
+
+  --ifm-footer-background-color: #130e30;
+  --ifm-footer-color: #eff2e5;
+  --ifm-footer-link-color: #ffe228;
+
+  --docusaurus-highlighted-code-line-bg: rgba(255, 226, 40, 0.2);
+}
+
+/* -----------------------------------------------------------------------------
+ * ActonOS Dark Mode Tokens (Deep Space Ink & Luminous Amber)
+ * ----------------------------------------------------------------------------- */
+[data-theme='dark'] {
+  --ifm-color-primary: #ffe228;
+  --ifm-color-primary-dark: #f5d60a;
+  --ifm-color-primary-darker: #e0c300;
+  --ifm-color-primary-darkest: #a89300;
+  --ifm-color-primary-light: #ffea5c;
+  --ifm-color-primary-lighter: #ffee76;
+  --ifm-color-primary-lightest: #fff9c2;
+
+  --ifm-background-color: #0d0b1a;
+  --ifm-background-surface-color: #16122b;
+  --ifm-card-background-color: #16122b;
+
+  --ifm-heading-color: #f9fbf2;
+  --ifm-font-color-base: #e5e8db;
+  --ifm-color-content: #e5e8db;
+  --ifm-color-content-secondary: #9c99ad;
+
+  --ifm-navbar-background-color: rgba(13, 11, 26, 0.9);
+  --ifm-navbar-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+
+  --ifm-footer-background-color: #07050e;
+  --ifm-footer-color: #e5e8db;
+  --ifm-footer-link-color: #ffe228;
+
+  --docusaurus-highlighted-code-line-bg: rgba(255, 226, 40, 0.15);
+}
+
+/* -----------------------------------------------------------------------------
+ * Custom Global Typography & Layout Polishing
+ * ----------------------------------------------------------------------------- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--ifm-heading-font-family);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.navbar {
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(19, 14, 48, 0.08);
+}
+
+[data-theme='dark'] .navbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.navbar__brand {
+  font-family: var(--ifm-heading-font-family);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.navbar__link {
+  font-weight: 500;
+  border-radius: 1440px;
+  padding: 6px 14px;
+  transition: all 0.2s ease;
+}
+
+.navbar__link:hover {
+  background-color: rgba(19, 14, 48, 0.06);
+}
+
+[data-theme='dark'] .navbar__link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* -----------------------------------------------------------------------------
+ * ActonOS Pill Buttons & Badges
+ * ----------------------------------------------------------------------------- */
+.button--primary,
+.button--action-yellow {
+  background-color: var(--color-hi-yellow) !important;
+  color: var(--color-deep-ink) !important;
+  border: 1px solid rgba(19, 14, 48, 0.12) !important;
+  font-weight: 600 !important;
+  border-radius: 1440px !important;
+  padding: 10px 24px !important;
+  box-shadow: 0 4px 14px rgba(255, 226, 40, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.button--primary:hover,
+.button--action-yellow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 226, 40, 0.45);
+  text-decoration: none !important;
+}
+
+.button--secondary-dark {
+  background-color: var(--color-deep-ink) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  font-weight: 600 !important;
+  border-radius: 1440px !important;
+  padding: 10px 24px !important;
+  transition: transform 0.15s ease;
+}
+
+.button--secondary-dark:hover {
+  transform: translateY(-2px);
+  text-decoration: none !important;
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 1440px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: rgba(19, 14, 48, 0.08);
+  color: var(--color-deep-ink);
+}
+
+[data-theme='dark'] .badge-pill {
+  background-color: rgba(255, 226, 40, 0.15);
+  color: var(--color-hi-yellow);
+}
+
+/* -----------------------------------------------------------------------------
+ * Admonitions (Callouts) Styling
+ * ----------------------------------------------------------------------------- */
+.theme-admonition {
+  border-radius: 20px !important;
+  border-left-width: 6px !important;
+  box-shadow: 0 2px 8px rgba(19, 14, 48, 0.04);
+}
+
+.theme-admonition-note {
+  border-left-color: var(--color-deep-ink) !important;
+  background-color: #f1f4e8 !important;
+}
+
+.theme-admonition-tip {
+  border-left-color: #59e25d !important;
+  background-color: #ebfaeb !important;
+}
+
+.theme-admonition-info {
+  border-left-color: #3b82f6 !important;
+  background-color: #edf5ff !important;
+}
+
+.theme-admonition-warning {
+  border-left-color: #eab308 !important;
+  background-color: #fefce8 !important;
+}
+
+.theme-admonition-danger {
+  border-left-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+
+[data-theme='dark'] .theme-admonition-note {
+  border-left-color: var(--color-hi-yellow) !important;
+  background-color: #1a172e !important;
+}
+
+[data-theme='dark'] .theme-admonition-tip {
+  background-color: #0e2414 !important;
+}
+
+[data-theme='dark'] .theme-admonition-info {
+  background-color: #0f1e36 !important;
+}
+
+[data-theme='dark'] .theme-admonition-warning {
+  background-color: #2b2208 !important;
+}
+
+[data-theme='dark'] .theme-admonition-danger {
+  background-color: #2d1010 !important;
+}
+
+/* -----------------------------------------------------------------------------
+ * Code Block & Table Enhancements
+ * ----------------------------------------------------------------------------- */
+div[class*='codeBlockContainer'] {
+  border-radius: 18px !important;
+  box-shadow: 0 4px 16px rgba(19, 14, 48, 0.08);
+  border: 1px solid rgba(19, 14, 48, 0.08);
+}
+
+[data-theme='dark'] div[class*='codeBlockContainer'] {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(19, 14, 48, 0.1);
+  margin: 1.5rem 0;
+}
+
+table th {
+  background-color: var(--color-soft-meadow);
+  color: var(--color-deep-ink);
+  font-weight: 700;
+  padding: 12px 16px;
+  border-bottom: 2px solid rgba(19, 14, 48, 0.1);
+}
+
+table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(19, 14, 48, 0.06);
+}
+
+table tr:last-child td {
+  border-bottom: none;
+}
+
+[data-theme='dark'] table {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] table th {
+  background-color: #1a172e;
+  color: #f9fbf2;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] table td {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+/* -----------------------------------------------------------------------------
+ * Sidebar Navigation Polish
+ * ----------------------------------------------------------------------------- */
+.theme-doc-sidebar-menu .menu__link {
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.theme-doc-sidebar-menu .menu__link--active {
+  background-color: var(--color-soft-meadow);
+  color: var(--color-deep-ink) !important;
+  font-weight: 700;
+}
+
+[data-theme='dark'] .theme-doc-sidebar-menu .menu__link--active {
+  background-color: #201b3b;
+  color: var(--color-hi-yellow) !important;
+}

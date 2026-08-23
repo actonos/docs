@@ -1,0 +1,127 @@
+---
+id: custom-skills-guide
+title: Developing Custom Skills (Skill-as-a-Folder)
+sidebar_label: Custom Skills Guide
+sidebar_position: 4
+---
+
+# Developing Custom Skills (Skill-as-a-Folder)
+
+ActonOS introduces the **Skill-as-a-Folder** pattern. You can author and deploy custom tools in seconds using any programming language (Python, Bash, Node.js, Go) without compiling or restarting the daemon.
+
+---
+
+## 1. Skill Directory Structure
+
+Create a new directory inside `/data/skills/<your_skill_name>/`:
+
+```
+/data/skills/currency_converter/
+├── skill.json      # Tool schema & parameter definitions
+└── run.py          # Executable code (or run.sh)
+```
+
+---
+
+## 2. Defining `skill.json` Schema
+
+The `skill.json` file declares the tool's name, description, and parameter types:
+
+```json
+{
+  "name": "convert_currency",
+  "description": "Converts a specified monetary amount from one currency to another using live exchange rates.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "amount": {
+        "type": "number",
+        "description": "The numerical amount of money to convert."
+      },
+      "from": {
+        "type": "string",
+        "description": "3-letter ISO currency code to convert from (e.g. USD, EUR, VND)."
+      },
+      "to": {
+        "type": "string",
+        "description": "3-letter ISO currency code to convert to (e.g. USD, EUR, VND)."
+      }
+    },
+    "required": ["amount", "from", "to"]
+  },
+  "executable": "run.py"
+}
+```
+
+---
+
+## 3. Authoring the Executable Script
+
+ActonOS passes tool arguments to your script as a **JSON string via standard input (`stdin`)**. Your script must print the result as a **JSON string to standard output (`stdout`)**.
+
+### Example `run.py` (Python):
+
+```python
+#!/usr/bin/env python3
+import sys
+import json
+import urllib.request
+
+def main():
+    # 1. Read JSON input arguments from stdin
+    try:
+        raw_input = sys.stdin.read()
+        args = json.loads(raw_input) if raw_input else {}
+    except Exception as e:
+        print(json.dumps({"error": f"Failed to parse input JSON: {str(e)}"}))
+        sys.exit(1)
+
+    amount = float(args.get("amount", 1.0))
+    from_curr = args.get("from", "USD").upper()
+    to_curr = args.get("to", "EUR").upper()
+
+    # 2. Perform business logic
+    try:
+        url = f"https://open.er-api.com/v6/latest/{from_curr}"
+        with urllib.request.urlopen(url, timeout=5) as response:
+            data = json.loads(response.read().decode())
+            rates = data.get("rates", {})
+            rate = rates.get(to_curr)
+            
+            if not rate:
+                print(json.dumps({"error": f"Currency code {to_curr} not supported"}))
+                sys.exit(1)
+
+            converted = amount * rate
+
+            # 3. Print final JSON result to stdout
+            print(json.dumps({
+                "from": from_curr,
+                "to": to_curr,
+                "original_amount": amount,
+                "converted_amount": round(converted, 2),
+                "exchange_rate": rate
+            }))
+            sys.exit(0)
+
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+```
+
+Make your script executable:
+```bash
+chmod +x /data/skills/currency_converter/run.py
+```
+
+---
+
+## 4. Instant Hot-Reload Testing
+
+1. The moment you save `skill.json` and `run.py`, the ActonOS `fsnotify` watcher automatically registers the tool.
+2. In the ActonOS **Chat** or **Agent Studio**, enable `convert_currency` for your agent.
+3. Prompt your agent: `How much is 150 USD in VND right now?`
+4. The agent will invoke `convert_currency`, and the live card will render the exact exchange result!

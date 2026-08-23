@@ -1,0 +1,73 @@
+---
+id: troubleshooting
+title: Troubleshooting & Problem Resolution
+sidebar_label: Troubleshooting Guide
+sidebar_position: 1
+---
+
+# Troubleshooting & Problem Resolution
+
+A comprehensive guide to diagnosing and resolving common operational issues across Bare-Metal, Docker, and AI Agent workflows in ActonOS.
+
+---
+
+## 1. Installation & Network Issues
+
+### Issue: Port 8080 Already in Use (Docker)
+- **Symptom**: `docker: Error response from daemon: driver failed programming external connectivity on endpoint actonos: Bind for 0.0.0.0:8080 failed: port is already allocated.`
+- **Solution**: Map ActonOS to an alternate host port:
+  ```bash
+  docker run -d -p 8888:8080 -v acton-data:/data ghcr.io/actonos/actonos:latest
+  ```
+  Then access the dashboard at `http://localhost:8888`.
+
+### Issue: Captive Portal Does Not Auto-Open on Wi-Fi Connect (Bare-Metal)
+- **Symptom**: Connected to `ActonOS-XXXX` but no browser popup appears.
+- **Solution**: Open any browser window and manually navigate to `http://192.168.4.1` or `http://acton.local:8080`. Ensure mobile data / cellular connection is temporarily disabled.
+
+### Issue: Wi-Fi Adapter Not Recognized on Bare-Metal MiniPC
+- **Symptom**: Setup wizard reports "No Wi-Fi Interfaces Found".
+- **Solution**: Connect via Ethernet cable. ActonOS will automatically fetch the latest Linux kernel firmware packages for Realtek / Intel Wi-Fi chipsets on first boot.
+
+---
+
+## 2. LLM Providers & Model Cascades
+
+### Issue: `429 Too Many Requests` (Upstream LLM Rate Limits)
+- **Symptom**: Agent pauses and logs rate limit warnings.
+- **Solution**: Configure a **Fallback Model** in Agent Studio (e.g., set `google:gemini-2.0-flash` or a local `ollama` model as secondary). ActonOS will automatically switch to the fallback upon encountering 429 status codes.
+
+### Issue: Weak Models Repeating Idle Greetings During Heartbeat
+- **Symptom**: Fast/cheap models say "Hello, how can I help you today?" instead of processing background tasks.
+- **Solution**: ActonOS includes an automatic `looksLikeIdleChatter` filter. For custom agents, ensure your system prompt emphasizes: `Headless Mode: If no work is required, reply ONLY with HEARTBEAT_OK.`
+
+---
+
+## 3. Channels & Integrations
+
+### Issue: Telegram Bot Does Not Respond
+- **Symptom**: Bot receives messages but does not reply.
+- **Solution**:
+  1. Check **Channels** in the dashboard to confirm the status is 🟢 `Connected`.
+  2. Verify you completed the **Pairing PIN** verification step.
+  3. Ensure your Telegram Bot Token was not revoked via `@BotFather`.
+
+### Issue: Discord Bot Missing Message Content Intent
+- **Symptom**: Bot joins server but cannot read user prompts.
+- **Solution**: In the [Discord Developer Portal](https://discord.com/developers/applications), navigate to **Bot** → **Privileged Gateway Intents** and enable **Message Content Intent**.
+
+### Issue: Expired Google / GitHub OAuth Tokens
+- **Symptom**: SaaS connector shows 🔴 `Re-authentication Required`.
+- **Solution**: Navigate to **Connectors**, click **Reconnect**, and approve third-party permissions. Ensure the host system clock is synchronized via NTP.
+
+---
+
+## 4. Execution Sandbox & Approvals
+
+### Issue: Agent Tool Fails with `Out of Memory (OOM)`
+- **Symptom**: Command terminates with exit code 137.
+- **Solution**: The default Bubblewrap sandbox limits processes to **512 MB RAM**. If compiling large codebases, adjust the agent's memory ceiling in `agent_manifests.json` under `sandbox_memory_mb: 1024`.
+
+### Issue: Mission Paused on Pending Approval
+- **Symptom**: Mission shows `Running` but progress does not advance.
+- **Solution**: Check the top **Pending Approvals Banner** on the Dashboard or navigate to **Operations** → **Approval Queue** to approve or reject the paused mutation.

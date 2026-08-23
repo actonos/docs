@@ -1,0 +1,59 @@
+---
+id: system-requirements
+title: System Requirements
+sidebar_label: System Requirements
+sidebar_position: 2
+---
+
+# System Requirements
+
+ActonOS is engineered with minimal footprint requirements, running comfortably on compact x86_64 MiniPCs, home servers, cloud VMs, and NAS appliances.
+
+## Bare-Metal MiniPC Specifications
+
+For dedicated appliance installations using the bootable ActonOS ISO:
+
+| Component | Minimum Specification | Recommended Specification |
+|:---|:---|:---|
+| **Processor (CPU)** | Intel Celeron N5105 / N95 or AMD equivalent (x86_64, 4 cores) | Intel Processor N100 / Core i3 / Core i5 or AMD Ryzen 5 / 7 |
+| **System Memory (RAM)** | 2 GB DDR4 / LPDDR4 | 8 GB – 16 GB DDR4/DDR5 |
+| **Storage** | 32 GB eMMC or SATA SSD | 128 GB+ NVMe SSD (PCIe 3.0 / 4.0) |
+| **Networking** | 1× Gigabit Ethernet (RJ-45) | 1× 2.5 GbE LAN + Wi-Fi 6 (802.11ax) & Bluetooth 5.2 |
+| **Display (Optional)** | HDMI / DisplayPort (first-boot debug only) | Headless (automated captive portal setup) |
+| **Boot Mode** | UEFI 64-bit | UEFI with Secure Boot support |
+
+:::tip Recommended Hardware
+Sub-$150 MiniPCs featuring the **Intel N100** processor (such as Beelink EQ12, Minisforum UN100, or GMKtec NucBox G2) deliver an optimal balance of energy efficiency (6W–15W TDP), multi-agent processing power, and 24/7 reliability.
+:::
+
+---
+
+## Docker Host Specifications
+
+For running ActonOS inside a container on existing infrastructure (Ubuntu, Debian, Fedora, Arch, TrueNAS, Synology, Unraid, or macOS/Windows via Docker Desktop/WSL2):
+
+| Metric | Minimum Specification | Recommended Specification |
+|:---|:---|:---|
+| **Host OS** | Linux Kernel 5.15+ / macOS 12+ / Windows 10/11 WSL2 | Linux Kernel 6.1+ (Debian 12 / Ubuntu 22.04 LTS / Arch) |
+| **Docker Engine** | Docker Engine 24.0+ or Docker Desktop 4.25+ | Docker Engine 26.0+ with Docker Compose v2 |
+| **Assigned CPU** | 2 Virtual CPUs | 4+ Virtual CPUs |
+| **Assigned Memory** | 1.5 GB RAM | 4 GB+ RAM |
+| **Disk Space** | 10 GB free space for `/data` | 50 GB+ SSD storage |
+
+---
+
+## Network & Firewall Requirements
+
+ActonOS requires minimal outbound internet connectivity to communicate with LLM API providers and SaaS platforms.
+
+| Port / Protocol | Direction | Purpose | Required? |
+|:---|:---|:---|:---|
+| `8080/TCP` | Inbound (Local LAN) | HTTP Web Dashboard & REST/WebSocket API | **Yes** (unless reverse proxied) |
+| `443/TCP` | Outbound | HTTPS connection to LLM APIs, OAuth providers, and Tool Hub | **Yes** |
+| `41641/UDP` | Inbound / Outbound | Direct WireGuard peer connections for Tailscale `tsnet` | Optional (falls back to DERP relay) |
+| `53/UDP & 53/TCP` | Inbound | Captive Portal DNS redirection on Bare-metal Wi-Fi hotspot | Bare-metal only |
+| `67/UDP & 68/UDP` | Inbound | DHCP server for Captive Portal setup hotspot | Bare-metal only |
+
+:::note No Port Forwarding Required
+When using the built-in **Tailscale tsnet** remote access engine, you do **not** need to open any inbound router ports or configure dynamic DNS. ActonOS establishes an end-to-end encrypted mesh tunnel directly to your Tailscale network.
+:::

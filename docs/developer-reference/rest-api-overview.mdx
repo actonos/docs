@@ -1,0 +1,82 @@
+---
+id: rest-api-overview
+title: REST API Conventions & Authentication
+sidebar_label: REST API Overview
+sidebar_position: 1
+---
+
+# REST API Conventions & Authentication
+
+The ActonOS HTTP API follows modern RESTful conventions, providing predictable resource-oriented URLs, standard HTTP response codes, and consistent JSON envelope formatting.
+
+---
+
+## 1. Base URL & Protocol
+
+- **Local LAN**: `http://acton.local:8080/api` (or `http://localhost:8080/api`)
+- **Remote Mesh**: `https://acton.<tailnet>.ts.net/api`
+- **Reverse Proxy**: `https://agent.yourdomain.com/api`
+
+---
+
+## 2. Authentication
+
+All requests to `/api/*` (except `/api/health` and the OAuth callback handler) require authentication:
+
+### Method A: Session Cookie (Web UI)
+The web frontend uses an `HttpOnly`, `SameSite=Strict` cookie named `actonos_token` issued upon successful PIN authentication.
+
+### Method B: Bearer Token (CLI & External Scripts)
+Include the Bearer authorization header with your configured Admin PIN or API token:
+```http
+Authorization: Bearer YOUR_ADMIN_PIN_OR_TOKEN
+```
+
+---
+
+## 3. Standard Response Envelopes
+
+### Successful Responses
+Successful responses encapsulate the payload inside a top-level `data` object:
+
+```json
+{
+  "data": {
+    "status": "healthy",
+    "version": "0.1.0",
+    "uptime_seconds": 86400,
+    "runtime_mode": "baremetal"
+  }
+}
+```
+
+### Error Responses
+Error responses return a standardized `error` envelope accompanied by an appropriate HTTP status code:
+
+```json
+{
+  "error": {
+    "code": "AGENT_NOT_FOUND",
+    "message": "Agent with ID 'devops-bot' does not exist in registry.",
+    "details": {
+      "requested_id": "devops-bot"
+    }
+  }
+}
+```
+
+---
+
+## 4. Standard HTTP Status Codes
+
+| Code | Meaning | Description |
+|:---|:---|:---|
+| `200 OK` | Success | Standard successful GET, PUT, or POST response. |
+| `201 Created` | Created | Resource successfully created. |
+| `202 Accepted` | Approval Required | The requested mutation requires human clearance; an approval record has been created. |
+| `400 Bad Request` | Validation Error | Malformed JSON payload or missing required parameter. |
+| `401 Unauthorized` | Auth Required | Missing or invalid Bearer token / session cookie. |
+| `403 Forbidden` | Access Denied | Insufficient permissions for the requested tool or path. |
+| `404 Not Found` | Not Found | Requested agent, run, or workspace file does not exist. |
+| `429 Too Many Requests`| Rate Limited | Upstream LLM provider rate limit exceeded. |
+| `500 Server Error` | Internal Error | An unhandled exception occurred in the daemon core. |

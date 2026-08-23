@@ -1,0 +1,47 @@
+---
+id: tailscale-remote-access
+title: Tailscale Embedded Remote Access (tsnet)
+sidebar_label: Remote Access (Tailscale)
+sidebar_position: 5
+---
+
+# Tailscale Embedded Remote Access (tsnet)
+
+ActonOS embeds **Tailscale `tsnet`** directly into the core Go daemon binary. This provides zero-configuration, end-to-end encrypted remote access across home networks, mobile devices, and cloud VPS instances without opening inbound firewall ports or managing dynamic DNS.
+
+```mermaid
+flowchart LR
+    A["Operator Laptop / Phone<br/>(Anywhere in the world)"] -->|Tailscale WireGuard Mesh<br/>E2E Encrypted| B["ActonOS Embedded tsnet Node<br/>https://acton.your-tailnet.ts.net"]
+    B --> C["Core Daemon (actond)<br/>Internal HTTP & WebSocket"]
+    
+    subgraph "No Inbound Open Ports"
+        D["Home Router / NAT Firewall"] -.-x E["Public Internet"]
+    end
+```
+
+---
+
+## 1. How Embedded `tsnet` Works
+
+Unlike traditional setups that require installing a separate system-level VPN daemon, ActonOS links the pure-Go `tailscale.com/tsnet` library directly into the `actond` binary:
+
+- **Isolated Virtual Network Stack**: Operates without modifying host routing tables or network interfaces.
+- **Automatic HTTPS TLS Certificates**: Provisions valid Let's Encrypt SSL/TLS certificates automatically for your Tailscale machine name (`https://acton.<tailnet>.ts.net`).
+- **Zero Port Forwarding**: Traverses NATs, CGNAT (Carrier-Grade NAT), and corporate firewalls seamlessly via DERP relays and direct UDP WireGuard tunnels.
+
+---
+
+## 2. Headless Provisioning via Environment Variable
+
+In containerized or automated deployments, you can pass a Tailscale auth key directly during startup:
+
+```bash
+docker run -d \
+  --name actonos \
+  -p 8080:8080 \
+  -v acton-data:/data \
+  -e TAILSCALE_AUTH_KEY=tskey-auth-xxxxxx-xxxxxx \
+  ghcr.io/actonos/actonos:latest
+```
+
+ActonOS will automatically join your Tailscale tailnet, acquire an IP (e.g., `100.x.y.z`), and log its secure URL in the system startup logs.

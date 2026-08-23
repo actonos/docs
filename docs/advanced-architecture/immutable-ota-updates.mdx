@@ -1,0 +1,67 @@
+---
+id: immutable-ota-updates
+title: Immutable OS Design & Self-Healing OTA Updates
+sidebar_label: Immutable OS & OTA
+sidebar_position: 6
+---
+
+# Immutable OS Design & Self-Healing OTA Updates
+
+On Bare-Metal MiniPC deployments, ActonOS employs an **Immutable Operating System** architecture combined with an **Atomic, Self-Healing Over-The-Air (OTA) Update System** that protects against bad builds, corrupted updates, and power interruptions.
+
+```mermaid
+sequenceDiagram
+    participant Cloud as ActonOS Release Server
+    participant OTA as OTA Update Engine
+    participant FS as Local Filesystem (/data)
+    participant Sys as systemd (actond.service)
+    participant WD as Health Watchdog
+
+    Cloud->>OTA: Notify New Version (v0.2.0)
+    OTA->>FS: Download binary to /data/releases/v0.2.0/actond
+    OTA->>OTA: Verify SHA-256 Checksum + GPG Signature
+    OTA->>FS: Atomic Symlink Swap: /data/bin/actond -> releases/v0.2.0/actond
+    OTA->>Sys: systemctl restart actond
+    Sys->>WD: Start 30-second Health Monitoring Loop
+
+    loop Every 5s for 30s
+        WD->>Sys: GET http://127.0.0.1:8080/api/health
+        alt HTTP 200 OK & Status Healthy
+            WD->>FS: Mark v0.2.0 as Stable Release ✅
+        else Crash / CrashLoop (>3 Failures)
+            WD->>FS: Revert Symlink to Previous Build (v0.1.0) ❌
+            WD->>Sys: systemctl restart actond (Auto-Rollback)
+        end
+    end
+```
+
+---
+
+## 1. Immutable Partition Layout
+
+The physical SSD is partitioned into strictly isolated zones:
+- **System Root Partition (`/`)**: Mounted **Read-Only** (`ro`) Ext4. Core OS utilities, libraries, and kernel modules cannot be modified by malware, user errors, or rogue scripts.
+- **Data Partition (`/data`)**: Mounted **Read-Write** (`rw`) Ext4. Houses all persistent configuration, user databases, agent workspaces, and versioned binary releases.
+
+---
+
+## 2. Atomic Symlink Swapping
+
+All executions of the core daemon invoke the binary via a symbolic link:
+```
+/data/bin/actond -> /data/releases/v0.1.0/actond
+```
+
+When an update is applied:
+1. The new binary is downloaded and verified in isolation under `/data/releases/v0.2.0/`.
+2. An atomic filesystem symlink swap (`ln -sfn`) switches `/data/bin/actond` to point to the new release directory instantly.
+3. The system service restarts.
+
+---
+
+## 3. 30-Second Health Watchdog & Automatic Rollback
+
+Following a service restart:
+- A dedicated background watchdog polls the internal health endpoint (`GET http://127.0.0.1:8080/api/health`) every 5 seconds.
+- If the new build crashes, hangs, or fails health checks 3 consecutive times during the 30-second verification window, the watchdog **automatically reverts the symlink to the previous working release** and restarts the daemon.
+- The machine never becomes an unrecoverable "brick".

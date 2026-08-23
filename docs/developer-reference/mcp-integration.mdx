@@ -1,0 +1,55 @@
+---
+id: mcp-integration
+title: Model Context Protocol (MCP) Server Integration
+sidebar_label: MCP Server Integration
+sidebar_position: 5
+---
+
+# Model Context Protocol (MCP) Server Integration
+
+ActonOS acts as a full-featured **MCP Host**, allowing agents to seamlessly discover and execute tools exposed by any standard [Model Context Protocol](https://modelcontextprotocol.io/) server.
+
+---
+
+## 1. Supported MCP Transports
+
+- **`stdio`**: The ActonOS daemon spawns the MCP server as a managed sub-process and communicates over standard input/output JSON-RPC.
+- **`http` / `sse`**: Connects to an existing remote MCP server running over HTTP and Server-Sent Events.
+
+---
+
+## 2. Adding an MCP Server via Manifest
+
+Add your server definition to `/data/mcp-servers/servers.json` or via `POST /api/tools/mcp`:
+
+```json
+{
+  "servers": [
+    {
+      "id": "filesystem-mcp",
+      "name": "Local Filesystem MCP",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/data/workspace"],
+      "enabled": true
+    },
+    {
+      "id": "remote-analytics",
+      "name": "Remote Analytics Server",
+      "transport": "sse",
+      "url": "https://mcp.analytics.internal/sse",
+      "headers": {
+        "Authorization": "Bearer SECRETS_FROM_VAULT"
+      },
+      "enabled": true
+    }
+  ]
+}
+```
+
+---
+
+## 3. Tool Collision Handling & Sandboxing
+
+- **Name Spacing**: ActonOS automatically namespaces tools to prevent naming collisions (e.g., `mcp_filesystem_read_file`).
+- **Atomic Rollback**: If a newly registered server declares a conflicting tool signature that breaks an existing manifest, ActonOS rolls back registration and alerts the operator.

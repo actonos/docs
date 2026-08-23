@@ -1,0 +1,44 @@
+---
+id: dual-runtime-hal
+title: Dual-Runtime Hardware Abstraction Layer (HAL)
+sidebar_label: Dual-Runtime HAL
+sidebar_position: 1
+---
+
+# Dual-Runtime Hardware Abstraction Layer (HAL)
+
+ActonOS utilizes an intelligent **Hardware Abstraction Layer (HAL)** that auto-detects its hosting environment on boot and adapts all system daemons accordingly.
+
+```mermaid
+graph TD
+    A["Daemon Entrypoint (cmd/actond)"] --> B{"HAL Environment Detection"}
+    B -->|Check for Container Markers<br/>/.dockerenv or env RUNTIME_MODE=docker| C["Docker Container Runtime"]
+    B -->|Absence of Container Markers| D["Bare-Metal MiniPC Runtime"]
+
+    C --> E["Container Subsystem:<br/>• Host/Bridge Networking<br/>• Subshell Execution Jail<br/>• Docker Container Stats Telemetry<br/>• Virtual Temp/Disk Emulation"]
+    
+    D --> F["Bare-Metal Subsystem:<br/>• Linux D-Bus & NetworkManager<br/>• Wi-Fi AP & Captive DNS (192.168.4.1)<br/>• Bubblewrap (bwrap) + Cgroups v2<br/>• Real Physical Thermal & Fan Sensors<br/>• Atomic Symlink OTA Watchdog"]
+```
+
+---
+
+## Runtime Differences & Capability Matrix
+
+| Feature Subsystem | Bare-Metal MiniPC Mode | Docker Container Mode |
+|:---|:---|:---|
+| **Base OS Layer** | Debian 12 Minimal (Read-only root) | Alpine Linux / Ubuntu slim base |
+| **Sandbox Technology** | Kernel Namespaces via `bubblewrap` (`bwrap`) | Jailed Subshell + Non-root `acton` user |
+| **Resource Limits** | Linux `cgroups v2` (RAM, CPU quota, PIDs) | Docker container resource constraints |
+| **Network Management** | D-Bus `NetworkManager` + `wpa_supplicant` | Docker bridge / host networking |
+| **Wi-Fi Hotspot** | AP Mode with `dnsmasq` captive portal | N/A (Web UI wizard on `:8080`) |
+| **OTA Updates** | Atomic `/data/bin/actond` symlink swap + Watchdog | Standard `docker pull` image updates |
+| **Hardware Telemetry** | Native D-Bus CPU thermal & NVMe sensors | `/sys/fs/cgroup` and `/proc` metrics |
+
+---
+
+## Automatic Detection Mechanics
+
+The HAL initializes before any agent services start:
+1. It checks the `RUNTIME_MODE` environment variable (`docker` or `baremetal`).
+2. If unset, it inspects filesystem markers (`/.dockerenv`, `/run/.containerenv`) and cgroup hierarchy definitions.
+3. It sets the global HAL interface which routes all network, sensor, and sandbox calls to the appropriate driver.
