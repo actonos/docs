@@ -69,6 +69,7 @@ const config: Config = {
       logo: {
         alt: 'ActonOS',
         src: 'img/actonos_logo.png',
+        srcDark: 'img/actonos_logo_light.png',
         height: 32,
       },
       items: [

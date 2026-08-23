@@ -121,10 +121,6 @@ h1 {
   display: block;
 }
 
-[data-theme='dark'] .navbar__logo {
-  filter: brightness(1.1);
-}
-
 .navbar__link {
   font-weight: 500;
   border-radius: 1440px;
