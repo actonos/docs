@@ -7,7 +7,8 @@ sidebar_position: 2
 
 # API Endpoints Reference
 
-A complete reference of all core REST endpoints exposed by the ActonOS daemon.
+A complete reference of all core REST endpoints exposed by the ActonOS daemon (`actond`).
+Base URL: `http://localhost:8080/api`
 
 ---
 
@@ -31,6 +32,25 @@ Returns system status, active version, uptime, runtime mode, and resource load. 
 }
 ```
 
+### `GET /api/models`
+Retrieve the canonical catalog of all supported LLM models, provider specs, badges, and pricing tiers. Single source of truth for the entire system.
+
+**Response:**
+```json
+{
+  "models": [
+    {
+      "id": "anthropic/claude-sonnet-4-6",
+      "name": "Claude Sonnet 4.6",
+      "provider_id": "anthropic",
+      "provider_name": "Anthropic Claude",
+      "context_window": 200000,
+      "badge": "Recommended"
+    }
+  ]
+}
+```
+
 ### `GET /api/system/audit/verify`
 Validates the cryptographic SHA-256 hash chain of `/data/logs/audit.jsonl` to detect tampering.
 
@@ -39,7 +59,26 @@ Streams a transactionally consistent SQLite database backup created using `VACUU
 
 ---
 
-## 2. Agents Management
+## 2. Authentication & Admin Identity
+
+### `GET /api/auth/status`
+Returns initialization status and current session state.
+
+### `POST /api/auth/setup`
+Initialize system admin identity and set the master password during onboarding.
+
+### `POST /api/auth/login`
+Authenticate using the master password and obtain a Bearer JWT session token.
+
+### `POST /api/auth/logout`
+Revoke the current session token.
+
+### `PUT /api/auth/password`
+Update admin master password.
+
+---
+
+## 3. Agents Management
 
 ### `GET /api/agents`
 Lists all registered agent manifests.
@@ -70,7 +109,7 @@ Removes an agent from the registry.
 
 ---
 
-## 3. Chat & Execution Streams
+## 4. Chat & Execution Streams
 
 ### `POST /api/agents/{id}/chat`
 Synchronously sends a message to an agent.
@@ -80,7 +119,7 @@ Initiates a Server-Sent Events (SSE) stream for real-time token streaming and li
 
 ---
 
-## 4. Approvals Ledger
+## 5. Approvals Ledger
 
 ### `GET /api/approvals?status=pending`
 Lists pending mutation approval requests (`pending`, `approved`, `rejected`, `all`).
@@ -88,75 +127,126 @@ Lists pending mutation approval requests (`pending`, `approved`, `rejected`, `al
 ### `POST /api/approvals/{id}/approve`
 Approves the exact action recorded in the approval entry and resumes the agent run.
 
-**Request Body:**
-```json
-{
-  "reason": "Reviewed and cleared by administrator"
-}
-```
-
 ### `POST /api/approvals/{id}/reject`
 Safely rejects the pending mutation without executing the action.
 
 ---
 
-## 5. Workspace File Management
+## 6. Plugins Subsystem (WASMLoader)
+
+### `GET /api/plugins`
+Lists all installed WASM plugins with manifests, capabilities (`tool`, `channel`, `connector`), permissions, and runtime statuses.
+
+**Response:**
+```json
+{
+  "plugins": [
+    {
+      "id": "channel-discord",
+      "name": "Discord Bot Channel",
+      "version": "2.0.0",
+      "author": "ActonOS Core Team",
+      "capabilities": ["channel"],
+      "enabled": true,
+      "status": "running",
+      "permissions": {
+        "net_outbound": ["discord.com", "gateway.discord.gg"],
+        "secrets": ["discord_bot_tokens.*"],
+        "storage": true
+      }
+    }
+  ]
+}
+```
+
+### `POST /api/plugins/upload`
+Upload an `.actonpkg` bundle or `.wasm` binary via `multipart/form-data` (`file`). Validates the manifest and hot-loads into the Wazero runtime sandbox.
+
+### `GET /api/plugins/{id}`
+Returns complete manifest details and configuration schema for a specific plugin.
+
+### `POST /api/plugins/{id}/config`
+Updates dynamic configuration values and persists declared secrets into Hardware Vault. Automatically triggers hot-reloading of the plugin instance.
+
+### `POST /api/plugins/{id}/enable` | `POST /api/plugins/{id}/disable`
+Enables or disables an installed plugin at runtime without restarting `actond`.
+
+### `DELETE /api/plugins/{id}`
+Uninstalls the plugin and purges its directory from `/data/plugins/{id}`.
+
+### `GET /api/plugins/{id}/logs`
+Fetches execution and telemetry logs emitted by the sandboxed WASM plugin.
+
+---
+
+## 7. Channel Accounts & Device Pairing
+
+### `GET /api/integrations/channels` | `POST /api/integrations/channels`
+Fetch or configure multi-account chat channel credentials and agent binding rules.
+
+### `GET /api/integrations/channels/accounts`
+List all active channel accounts with live connectivity health badges.
+
+### `POST /api/integrations/pairing/code`
+Generates a 6-digit numeric pairing code for channel operator verification.
+
+### `POST /api/integrations/pairing/verify`
+Validates pairing code from an incoming chat message to authorize a user ID.
+
+### `GET /api/integrations/authorizations` | `DELETE /api/integrations/authorizations`
+List or revoke authorized external chat senders.
+
+---
+
+## 8. Hardware Vault Secrets
+
+### `GET /api/vault/secrets`
+Lists metadata for all encrypted secrets currently stored in the Hardware Vault.
+
+### `POST /api/vault/secrets`
+Stores an encrypted secret value bound to hardware UUID and CPU serial.
+
+### `DELETE /api/vault/secrets/{name}`
+Deletes a secret record from the Vault.
+
+---
+
+## 9. Tools & Marketplace Hub
+
+### `GET /api/tools`
+Lists all active tools across Native, MCP, WASM Plugins, and Skill-as-a-Folder categories.
+
+### `POST /api/tools/mcp` | `DELETE /api/tools/mcp/{serverID}`
+Register or disconnect an MCP server (`stdio` or `sse`). High-risk operations return a `202 Accepted` pending approval request.
+
+### `GET /api/tools/hub/catalog`
+Fetches the live Community Tool Hub catalog.
+
+### `POST /api/tools/hub/install` | `POST /api/tools/hub/uninstall`
+Installs or uninstalls a verified community skill package.
+
+---
+
+## 10. Workspace File Management
 
 ### `GET /api/workspace/files?dir=docs`
-Lists files and directories under the specified relative workspace path with AI semantic indexing status.
+Lists files and directories under the specified relative workspace path with semantic vector status.
 
 ### `GET /api/workspace/file?path=docs/notes.md`
 Returns the content and metadata of a specific text file.
 
 ### `GET /api/workspace/raw?path=docs/diagram.png`
-Streams raw binary bytes (with HTTP Range support) for media, image, and PDF previews.
+Streams raw binary bytes (with HTTP Range support) for media and image previews.
 
 ### `POST /api/workspace/file`
-Creates or updates a file and automatically enqueues it for semantic vector indexing.
-
-**Request Body:**
-```json
-{
-  "path": "reports/summary.md",
-  "content": "# Research Summary\nKey findings..."
-}
-```
+Creates or updates a file and enqueues it for semantic vector indexing.
 
 ### `DELETE /api/workspace/file?path=reports/old.md`
 Deletes a file or directory from the workspace.
 
-### `GET /api/workspace/zip?paths=docs,reports`
-Downloads specified folders or files as a compressed `.zip` archive.
-
-### `GET /api/workspace/chunks?path=docs/notes.md`
-Returns the semantic chunks and embedding vector metadata generated for a file.
-
 ---
 
-## 6. Tools & Marketplace Hub
-
-### `GET /api/tools`
-Lists all active tools across Native, MCP, WASM, and Skill categories.
-
-### `GET /api/tools/hub/catalog`
-Fetches the live Community Tool Hub catalog with ratings, categories, and tags.
-
-### `POST /api/tools/hub/install`
-Downloads and installs a community skill package into `/data/skills/<slug>/`.
-
-**Request Body:**
-```json
-{
-  "skill_id": "tavily"
-}
-```
-
-### `POST /api/tools/hub/uninstall`
-Removes an installed skill package.
-
----
-
-## 7. Notifications Center
+## 11. Notifications Center
 
 ### `GET /api/notifications`
 Returns paginated system and mission notifications (`page`, `limit`, `type`, `unread_only`).

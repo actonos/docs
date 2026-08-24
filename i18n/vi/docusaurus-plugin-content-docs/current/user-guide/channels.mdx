@@ -1,45 +1,71 @@
 ---
 id: channels
-title: Kênh Chat & Tích hợp Tin nhắn
-sidebar_label: Kênh Chat (Telegram/Discord)
+title: Kênh Giao tiếp & Tin nhắn Đa kênh
+sidebar_label: Kênh Giao tiếp (Telegram/Discord)
 sidebar_position: 7
 ---
 
-# Kênh Chat & Tích hợp Tin nhắn Đa nền tảng
+# Kênh Giao tiếp & Tin nhắn Đa kênh
 
-Phân hệ **Kênh chat (Channels)** cho phép người dùng trò chuyện với các Agent của ActonOS trực tiếp từ các ứng dụng nhắn tin quen thuộc như Telegram, Discord và Slack.
-
----
-
-## 1. Tích hợp Bot Telegram
-
-### Các bước cài đặt:
-1. Mở Telegram và tìm bot **[@BotFather](https://t.me/botfather)**.
-2. Gửi lệnh `/newbot` và đặt tên cho bot theo hướng dẫn.
-3. Sao chép chuỗi **HTTP API Bot Token** (ví dụ: `123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ`).
-4. Trong ActonOS, vào mục **Kênh chat** → **Telegram** → chọn **Kết nối tài khoản**.
-5. Dán Bot Token và bấm **Khởi tạo Bộ điều hợp**.
-
-### Mã PIN Ghép nối (Pairing PIN):
-- Khi bạn nhắn tin lần đầu tiên đến bot Telegram, bot sẽ phản hồi một mã xác thực 6 số.
-- Nhập mã này trên giao diện ActonOS để xác thực tài khoản Telegram của bạn là người quản trị hợp lệ.
+ActonOS kết nối AI Agent với các nền tảng chat phổ biến (Telegram, Discord, Slack, WhatsApp, Zalo) thông qua **Plugin Kênh WASM** (`WasmChannelBridge`). Kiến trúc này tách biệt việc triển khai giao thức nhắn tin khỏi nhân hệ điều hành, đồng thời áp dụng cơ chế sandbox nghiêm ngặt, mã hóa token bằng Hardware Vault và xác thực ghép đôi Zero-Trust.
 
 ---
 
-## 2. Tích hợp Bot Discord
+## 1. Cơ chế Hoạt động của Plugin Kênh
 
-### Các bước cài đặt:
-1. Truy cập **[Discord Developer Portal](https://discord.com/developers/applications)**.
-2. Tạo Application mới và chuyển sang tab **Bot**.
-3. Bật quyền **Message Content Intent** trong mục Privileged Gateway Intents.
-4. Bấm **Reset Token** và sao chép Bot Token.
-5. Tạo link mời bot vào máy chủ Discord của bạn qua mục **OAuth2** → **URL Generator** (chọn scope `bot`).
-6. Dán token vào trang cấu hình Discord trong ActonOS.
+Thay vì viết cứng giao thức trong mã nguồn Go của daemon, các kênh chat chạy dưới dạng module WebAssembly biệt lập trong Wazero runtime:
+
+```mermaid
+flowchart LR
+    User["Người vận hành / Chat User\n(Telegram / Discord)"] <--> ExtAPI["API Chat Bên ngoài\n(api.telegram.org)"]
+    ExtAPI <--> Bridge["Plugin Kênh WASM\n(WasmChannelBridge)"]
+    Bridge <--> CM["ActonOS ChannelManager"]
+    CM <--> Swarm["Universal Agent Swarm\n(ReAct Execution)"]
+```
+
+### Các Khả năng Cốt lõi:
+- **Ghép đôi Mã PIN Zero-Trust**: Ngăn chặn người lạ nhắn tin với bot bằng quy trình bắt tay mã PIN 6 chữ số trước khi cấp quyền điều khiển Agent.
+- **Đa Tài khoản Bot (Multi-Bot)**: Kết nối nhiều bot trên cùng một nền tảng (ví dụ: `@dev_support_bot` và `@ops_monitor_bot`).
+- **Định tuyến Tin nhắn Linh hoạt**: Định tuyến tin nhắn nhóm qua cú pháp nhắc tên `@agent_name` hoặc chuyển tiếp về Agent chính.
+- **Truyền phát Luồng WebSocket Thời gian thực (`acton_ws`)**: Độ trễ cực thấp cho Discord Gateway và Slack Socket Mode.
 
 ---
 
-## 3. Tự phục hồi Kết nối (Auto-Recovery)
+## 2. Thiết lập Plugin Kênh Chat
 
-ActonOS tự động giám sát kết nối:
-- Nếu mất mạng hoặc gateway bị ngắt, hệ thống sẽ tự động kết nối lại theo chu kỳ backoff.
-- Nếu token bị thu hồi, hệ thống sẽ gửi thông báo cảnh báo trực tiếp trên giao diện để người quản trị cập nhật lại token.
+### Bước 1: Cài đặt Plugin Kênh
+1. Mở menu **Extensions** → chọn **Plugins** trên thanh điều hướng.
+2. Nếu chưa cài đặt, tải lên gói plugin tương ứng (ví dụ: `channel-telegram.actonpkg` hoặc `channel-discord.actonpkg`).
+
+### Bước 2: Cấu hình Tài khoản Bot & Token
+1. Trên thẻ plugin, bấm **Configure** (Cấu hình).
+2. Tại mục **Tài khoản Bot (Bot Accounts)**, bấm **+ Thêm tài khoản**.
+3. Điền các tham số:
+   - **Account ID**: Mã định danh duy nhất (ví dụ: `tg_dev_bot`).
+   - **Bot Token**: Lấy từ [@BotFather](https://t.me/botfather) hoặc Discord Developer Portal.
+   - **Agent Mặc định**: Chọn Agent phụ trách phản hồi tin nhắn từ bot này.
+   - **Chế độ Định tuyến (Routing Mode)**:
+     - `exclusive`: Chỉ các Agent được chỉ định mới nhận tin nhắn.
+     - `mention`: Tin nhắn trong nhóm được chuyển cho Agent có tên `@agent_name`.
+     - `fallback`: Chuyển tin nhắn chưa gắn nhãn về Agent mặc định.
+4. Bấm **Lưu Thay đổi**. Token được mã hóa an toàn vào **Hardware Vault** (`vault.db`) và plugin hot-reload tức thì.
+
+---
+
+## 3. Bảo mật Người vận hành & Bắt tay Mã PIN Ghép đôi
+
+Khi người dùng mới gửi tin nhắn cho bot lần đầu tiên, hệ thống sẽ thực hiện bắt tay xác thực:
+
+1. Bot sẽ phản hồi lại một **mã ghép đôi 6 chữ số** dùng một lần (ví dụ: `842-195`).
+2. Quản trị viên truy cập vào **System** → **Settings** (hoặc mở modal Ghép đôi) trên giao diện Web UI của ActonOS.
+3. Nhập mã PIN 6 chữ số để phê duyệt User ID đó.
+4. Sau khi xác thực thành công, danh tính người gửi được lưu trữ vĩnh viễn trong sổ cái ủy quyền và các tin nhắn tiếp theo sẽ được xử lý tự động bởi Agent swarm.
+
+---
+
+## 4. Giám sát Sức khỏe Kênh & Tự phục hồi
+
+ActonOS liên tục kiểm tra trạng thái hoạt động của các bộ điều hợp kênh:
+- **Bộ giám sát Polling & WebSocket Watchdog**: Khi vòng lặp bị gián đoạn hoặc mất socket, daemon tự động thực hiện tái kết nối theo thuật toán exponential backoff.
+- **Huy hiệu Trạng thái**: Bảng điều khiển Plugins và Operations hiển thị trạng thái trực tiếp: 🟢 `Connected`, 🟡 `Reconnecting`, hoặc 🔴 `Error`.
+- **Cảnh báo Tự động**: Nếu token bị thu hồi hoặc bị chặn API, ActonOS sẽ gửi thông báo khẩn cấp đến Trung tâm Thông báo kèm log chẩn đoán chi tiết.

@@ -1,45 +1,54 @@
 ---
 id: sandbox-isolation
-title: Sandbox Isolation & Cgroups v2
-sidebar_label: Sandbox & Cgroups
+title: Sandbox Isolation & Multi-Layer Security
+sidebar_label: Sandbox & Security
 sidebar_position: 4
 ---
 
-# Sandbox Isolation & Cgroups v2
+# Sandbox Isolation & Multi-Layer Security
 
-To allow autonomous agents to execute untrusted scripts, compile code, and browse the web safely, ActonOS enforces strict kernel-level sandboxing using **Bubblewrap (`bwrap`)** and **Linux Control Groups (Cgroups v2)**.
+To allow autonomous agents and plugins to execute untrusted scripts, compile code, and run external integrations safely, ActonOS enforces strict multi-layered isolation using **Bubblewrap (`bwrap`)**, **Linux Control Groups (Cgroups v2)**, and the **Wazero WebAssembly JIT Sandbox**.
 
 ```mermaid
 graph TD
-    A["Agent Tool Call (e.g., native_exec)"] --> B["Sandbox Dispatcher"]
-    B --> C["Spawn Bubblewrap Container (bwrap)"]
+    A["Agent Execution Boundary"] --> B{"Execution Target"}
     
-    subgraph "Bubblewrap Namespace Isolation"
-        D["Mount Namespaces:<br/>• /usr, /lib, /bin -> Read-Only<br/>• /proc -> Isolated Virtual Procfs<br/>• /tmp -> Private Ephemeral Tmpfs<br/>• /workspace -> Sandboxed Read-Write"]
-        E["Network Namespace:<br/>• Loopback only (unless network enabled)"]
-        F["PID & IPC Namespaces:<br/>• Cannot see host processes"]
+    B -- "Shell / Python / Binaries" --> C["Bubblewrap Sandbox (bwrap)"]
+    B -- "WASM Plugins (.actonpkg)" --> W["Wazero JIT Runtime"]
+    
+    subgraph "OS-Level Sandbox (bwrap + Cgroups v2)"
+        D["Mount Namespaces:<br/>• /usr, /lib, /bin -> Read-Only<br/>• /proc -> Isolated Procfs<br/>• /workspace -> Scoped Read-Write"]
+        G["Resource Limits:<br/>• 512 MB RAM Max<br/>• 50% CPU Quota<br/>• 30 PIDs (Fork-bomb protection)"]
+    end
+    
+    subgraph "WebAssembly Sandbox (Wazero)"
+        W1["Isolated Linear Memory<br/>(Bounds-checked, zero escape)"]
+        W2["Host Syscall Gateway<br/>(acton_sys, acton_vault, acton_storage)"]
+        W3["Egress Firewall Gateway<br/>(net_outbound domain whitelist)"]
     end
     
     C --> D
-    C --> E
-    C --> F
-    
-    subgraph "Cgroups v2 Resource Governance"
-        G["Memory Limit: 512 MB Max (OOM-killed if exceeded)"]
-        H["CPU Quota: 50% of single core maximum"]
-        I["PID Limit: Max 30 concurrent processes (Fork-bomb protection)"]
-    end
-    
     C --> G
-    C --> H
-    C --> I
+    W --> W1
+    W --> W2
+    W --> W3
 ```
 
 ---
 
-## 1. Filesystem Namespace Restrictions
+## 1. WebAssembly (WASM) Sandbox Isolation
 
-Inside the sandboxed execution environment:
+All plugins (`.actonpkg` / `.wasm`) run inside the pure-Go **Wazero WebAssembly JIT engine**:
+- **Linear Memory Safety**: Plugins cannot access host memory or pointer addresses outside their dedicated WebAssembly linear memory pool.
+- **Zero Raw Sockets**: Direct TCP/UDP socket calls are blocked at the WASI boundary. All network requests must use the `acton_net: http_request` or `acton_ws: ws_*` host syscalls.
+- **Egress Domain Firewall**: Outbound HTTP traffic is evaluated against the `manifest.permissions.net_outbound` whitelist. Any connection attempt to an unlisted domain is rejected immediately.
+- **Hardware Vault Brokering**: Plugins never read encryption keys directly; requests for credentials pass through the `acton_vault` syscall and are verified against `permissions.secrets`.
+
+---
+
+## 2. OS-Level Filesystem & Process Sandboxing (Bubblewrap)
+
+For shell commands (`native_exec`), code compilers, and Python scripts:
 - **System Binaries**: `/usr`, `/lib`, `/lib64`, and `/bin` are mounted **Read-Only** from the host image.
 - **Sensitive Directories**: `/etc`, `/root`, `/home`, and `/data/config` (containing Vault keys) are **completely hidden** and unmounted.
 - **Workspace Access**: The only writable directory is `/data/workspace` (or the agent's explicitly configured path scope).
@@ -47,11 +56,11 @@ Inside the sandboxed execution environment:
 
 ---
 
-## 2. Resource Enforcements (Cgroups v2)
+## 3. Resource Enforcements (Cgroups v2)
 
 | Resource Metric | Default Limit | Behavioral Consequence on Breach |
 |:---|:---|:---|
-| **Max Memory (RAM)** | `512 MB` | Linux Kernel Out-Of-Memory (OOM) killer terminates the sandboxed child process without affecting the `actond` daemon. |
+| **Max Memory (RAM)** | `512 MB` | Linux Kernel Out-Of-Memory (OOM) killer terminates the sandboxed child process without affecting `actond`. |
 | **CPU Quota** | `50%` (0.5 core) | CPU throttling via CFS bandwidth controller prevents 100% CPU lockup. |
 | **Max Processes (PIDs)** | `30` | `fork()` calls return `EAGAIN` to prevent fork bombs and runaway subprocesses. |
 | **Execution Timeout** | `60 seconds` | SIGKILL dispatched automatically if a script hangs. |

@@ -1,36 +1,69 @@
 ---
 id: troubleshooting
-title: Cẩm nang Xử lý Sự cố & Khắc phục Lỗi
-sidebar_label: Cẩm nang Xử lý Sự cố
+title: Xử lý Sự cố & Khắc phục Lỗi
+sidebar_label: Hướng dẫn Xử lý Sự cố
 sidebar_position: 1
 ---
 
-# Cẩm nang Xử lý Sự cố & Khắc phục Lỗi
+# Xử lý Sự cố & Khắc phục Lỗi
 
-Hướng dẫn chẩn đoán và khắc phục nhanh các tình huống lỗi thường gặp trong quá trình vận hành ActonOS.
-
----
-
-## 1. Sự cố Mạng & Wi-Fi Captive Portal
-
-### Không thấy Wi-Fi Hotspot `ActonOS-XXXX`:
-- **Nguyên nhân**: MiniPC đã nhận IP qua cổng mạng LAN hoặc card Wi-Fi chưa được nhận diện.
-- **Cách xử lý**:
-  1. Nếu có cắm mạng dây, truy cập trực tiếp `http://acton.local:8080`.
-  2. Rút cáp mạng LAN và khởi động lại máy để kích hoạt Hotspot.
+Cẩm nang tổng hợp giúp chẩn đoán và khắc phục các vấn đề vận hành thường gặp trên môi trường Bare-Metal, Docker, Plugin WASM và quy trình làm việc của AI Agent trong ActonOS.
 
 ---
 
-## 2. Lỗi Gọi Mô hình LLM & API Rate Limits
+## 1. Sự cố Cài đặt & Mạng
 
-### Lỗi `RATE_LIMIT_EXCEEDED` hoặc `429 Too Many Requests`:
-- **Nguyên nhân**: API key của nhà cung cấp chính chạm ngưỡng giới hạn.
-- **Giải pháp**: ActonOS tự động chuyển sang Mô hình Dự phòng (Fallback Model). Bạn có thể cấu hình thêm các model giá rẻ hoặc local LLM (Ollama) trong **Agent Studio**.
+### Lỗi: Cổng 8080 Đã Bị Chiếm dụng (Docker)
+- **Hiện tượng**: `docker: Error response from daemon: Bind for 0.0.0.0:8080 failed: port is already allocated.`
+- **Giải pháp**: Ánh xạ ActonOS sang cổng khác trên máy host:
+  ```bash
+  docker run -d -p 8888:8080 -v acton-data:/data ghcr.io/actonos/actonos:latest
+  ```
+  Sau đó truy cập trang quản trị tại `http://localhost:8888`.
+
+### Lỗi: Trang Captive Portal Không Tự Động Mở (Bare-Metal)
+- **Hiện tượng**: Đã kết nối Wi-Fi `ActonOS-XXXX` nhưng trình duyệt không tự bật lên.
+- **Giải pháp**: Mở trình duyệt web và nhập thủ công `http://192.168.4.1` hoặc `http://acton.local:8080`. Tạm thời tắt kết nối dữ liệu di động 4G/5G trên điện thoại.
 
 ---
 
-## 3. Lỗi Sandbox & Tràn Bộ nhớ
+## 2. Sự cố Plugin WASM & Môi trường Sandbox
 
-### Tiến trình con bị dừng đột ngột (`Exit code 137 / SIGKILL`):
-- **Nguyên nhân**: Tiến trình do Agent chạy vượt quá giới hạn cứng **512 MB RAM** của Cgroups v2.
-- **Giải pháp**: Tối ưu hóa script để xử lý dữ liệu dạng stream hoặc tăng giới hạn trong cấu hình daemon nếu phần cứng cho phép.
+### Lỗi: `domain not permitted in manifest net_outbound`
+- **Hiện tượng**: Plugin không thể gửi HTTP request; log ghi nhận vi phạm an ninh egress.
+- **Giải pháp**: Mở tệp `manifest.json` của plugin và đảm bảo tên miền đích (ví dụ `"api.weather.com"`) đã được khai báo trong `permissions.net_outbound`. Đóng gói lại và tải lên tệp `.actonpkg`.
+
+### Lỗi: `missing secret ... in vault`
+- **Hiện tượng**: Plugin không thể xác thực hoặc không lấy được token khi khởi chạy.
+- **Giải pháp**: Kiểm tra tiền tố khóa bí mật đã được khai báo trong `permissions.secrets` và đã nhập giá trị trong modal Cài đặt của plugin trên giao diện Web UI chưa.
+
+### Lỗi: `WebSocket connection closed (-1)`
+- **Hiện tượng**: Kênh chat không nhận được thông điệp thời gian thực.
+- **Giải pháp**: Kiểm tra dịch vụ bên ngoài có yêu cầu header xác thực hoặc bắt tay token đặc thù khi thiết lập kết nối (`acton_ws: ws_connect`) hay không.
+
+---
+
+## 3. Kênh Giao tiếp & Tích hợp
+
+### Lỗi: Telegram Bot Không Phản hồi
+- **Hiện tượng**: Bot nhận được tin nhắn nhưng không trả lời.
+- **Giải pháp**:
+  1. Kiểm tra mục **Plugins** trên Dashboard để đảm bảo plugin Telegram đang ở trạng thái 🟢 `Running`.
+  2. Xác nhận bạn đã hoàn thành bước nhập **Mã PIN Ghép đôi**.
+  3. Đảm bảo Bot Token chưa bị thu hồi qua `@BotFather`.
+
+### Lỗi: Discord Bot Thiếu Quyền Đọc Nội dung Tin nhắn
+- **Hiện tượng**: Bot đã vào server nhưng không đọc được nội dung câu lệnh người dùng.
+- **Giải pháp**: Trong [Discord Developer Portal](https://discord.com/developers/applications), mở mục **Bot** → **Privileged Gateway Intents** và kích hoạt **Message Content Intent**.
+
+---
+
+## 4. Cách ly Sandbox & Phê duyệt Hành động
+
+### Lỗi: Công cụ Agent Thất bại do `Out of Memory (OOM)`
+- **Hiện tượng**: Lệnh thực thi bị hủy với mã lỗi exit code 137.
+- **Giải pháp**: Môi trường Bubblewrap sandbox giới hạn mặc định **512 MB RAM**. Nếu biên dịch dự án lớn, hãy tăng mức trần bộ nhớ trong cấu hình Agent (`sandbox_memory_mb: 1024`).
+
+### Lỗi: Nhiệm vụ Bị Tạm dừng Chờ Phê duyệt
+- **Hiện tượng**: Nhiệm vụ hiển thị `Running` nhưng tiến độ không thay đổi.
+- **Giải pháp**: Kiểm tra thanh **Thông báo Chờ Phê duyệt** trên đầu Dashboard hoặc mở trang **Missions** → **Approval Queue** để duyệt hoặc từ chối hành động.

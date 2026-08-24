@@ -11,6 +11,18 @@ Standardized definitions for core concepts and architectural terms used across A
 
 ---
 
+### WASMLoader
+The unified plugin management subsystem in ActonOS (`internal/plugin/`) that handles discovery, validation, lifecycle orchestration, and hot-reloading of WebAssembly extensions for tools, chat channels, and SaaS connectors.
+
+### Wazero
+The zero-dependency, 100% pure-Go WebAssembly JIT runtime embedded within `actond` to execute sandboxed WASI modules with memory safety and near-native performance without requiring CGO or external runtimes.
+
+### `.actonpkg`
+The official distributable package format for ActonOS plugins—a ZIP archive bundling `manifest.json`, compiled `plugin.wasm` binary, icons, and configuration schemas.
+
+### Plugin Bridges (`WasmToolBridge`, `WasmChannelBridge`, `WasmConnectorBridge`)
+Internal host adapter bridges that bind guest WebAssembly exports to the ActonOS `ToolRegistry`, `ChannelManager`, and Event Bus subsystems.
+
 ### Hardware Abstraction Layer (HAL)
 The system layer in ActonOS that detects whether the host is running directly on physical Bare-Metal hardware (x86_64 MiniPC) or inside a Docker container, transparently adapting network drivers, telemetry sensors, and sandbox executors.
 

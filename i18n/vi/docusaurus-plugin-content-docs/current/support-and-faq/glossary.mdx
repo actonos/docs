@@ -1,24 +1,54 @@
 ---
 id: glossary
-title: Thuật ngữ Kỹ thuật ActonOS
-sidebar_label: Bảng Thuật ngữ Kỹ thuật
+title: Thuật ngữ Kỹ thuật
+sidebar_label: Thuật ngữ
 sidebar_position: 3
 ---
 
-# Bảng Thuật ngữ Kỹ thuật ActonOS
+# Thuật ngữ Kỹ thuật
 
-Định nghĩa chính xác các khái niệm và thành phần trong hệ sinh thái ActonOS.
+Bảng định nghĩa chuẩn hóa các khái niệm cốt lõi và thuật ngữ kiến trúc được sử dụng trong ActonOS.
 
 ---
 
-| Thuật ngữ | Khái niệm & Giải thích |
-|:---|:---|
-| **`actond`** | Daemon lõi duy nhất bằng Go (`CGO_ENABLED=0`) quản lý toàn bộ hệ sinh thái ActonOS. |
-| **HAL** | *Hardware Abstraction Layer* - Lớp trừu tượng phần cứng tự động chuyển đổi giữa Bare-Metal và Docker. |
-| **Swarm** | Nhóm các tác nhân AI làm việc phối hợp, ủy quyền và giải quyết các mục tiêu DAG phức tạp. |
-| **Hardware Vault** | Cơ chế mã hóa bí mật bằng AES-256-GCM kết hợp Argon2id dựa trên UUID phần cứng. |
-| **Hybrid RAG** | Tìm kiếm lai kết hợp SQLite FTS5 (từ khóa BM25) và Vector embeddings cục bộ (`multilingual-e5-small`). |
-| **MCP** | *Model Context Protocol* - Giao thức chuẩn hóa của Anthropic kết nối mô hình AI với công cụ và dữ liệu. |
-| **`wazero`** | Động cơ thực thi WebAssembly (WASM) thuần Go giúp chạy plugin độc lập và an toàn. |
-| **Bubblewrap (`bwrap`)** | Công cụ tạo môi trường cách ly namespace không đặc quyền trên nhân Linux. |
-| **`tsnet`** | Thư viện nhúng của Tailscale cho phép tạo kết nối Mesh VPN WireGuard trực tiếp trong mã nguồn Go. |
+### WASMLoader
+Phân hệ quản lý plugin thống nhất trong ActonOS (`internal/plugin/`), phụ trách việc phát hiện, xác thực, điều phối vòng đời và hot-reload các tiện ích WebAssembly cho công cụ, kênh chat và kết nối SaaS.
+
+### Wazero
+Engine WebAssembly JIT runtime thuần Go 100% không phụ thuộc CGO, được tích hợp trực tiếp vào `actond` để thực thi các module WASI cách ly với hiệu năng tiệm cận native.
+
+### `.actonpkg`
+Định dạng tệp phân phối chính thức của plugin ActonOS—tệp nén ZIP bao gồm `manifest.json`, tệp nhị phân `plugin.wasm`, biểu tượng và schema cấu hình giao diện.
+
+### Cầu nối Plugin (`WasmToolBridge`, `WasmChannelBridge`, `WasmConnectorBridge`)
+Các bộ điều hợp trên host giúp liên kết hàm xuất khẩu của module WebAssembly với `ToolRegistry`, `ChannelManager` và Event Bus của hệ thống.
+
+### Lớp Trừu tượng Phần cứng (HAL)
+Phân tầng hệ thống trong ActonOS tự động nhận diện máy chủ đang chạy trực tiếp trên Bare-Metal (MiniPC x86_64) hay bên trong Container Docker để linh hoạt điều chỉnh driver mạng, cảm biến đo kiểm và môi trường sandbox.
+
+### Giao thức Ngữ cảnh Mô hình (MCP)
+Tiêu chuẩn mở do Anthropic giới thiệu cho phép mô hình AI tương tác an toàn với các công cụ, nguồn dữ liệu và máy chủ bên ngoài qua giao thức `stdio` và HTTP/SSE JSON-RPC.
+
+### Vòng lặp ReAct (Reasoning + Acting)
+Mô hình suy luận và hành động tự động, trong đó LLM luân phiên giữa việc tạo suy nghĩ tự nhiên và gọi công cụ để quan sát kết quả trước khi đưa ra câu trả lời cuối cùng.
+
+### Phối hợp Đa Agent (Swarm Orchestration)
+Mô hình điều phối trong đó Agent chỉ huy phân rã mục tiêu lớn thành các tác vụ độc lập và ủy quyền thực thi song song cho các Agent chuyên môn thông qua Go Goroutine.
+
+### Bubblewrap (`bwrap`)
+Tiện ích sandbox không cần đặc quyền root trên Linux, tạo không gian namespace cô lập cho user, mount, PID và network.
+
+### Cgroups v2 (Control Groups)
+Cơ chế nhân Linux được ActonOS áp dụng để giới hạn cứng bộ nhớ RAM (512 MB), hạn ngạch CPU và trần số lượng tiến trình con.
+
+### Bộ nhớ Ngữ nghĩa Kết hợp (Hybrid Memory RAG)
+Hệ thống truy xuất hai động cơ kết hợp SQLite FTS5 (so khớp từ khóa BM25) và vector dày đặc (sinh bởi ONNX `multilingual-e5-small`) lưu trữ trong `chromem-go`.
+
+### Đường cong Quên lãng Ebbinghaus (Cognitive Decay)
+Mô hình toán học (`R = exp(-t / S)`) suy giảm trọng số của các mảnh ký ức cũ không được gợi nhớ, ưu tiên dữ liệu thường xuyên sử dụng cho LLM.
+
+### Tích hợp `tsnet`
+Thư viện Tailscale thuần Go được nhúng trực tiếp vào daemon `actond`, cung cấp kết nối mạng riêng ảo WireGuard mesh mã hóa đầu cuối và tên miền HTTPS tự động.
+
+### Cập nhật Tự phục hồi OTA (Self-Healing OTA)
+Cơ chế cập nhật nguyên tử tráo đổi symlink `/data/bin/actond` sang phiên bản mới, tự động hoàn tác về phiên bản cũ nếu bộ đếm watchdog 30 giây phát hiện sự cố.

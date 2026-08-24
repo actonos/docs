@@ -15,11 +15,14 @@ Answers to common questions about ActonOS architecture, privacy, capabilities, a
 
 ### What makes ActonOS different from standard AI agent frameworks?
 Unlike Python-based CLI frameworks that run unconstrained scripts, ActonOS is a **complete operating system and orchestration engine**. It provides:
-1. Kernel-level sandboxing (Bubblewrap & Cgroups v2).
-2. Hardware-encrypted credential vaults.
-3. Pluggable tool protocols (MCP, WASM, Skills).
+1. Kernel-level sandboxing (Bubblewrap & Cgroups v2) and pure-Go WebAssembly JIT (Wazero).
+2. Hardware-encrypted credential vaults with dynamic secret brokering.
+3. Unified WASMLoader plugin subsystem for Tools, Chat Channels, and SaaS Connectors.
 4. Durable checkpointing and self-healing OTA updates.
 5. Dual-runtime support (dedicated MiniPCs & Docker).
+
+### Can I write and install custom plugins without restarting the OS?
+**Yes.** Plugins compile to `.wasm` / `.actonpkg` packages. When uploaded through the **Plugins** page (`/plugins`), the WASMLoader hot-loads the WebAssembly binary inside the Wazero JIT runtime instantaneously.
 
 ### Can ActonOS run 100% offline without internet access?
 **Yes.** When configured with local LLM runtimes (such as **Ollama**, **vLLM**, or local **ONNX** models), ActonOS operates entirely on your local area network with zero data leaving your machine.
@@ -39,7 +42,7 @@ Currently, ActonOS v0.1 targets **x86_64 architecture**. ARM64 support (includin
 ## Security & Data Privacy
 
 ### Where are my API keys and OAuth tokens stored?
-All sensitive secrets are encrypted using **AES-256-GCM** inside `/data/config/vault.db` and `/data/tokens/oauth_tokens.vault`. The master key is derived from the machine's hardware UUID and CPU serial via **Argon2id**. Plaintext credentials never exist on disk.
+All sensitive secrets are encrypted using **AES-256-GCM** inside `/data/config/vault.db`. The master key is derived from the machine's hardware UUID and CPU serial via **Argon2id**. Plaintext credentials never exist on disk.
 
-### Can agents accidentally delete my operating system files?
-**No.** On Bare-Metal MiniPCs, the system root partition is mounted **Read-Only**. Furthermore, all tool executions run inside an unprivileged Bubblewrap namespace where system folders cannot be modified.
+### Can agents or plugins accidentally delete operating system files?
+**No.** On Bare-Metal MiniPCs, the system root partition is mounted **Read-Only**. Furthermore, all tool executions run inside an unprivileged Bubblewrap namespace or sandboxed Wazero linear memory where host system folders cannot be modified.

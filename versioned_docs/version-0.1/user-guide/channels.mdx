@@ -7,49 +7,65 @@ sidebar_position: 7
 
 # Channels & Omnichannel Messaging
 
-The **Channels** subsystem allows ActonOS agents to communicate seamlessly across popular messaging platforms. Users can converse with agents, issue commands, and receive automated mission alerts directly from their favorite chat apps.
+ActonOS connects AI agents to external messaging platforms (Telegram, Discord, Slack, WhatsApp, Zalo) using **WASM Channel Plugins** (`WasmChannelBridge`). This architecture decouples chat protocol implementations from the core daemon while enforcing strict sandboxing, hardware-encrypted bot tokens, and zero-trust pairing security.
 
 ---
 
-## 1. Telegram Bot Integration
+## 1. How Channel Plugins Work
 
-### Setup Steps:
-1. Open Telegram and message **[@BotFather](https://t.me/botfather)**.
-2. Send `/newbot` and follow the prompts to choose a name and username.
-3. Copy the generated **HTTP API Bot Token** (e.g., `123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ`).
-4. In ActonOS, navigate to **Channels** → **Telegram** → click **Connect Account**.
-5. Paste the Bot Token and click **Initialize Adapter**.
+Instead of hardcoded protocol daemons, chat channels execute as sandboxed WebAssembly plugins inside the Wazero runtime:
 
-### Pairing Security PIN:
-- By default, ActonOS uses a **Pairing PIN** handshake to prevent unauthorized users from chatting with your bot.
-- When you first send a message to your Telegram bot, it will reply with a 6-digit verification code.
-- Enter this code in the ActonOS Channels UI to bind your Telegram User ID as an authorized operator.
+```mermaid
+flowchart LR
+    User["Operator / Chat User\n(Telegram / Discord)"] <--> ExtAPI["External Chat API\n(api.telegram.org)"]
+    ExtAPI <--> Bridge["WASM Channel Plugin\n(WasmChannelBridge)"]
+    Bridge <--> CM["ActonOS ChannelManager"]
+    CM <--> Swarm["Universal Agent Swarm\n(ReAct Execution)"]
+```
 
----
-
-## 2. Discord Bot Integration
-
-### Setup Steps:
-1. Navigate to the **[Discord Developer Portal](https://discord.com/developers/applications)**.
-2. Click **New Application**, name your bot, and go to the **Bot** tab.
-3. Under **Privileged Gateway Intents**, enable **Message Content Intent**.
-4. Click **Reset Token** and copy your Discord Bot Token.
-5. Under **OAuth2** → **URL Generator**, select `bot` scope with permissions: `Send Messages`, `Read Message History`, `Attach Files`.
-6. Use the generated invite link to add the bot to your Discord server.
-7. In ActonOS, go to **Channels** → **Discord** → click **Connect Account** and paste the token.
+### Key Capabilities:
+- **Zero-Trust PIN Pairing**: Protects bots from unauthorized users by requiring a 6-digit numeric handshake before granting agent access.
+- **Multi-Bot Accounts**: Connect multiple bots on the same platform (e.g., `@dev_support_bot` and `@ops_monitor_bot`).
+- **Flexible Message Routing**: Route group chat messages by `@agent_name` mention or fallback to a default orchestrator.
+- **Real-time WebSocket Streaming (`acton_ws`)**: Low-latency bidirectional streaming for Discord Gateways and Slack Socket Mode.
 
 ---
 
-## 3. Slack & Custom Webhook Adapters
+## 2. Setting Up a Channel Plugin
 
-- **Slack App**: Ingest team messages via Socket Mode or Incoming Webhooks.
-- **Custom Webhooks**: Configure incoming/outgoing HTTP webhooks with HMAC-SHA256 signature verification for integration with bespoke internal systems.
+### Step 1: Install the Channel Plugin
+1. Navigate to **Extensions** → **Plugins** in the sidebar.
+2. If not already installed, upload the channel package (e.g., `channel-telegram.actonpkg` or `channel-discord.actonpkg`).
+
+### Step 2: Configure Bot Accounts & Tokens
+1. On the plugin card, click **Configure**.
+2. Under **Bot Accounts**, click **+ Add Account**.
+3. Fill in the required parameters:
+   - **Account ID**: Unique identifier (e.g., `tg_dev_bot`).
+   - **Bot Token**: Obtained from [@BotFather](https://t.me/botfather) or Discord Developer Portal.
+   - **Default Agent**: Select the target agent that responds to incoming messages.
+   - **Routing Mode**:
+     - `exclusive`: Only assigned agents receive messages.
+     - `mention`: Group messages are routed to agents tagged with `@agent_name`.
+     - `fallback`: Routes unassigned messages to the system core agent.
+4. Click **Save Changes**. The token is encrypted inside the **Hardware Vault** (`vault.db`) and the plugin hot-reloads instantly.
+
+---
+
+## 3. Operator Security & Pairing PIN Handshake
+
+When a new user sends a message to an ActonOS bot for the first time, the system initiates a zero-trust authorization handshake:
+
+1. The bot replies with a one-time **6-digit pairing code** (e.g., `842-195`).
+2. The user/administrator navigates to **System** → **Settings** (or the Pairing modal) in the ActonOS Web UI.
+3. Enter the 6-digit PIN to authorize the user ID.
+4. Once verified, the sender's identity is permanently recorded in the authorization ledger, and subsequent messages are processed directly by the assigned agent swarm.
 
 ---
 
 ## 4. Channel Health Monitoring & Auto-Recovery
 
-ActonOS continuously monitors channel adapter health:
-- **Long-Polling & WebSocket Watchdog**: If a Telegram poll loop stalls or a Discord gateway socket drops, the system logs the state transition and attempts automatic reconnection with exponential backoff.
-- **State Notifications**: If an adapter encounters an unrecoverable error (such as a revoked bot token), ActonOS immediately publishes an alert in the Notification Center linking directly to the Channels configuration screen.
-- **Health Badges**: The Channels overview page displays live status badges: 🟢 `Connected`, 🟡 `Reconnecting`, or 🔴 `Error`.
+ActonOS continuously monitors the runtime health of all active channel adapters:
+- **Long-Polling & WebSocket Watchdog**: If a polling loop stalls or a socket disconnects, the daemon automatically initiates reconnection with exponential backoff.
+- **Health Badges**: The Plugins and Operations dashboards display real-time statuses: 🟢 `Connected`, 🟡 `Reconnecting`, or 🔴 `Error`.
+- **Failure Escalation**: If a token is revoked or rate-limited by the upstream provider, ActonOS generates an immediate notification in the Notification Center with actionable diagnostic logs.

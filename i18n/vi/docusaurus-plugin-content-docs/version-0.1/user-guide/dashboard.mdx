@@ -1,21 +1,21 @@
 ---
 id: dashboard
-title: Bảng điều khiển & Giám sát Hệ thống
+title: Bảng điều khiển & Quan sát Hệ thống
 sidebar_label: Bảng điều khiển
 sidebar_position: 1
 ---
 
-# Bảng điều khiển & Giám sát Hệ thống
+# Bảng điều khiển & Quan sát Hệ thống
 
-**Bảng điều khiển ActonOS (Dashboard)** đóng vai trò là trung tâm kiểm soát chính để theo dõi hoạt động của các nhóm tác nhân AI, tài nguyên máy chủ, hàng đợi phê duyệt và các tiến trình tự động chạy ngầm.
+**Bảng điều khiển ActonOS (Dashboard)** đóng vai trò là buồng lái trung tâm để theo dõi hoạt động của các Agent, thông số đo kiểm hệ thống, mức tiêu thụ tài nguyên và các quy trình tự động ngầm theo thời gian thực.
 
 ```mermaid
 graph TD
-    A["Dữ liệu Telemetry Lõi ActonOS"] --> B["Tài nguyên Phần cứng: CPU · RAM · Disk · Nhiệt độ"]
-    A --> C["Các nhóm Agent đang chạy & Nhiệm vụ Trực tiếp"]
+    A["Đo kiểm Cốt lõi ActonOS"] --> B["Chỉ số Phần cứng: CPU · RAM · Đĩa · Nhiệt độ"]
+    A --> C["Mạng lưới Agent Hoạt động & Nhiệm vụ Trực tiếp"]
     A --> D["Luồng Sự kiện Thời gian thực qua WebSocket"]
-    A --> E["Hàng đợi Phê duyệt của Người dùng"]
-    B --> F["Giao diện Web UI (React 19 + Tailwind v4)"]
+    A --> E["Hàng đợi Phê duyệt từ Con người"]
+    B --> F["Giao diện Dashboard (React 19 + Tailwind v4)"]
     C --> F
     D --> F
     E --> F
@@ -23,40 +23,45 @@ graph TD
 
 ---
 
-## 1. Thanh Telemetry Giám sát Tài nguyên
+## 1. Thanh Đo kiểm Hệ thống (Top Telemetry Bar)
 
-Thanh trạng thái phía trên cập nhật liên tục mỗi 2 giây:
-- **Đồng hồ CPU**: Tải xử lý của bộ vi xử lý theo thời gian thực.
-- **Dung lượng RAM**: Bộ nhớ đang dùng so với tổng dung lượng (ví dụ `1.8 GB / 16 GB`).
-- **Dung lượng Ổ cứng**: Dung lượng đã dùng trên phân vùng `/data`.
-- **Huy hiệu Chế độ HAL**: Hiển thị chế độ chạy `Bare-metal (bwrap)` hoặc `Docker Container`.
-- **Nhiệt độ Chip (Bare-metal)**: Đọc cảm biến nhiệt độ phần cứng qua Linux D-Bus.
+Thanh tiêu đề phía trên cung cấp nhịp đập liên tục của máy chủ vật lý hoặc container:
 
----
-
-## 2. Danh sách Agent Đang Hoạt động
-
-Hiển thị toàn bộ các agent đang có trong hệ thống:
-- **Trạng thái Agent**:
-  - 🟢 `Rảnh rỗi (Idle)` - Sẵn sàng nhận lệnh hoặc chờ chu kỳ đánh thức.
-  - 🟡 `Đang gọi Công cụ (Executing Tool)` - Đang chạy script, duyệt web hoặc truy vấn dữ liệu.
-  - 🟣 `Đang Ủy quyền (Delegated)` - Đang phân công công việc cho nhóm agent con.
-  - 🔴 `Chờ Phê duyệt (Approval Required)` - Đang tạm dừng chờ con người xác nhận hành động.
-- **Thao tác Nhanh**: Bấm vào thẻ Agent để bắt đầu Chat ngay hoặc mở cấu hình trong **Agent Studio**.
+- **Đồng hồ Đo Tải CPU**: Mức tải đa nhân theo thời gian thực, cập nhật mỗi 2 giây qua ảnh chụp WebSocket snapshot.
+- **Phân bổ Bộ nhớ RAM**: Dung lượng RAM đang sử dụng so với tổng dung lượng vật lý (ví dụ: `1.8 GB / 16 GB`).
+- **Lưu trữ Ổ đĩa**: Dung lượng đã dùng và còn trống trên phân vùng `/data`.
+- **Huy hiệu Chế độ HAL**: Hiển thị hệ thống đang chạy ở chế độ `Bare-metal (bwrap)` hay `Docker Container`.
+- **Nhiệt độ Chip (Bare-metal)**: Đọc trực tiếp cảm biến nhiệt từ giao diện D-Bus của bo mạch chủ.
 
 ---
 
-## 3. Bảng Lệnh Toàn cục (`Ctrl + K`)
+## 2. Tổng quan Danh sách Agent Đang Hoạt động
 
-Bấm tổ hợp phím **`Ctrl + K`** (hoặc `Cmd + K` trên macOS) ở bất kỳ đâu trong ActonOS:
-- **Điều hướng nhanh**: Chuyển ngay đến các trang Chat, Nhiệm vụ, Kênh chat, Cài đặt, Terminal.
-- **Tìm kiếm Agent & Tệp**: Gõ tên Agent để trò chuyện hoặc tìm tệp trong Workspace.
-- **Thao tác khẩn cấp**: Tạo bản sao lưu nhanh hoặc khóa màn hình phiên làm việc.
+Các thẻ trung tâm hiển thị toàn bộ Agent đã được đăng ký:
+- **Ảnh đại diện & Tên Agent**: Nhận diện nhanh chóng.
+- **Chỉ báo Trạng thái**:
+  - 🟢 `Idle` - Agent đang chờ lệnh hoặc chờ đến chu kỳ kiểm tra.
+  - 🟡 `Executing Tool` - Agent đang gọi công cụ MCP, WASM, hoặc Native.
+  - 🟣 `Delegated` - Agent đang điều phối các tác vụ con trong mạng lưới swarm.
+  - 🔴 `Approval Required` - Agent tạm dừng để chờ con người phê duyệt.
+- **Thao tác Nhanh**: Bấm vào bất kỳ thẻ Agent nào để mở cửa sổ Chat trực tiếp hoặc mở cấu hình trong **Agent Studio**.
 
 ---
 
-## 4. Hộp Thông báo Phê duyệt Hành động
+## 3. Bảng Lệnh Toàn cục (Global Command Palette `Ctrl + K`)
 
-Khi một Agent tự trị thực hiện thao tác nhạy cảm (như ghi đè file hệ thống, chạy lệnh shell, hoặc gửi email hàng loạt), thanh cảnh báo màu hổ phách sẽ xuất hiện:
-- **Xem trước Hành động**: Tên công cụ, đường dẫn tệp và tham số dữ liệu.
-- **Phê duyệt / Từ chối**: Bấm **Phê duyệt** (có thể kèm lý do) để tiếp tục chạy từ đúng điểm dừng, hoặc **Từ chối** để hủy bỏ an toàn.
+Nhấn **`Ctrl + K`** (hoặc **`Cmd + K`** trên macOS) tại bất kỳ đâu trong ActonOS để mở thanh tìm kiếm thông minh:
+
+- **Điều hướng Nhanh**: Di chuyển tức thì đến các trang (`Chat`, `Missions`, `Plugins`, `Skills`, `Settings`, `Terminal`).
+- **Tìm kiếm Agent Trực tiếp**: Nhập tên Agent để bắt đầu trò chuyện ngay.
+- **Định vị Tệp**: Tìm và mở tệp trong Workspace mà không cần duyệt cây thư mục.
+- **Hành động Nhanh**: Kích hoạt **Sao lưu Hệ thống**, phát nhịp **Heartbeat Pulse**, hoặc **Khóa Phiên làm việc**.
+
+---
+
+## 4. Thanh Thông báo Yêu cầu Phê duyệt
+
+Khi một Agent tự trị cố gắng thực hiện hành vi đột biến rủi ro cao (như sửa đổi tệp hệ thống, chạy lệnh shell chưa biết, hoặc phát email hàng loạt), một dải thông báo màu hổ phách sẽ xuất hiện trên Dashboard:
+
+- **Xem trước Hành động**: Hiển thị tên công cụ, đường dẫn đích và tham số truyền vào.
+- **Phê duyệt / Từ chối**: Bấm **Approve** (kèm lý do kiểm toán) để tiếp tục thực thi, hoặc **Reject** để hủy bỏ hành động an toàn.

@@ -7,24 +7,42 @@ sidebar_position: 2
 
 # Câu hỏi Thường gặp (FAQ)
 
-Tổng hợp các câu hỏi phổ biến từ người dùng, quản trị viên hệ thống và lập trình viên.
+Giải đáp các thắc mắc phổ biến về kiến trúc, tính riêng tư, tính năng và phần cứng của ActonOS.
 
 ---
 
-## 1. Dành cho Người dùng Mới
+## Tính năng Chung & Năng lực Hệ thống
 
-### ActonOS có cần kết nối Internet liên tục không?
-- **Trả lời**: Nếu bạn sử dụng các mô hình đám mây (OpenAI, Claude, Gemini), ActonOS cần Internet để gọi API. Nếu bạn sử dụng mô hình AI cục bộ chạy trên **Ollama**, hệ thống có thể hoạt động hoàn toàn offline (kèm theo tính năng tìm kiếm ngữ nghĩa cục bộ qua `embeddingd`).
+### Điểm khác biệt giữa ActonOS và các framework AI Agent thông thường?
+Không giống các thư viện Python chạy script không kiểm soát, ActonOS là **một hệ điều hành hoàn chỉnh và động cơ điều phối chuyên dụng**. Hệ thống tích hợp:
+1. Cách ly sandbox cấp nhân (Bubblewrap & Cgroups v2) và WebAssembly JIT thuần Go (Wazero).
+2. Két bí mật mã hóa phần cứng với cơ chế môi giới token động.
+3. Phân hệ Plugin WASMLoader hợp nhất cho Công cụ, Kênh chat và Kết nối SaaS.
+4. Lưu trạng thái bền vững và cập nhật OTA tự phục hồi.
+5. Hỗ trợ chạy song song Bare-Metal (MiniPC vật lý) và Container Docker.
 
-### Tôi có thể cài ActonOS song song với Windows được không?
-- **Trả lời**: Trình cài đặt ISO tự động sẽ xóa toàn bộ ổ đĩa để thiết lập phân vùng bảo mật. Nếu muốn chạy chung máy tính, hãy sử dụng giải pháp **Docker Container** trên WSL2.
+### Tôi có thể tự viết và cài đặt Plugin tùy chỉnh mà không cần khởi động lại OS không?
+**Hoàn toàn được.** Plugin được biên dịch thành các gói `.wasm` / `.actonpkg`. Khi tải lên qua trang **Plugins** (`/plugins`), WASMLoader sẽ hot-load nhị phân WebAssembly trong Wazero runtime ngay lập tức.
+
+### ActonOS có thể chạy Offline 100% không cần Internet không?
+**Có.** Khi kết hợp với các LLM nội bộ (như **Ollama**, **vLLM**, hoặc các mô hình **ONNX** cục bộ), ActonOS vận hành trọn vẹn trong mạng LAN nội bộ mà không có bất kỳ dữ liệu nào gửi ra ngoài.
 
 ---
 
-## 2. Dành cho Quản trị viên & Lập trình viên
+## Phần cứng & Triển khai
 
-### Dữ liệu và API Key của tôi có an toàn không?
-- **Trả lời**: Hoàn toàn an toàn. ActonOS sử dụng **Hardware-Bound Vault** (AES-256-GCM + Argon2id) gắn chặt với số định danh phần cứng của máy. Key không bao giờ được lưu dạng văn bản thô.
+### Thiết bị MiniPC nào phù hợp nhất để chạy ActonOS?
+Bất kỳ máy tính MiniPC x86_64 nào trang bị chip **Intel Processor N100** (như Beelink EQ12, Minisforum UN100, GMKtec G2) kèm 8 GB – 16 GB RAM và ổ cứng 128 GB+ NVMe SSD đều mang lại sự cân bằng tối ưu giữa tiết kiệm điện năng (6W–15W) và khả năng hoạt động 24/7.
 
-### Làm thế nào để thêm công cụ mới cho Agent?
-- **Trả lời**: Bạn có thể cài đặt 1-click từ **Tool Hub**, thêm máy chủ **MCP**, tạo thư mục **Skill-as-a-Folder** hoặc tải lên plugin **WASM**.
+### Tôi có thể cài đặt ActonOS trên Raspberry Pi không?
+Hiện tại, phiên bản ActonOS v0.1 tập trung tối ưu cho **kiến trúc x86_64**. Hỗ trợ ARM64 (bao gồm Raspberry Pi 5 và Docker trên Apple Silicon) đang được hoàn thiện tích cực cho bản phát hành v0.2.
+
+---
+
+## Bảo mật & Quyền Riêng tư Dữ liệu
+
+### Khóa API và Token OAuth được lưu trữ ở đâu?
+Toàn bộ bí mật được mã hóa bằng thuật toán **AES-256-GCM** trong tệp `/data/config/vault.db`. Khóa chủ được dẫn xuất mật mã từ UUID và CPU serial phần cứng qua **Argon2id**. Dữ liệu văn bản thô không bao giờ tồn tại trên đĩa cứng.
+
+### Agent hay Plugin có thể vô tình xóa tệp hệ điều hành không?
+**Không.** Trên Bare-Metal MiniPC, phân vùng gốc hệ điều hành được gắn kết ở chế độ **Read-Only**. Hơn nữa, mọi công cụ đều chạy trong namespace Bubblewrap hoặc bộ nhớ tuyến tính Wazero được kiểm tra biên nghiêm ngặt.

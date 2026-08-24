@@ -1,38 +1,73 @@
 ---
 id: hardware-vault-security
-title: Két Bảo mật Ràng buộc Phần cứng & Sổ cái Kiểm toán
-sidebar_label: Két Bảo mật & Kiểm toán
+title: Két Bảo mật Phần cứng & Mật mã học
+sidebar_label: Hardware Vault & Bảo mật
 sidebar_position: 3
 ---
 
-# Két Bảo mật Ràng buộc Phần cứng & Sổ cái Kiểm toán
+# Két Bảo mật Phần cứng & Mật mã học
 
-Trong ActonOS, toàn bộ bí mật, API key và OAuth tokens được bảo vệ bằng mô hình **Zero-Trust Hardware-Bound Vault** kết hợp với **Sổ cái Kiểm toán Bất biến (SHA-256 Chained Audit Trail)**.
+ActonOS triển khai hệ thống lưu trữ thông tin xác thực theo mô hình Zero-Trust, trong đó các khóa bí mật nhạy cảm, API key, token bot chat và OAuth refresh token đều được mã hóa ở trạng thái tĩnh bằng thuật toán **AES-256-GCM** với khóa chủ được dẫn xuất mật mã trực tiếp từ định danh phần cứng vật lý và muối mật khẩu quản trị.
 
 ```mermaid
-flowchart LR
-    A["Định danh Phần cứng:<br/>DMI UUID + CPU Serial"] --> B["Hàm Dẫn xuất Khóa:<br/>Argon2id (64MB, 4 Lượt)"]
-    B --> C["Khóa Mã hóa Chủ Master Key"]
-    C --> D["Thuật toán AES-256-GCM (96-bit Nonce)"]
-    D --> E["Két Dữ liệu Mã hóa: /data/config/vault.db"]
-    
-    F["Sự kiện Hệ thống / Agent"] --> G["Tạo Bản ghi Kiểm toán JSON"]
-    G --> H["Băm SHA-256 nối tiếp (H_n = Hash(H_{n-1} + Log_n))"]
-    H --> I["Sổ cái Bất biến: /data/logs/audit.jsonl"]
+flowchart TD
+    A["DMI System UUID<br/>/sys/class/dmi/id/product_uuid"] --> C["Bộ Thu thập Seed Phần cứng"]
+    B["CPU Processor Serial / Machine ID<br/>/etc/machine-id"] --> C
+    D["Muối Mật khẩu Quản trị"] --> E["Hàm Dẫn xuất Khóa<br/>Argon2id (Memory-Hard)"]
+    C --> E
+    E --> F["Khóa Mã hóa Chủ (256-bit)"]
+    F --> G["Engine AES-256-GCM"]
+    H["Token Bot, Khóa API & Bí mật OAuth"] --> G
+    G --> I[("Tệp Vault Mã hóa<br/>/data/config/vault.db")]
 ```
 
 ---
 
-## 1. Cơ chế Ràng buộc Phần cứng (Hardware Binding)
+## 1. Dấu vân tay Phần cứng & Dẫn xuất Khóa
 
-- **Sinh khóa**: Khi thiết lập lần đầu, hệ thống đọc DMI UUID (`/sys/class/dmi/id/product_uuid`) và CPU Serial từ phần cứng.
-- **Argon2id**: Khóa chủ được dẫn xuất qua Argon2id với bộ nhớ 64 MB, 4 lượt tính toán và muối (salt) hệ thống ngẫu nhiên.
-- **Chống Trộm Ổ Cứng**: Nếu tháo ổ SSD mang sang máy tính khác, khóa không thể giải mã được vì khác mã phần cứng.
+Trên các máy chủ Bare-Metal, Hardware Vault dẫn xuất khóa gốc từ:
+1. **DMI System UUID**: Định danh phần cứng duy nhất từ BIOS bo mạch chủ.
+2. **System Machine ID**: Định danh CPU và phần cứng máy chủ.
+3. **Argon2id KDF**: Hàm dẫn xuất khóa tốn bộ nhớ (64 MB RAM, 4 vòng lặp song song).
+
+:::important Chống Trộm Ổ Cứng & Nhân Bản Đĩa
+Nếu kẻ tấn công tháo ổ cứng NVMe SSD hoặc sao chép ảnh đĩa sang máy khác, khóa phần cứng dẫn xuất sẽ không khớp, khiến toàn bộ dữ liệu trong `/data/config/vault.db` trở nên hoàn toàn không thể giải mã.
+:::
 
 ---
 
-## 2. Sổ cái Kiểm toán Nối chuỗi Băm (SHA-256 Ledger)
+## 2. Cầu nối Phân phối Bí mật cho Plugin WASM
 
-Mọi thao tác thay đổi cấu hình, tiêu thụ token và gọi công cụ đều được ghi vào `/data/logs/audit.jsonl`.
-Mỗi dòng log chứa mã hash của dòng trước đó:
-- Nếu ai đó cố tình xóa hoặc sửa một dòng trong quá khứ, toàn bộ chuỗi băm sẽ bị gãy và hệ thống sẽ báo động vi phạm tính toàn vẹn.
+Các plugin WASM không bao giờ được phép đọc trực tiếp tệp `/data/config/vault.db` hay tiếp cận Master Key. Việc lấy thông tin xác thực tuân thủ mô hình môi giới bảo mật (Broker Pattern):
+
+```mermaid
+sequenceDiagram
+    participant Plugin as Plugin WASM (Guest)
+    participant Gate as Cổng Bảo mật ActonOS Security Gate
+    participant Vault as Hardware Vault (Host)
+
+    Plugin->>Gate: Syscall acton_vault: get_secret("tokens.bot_primary")
+    Gate->>Gate: Kiểm tra key với manifest.permissions.secrets
+    alt Được cấp quyền
+        Gate->>Vault: Giải mã bí mật từ vault.db
+        Vault-->>Gate: Trả về token đã giải mã
+        Gate-->>Plugin: Truyền byte vào bộ nhớ tuyến tính WASM
+    else Bị từ chối
+        Gate-->>Plugin: Trả về 0 bytes (Lỗi: Từ chối quyền truy cập)
+    end
+```
+
+- **Khai báo Manifest**: Plugin bắt buộc phải khai báo mẫu khóa bí mật cần dùng trong `manifest.permissions.secrets` (ví dụ: `["discord_bot_tokens.*"]`).
+- **Phân quyền RBAC Chặt chẽ**: Yêu cầu đọc các khóa ngoài danh mục cấp phép sẽ bị từ chối ngay lập tức và ghi lại trong nhật ký kiểm toán an ninh.
+
+---
+
+## 3. Sổ cái Kiểm toán Chuỗi Băm Mật mã (`audit.jsonl`)
+
+Mọi sự kiện nhạy cảm (gọi công cụ, phê duyệt/từ chối hành động, làm mới token, đăng nhập) đều được lưu vào tệp nhật ký chỉ ghi nối tiếp (append-only) có tính bảo mật tiến:
+
+```
+Hash(n) = SHA-256(Hash(n-1) || Timestamp(n) || EventPayload(n))
+```
+
+Hệ thống cung cấp API kiểm tra toàn vẹn (`GET /api/system/audit/verify`) để quét toàn bộ chuỗi băm từ bản ghi khởi tạo, giúp phát hiện ngay mọi hành vi sửa đổi hoặc xóa nhật ký trái phép.

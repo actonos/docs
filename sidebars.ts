@@ -26,6 +26,7 @@ const sidebars: SidebarsConfig = {
         'user-guide/missions',
         'user-guide/operations',
         'user-guide/automations-heartbeat',
+        'user-guide/plugins',
         'user-guide/channels',
         'user-guide/connectors',
         'user-guide/tools-and-skills',

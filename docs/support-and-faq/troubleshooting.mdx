@@ -7,14 +7,14 @@ sidebar_position: 1
 
 # Troubleshooting & Problem Resolution
 
-A comprehensive guide to diagnosing and resolving common operational issues across Bare-Metal, Docker, and AI Agent workflows in ActonOS.
+A comprehensive guide to diagnosing and resolving common operational issues across Bare-Metal, Docker, WASM Plugins, and AI Agent workflows in ActonOS.
 
 ---
 
 ## 1. Installation & Network Issues
 
 ### Issue: Port 8080 Already in Use (Docker)
-- **Symptom**: `docker: Error response from daemon: driver failed programming external connectivity on endpoint actonos: Bind for 0.0.0.0:8080 failed: port is already allocated.`
+- **Symptom**: `docker: Error response from daemon: Bind for 0.0.0.0:8080 failed: port is already allocated.`
 - **Solution**: Map ActonOS to an alternate host port:
   ```bash
   docker run -d -p 8888:8080 -v acton-data:/data ghcr.io/actonos/actonos:latest
@@ -25,21 +25,21 @@ A comprehensive guide to diagnosing and resolving common operational issues acro
 - **Symptom**: Connected to `ActonOS-XXXX` but no browser popup appears.
 - **Solution**: Open any browser window and manually navigate to `http://192.168.4.1` or `http://acton.local:8080`. Ensure mobile data / cellular connection is temporarily disabled.
 
-### Issue: Wi-Fi Adapter Not Recognized on Bare-Metal MiniPC
-- **Symptom**: Setup wizard reports "No Wi-Fi Interfaces Found".
-- **Solution**: Connect via Ethernet cable. ActonOS will automatically fetch the latest Linux kernel firmware packages for Realtek / Intel Wi-Fi chipsets on first boot.
-
 ---
 
-## 2. LLM Providers & Model Cascades
+## 2. WASM Plugins & Extension Runtime
 
-### Issue: `429 Too Many Requests` (Upstream LLM Rate Limits)
-- **Symptom**: Agent pauses and logs rate limit warnings.
-- **Solution**: Configure a **Fallback Model** in Agent Studio (e.g., set `google:gemini-2.0-flash` or a local `ollama` model as secondary). ActonOS will automatically switch to the fallback upon encountering 429 status codes.
+### Issue: `domain not permitted in manifest net_outbound`
+- **Symptom**: Plugin fails to perform HTTP request; log reports egress security violation.
+- **Solution**: Open `manifest.json` for the plugin and ensure the target domain hostname (e.g. `"api.weather.com"`) is explicitly declared inside `permissions.net_outbound`. Re-package and upload the `.actonpkg`.
 
-### Issue: Weak Models Repeating Idle Greetings During Heartbeat
-- **Symptom**: Fast/cheap models say "Hello, how can I help you today?" instead of processing background tasks.
-- **Solution**: ActonOS includes an automatic `looksLikeIdleChatter` filter. For custom agents, ensure your system prompt emphasizes: `Headless Mode: If no work is required, reply ONLY with HEARTBEAT_OK.`
+### Issue: `missing secret ... in vault`
+- **Symptom**: Plugin fails to authenticate or retrieve credentials during startup.
+- **Solution**: Check that the required secret key prefix is declared in `permissions.secrets` and configured in the plugin's Settings modal in the ActonOS Web UI.
+
+### Issue: `WebSocket connection closed (-1)`
+- **Symptom**: Chat channel fails to receive live inbound frames.
+- **Solution**: Check if the remote service requires authentication headers or custom token handshakes during connection establishment (`acton_ws: ws_connect`).
 
 ---
 
@@ -48,17 +48,13 @@ A comprehensive guide to diagnosing and resolving common operational issues acro
 ### Issue: Telegram Bot Does Not Respond
 - **Symptom**: Bot receives messages but does not reply.
 - **Solution**:
-  1. Check **Channels** in the dashboard to confirm the status is 🟢 `Connected`.
+  1. Check **Plugins** in the dashboard to confirm the Telegram plugin status is 🟢 `Running`.
   2. Verify you completed the **Pairing PIN** verification step.
   3. Ensure your Telegram Bot Token was not revoked via `@BotFather`.
 
 ### Issue: Discord Bot Missing Message Content Intent
 - **Symptom**: Bot joins server but cannot read user prompts.
 - **Solution**: In the [Discord Developer Portal](https://discord.com/developers/applications), navigate to **Bot** → **Privileged Gateway Intents** and enable **Message Content Intent**.
-
-### Issue: Expired Google / GitHub OAuth Tokens
-- **Symptom**: SaaS connector shows 🔴 `Re-authentication Required`.
-- **Solution**: Navigate to **Connectors**, click **Reconnect**, and approve third-party permissions. Ensure the host system clock is synchronized via NTP.
 
 ---
 
@@ -70,4 +66,4 @@ A comprehensive guide to diagnosing and resolving common operational issues acro
 
 ### Issue: Mission Paused on Pending Approval
 - **Symptom**: Mission shows `Running` but progress does not advance.
-- **Solution**: Check the top **Pending Approvals Banner** on the Dashboard or navigate to **Operations** → **Approval Queue** to approve or reject the paused mutation.
+- **Solution**: Check the top **Pending Approvals Banner** on the Dashboard or navigate to **Missions** → **Approval Queue** to approve or reject the paused mutation.

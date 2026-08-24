@@ -1,31 +1,66 @@
 ---
 id: sandbox-isolation
-title: Cách ly Sandbox & Kiểm soát Tài nguyên Cgroups v2
-sidebar_label: Cách ly Sandbox & Cgroups
+title: Cách ly Sandbox & Bảo mật Đa tầng
+sidebar_label: Sandbox & Bảo mật
 sidebar_position: 4
 ---
 
-# Cách ly Sandbox & Kiểm soát Tài nguyên Cgroups v2
+# Cách ly Sandbox & Bảo mật Đa tầng
 
-Để ngăn chặn các Agent tự trị vô tình làm hỏng hệ điều hành hoặc bị lợi dụng thực thi mã độc, ActonOS triển khai cơ chế cách ly tầng nhân Linux bằng **Bubblewrap (`bwrap`)** kết hợp **Cgroups v2 Resource Slices**.
+Nhằm cho phép các AI Agent và Plugin thực thi an toàn các đoạn mã chưa được kiểm duyệt, biên dịch phần mềm và chạy các tích hợp ngoài, ActonOS áp dụng cơ chế cách ly đa tầng nghiêm ngặt kết hợp giữa **Bubblewrap (`bwrap`)**, **Linux Control Groups (Cgroups v2)** và **Môi trường Sandbox WebAssembly Wazero**.
+
+```mermaid
+graph TD
+    A["Ranh giới Thực thi Agent"] --> B{"Mục tiêu Thực thi"}
+    
+    B -- "Shell / Python / Nhị phân" --> C["Sandbox Bubblewrap (bwrap)"]
+    B -- "Plugin WASM (.actonpkg)" --> W["Wazero JIT Runtime"]
+    
+    subgraph "Cách ly Cấp Hệ điều hành (bwrap + Cgroups v2)"
+        D["Mount Namespaces:<br/>• /usr, /lib, /bin -> Read-Only<br/>• /proc -> Procfs Biệt lập<br/>• /workspace -> Giới hạn Read-Write"]
+        G["Giới hạn Tài nguyên:<br/>• RAM tối đa 512 MB<br/>• 50% CPU Quota<br/>• 30 PIDs (Chống Fork-bomb)"]
+    end
+    
+    subgraph "Cách ly WebAssembly (Wazero)"
+        W1["Bộ nhớ Tuyến tính Biệt lập<br/>(Kiểm tra biên an toàn)"]
+        W2["Cổng Lệnh gọi Host Syscall<br/>(acton_sys, acton_vault, acton_storage)"]
+        W3["Cổng Tường lửa Mạng Egress<br/>(Whitelist net_outbound)"]
+    end
+    
+    C --> D
+    C --> G
+    W --> W1
+    W --> W2
+    W --> W3
+```
 
 ---
 
-## 1. Giới hạn Tài nguyên (Cgroups v2 Hard Caps)
+## 1. Cách ly Môi trường WebAssembly (WASM Sandbox)
 
-Mỗi tiến trình con được khởi tạo bởi Agent đều bị khống chế nghiêm ngặt:
+Toàn bộ plugin (`.actonpkg` / `.wasm`) thực thi bên trong engine **Wazero WebAssembly JIT** thuần Go:
+- **An toàn Bộ nhớ Tuyến tính**: Plugin hoàn toàn không thể truy xuất bộ nhớ ngoài không gian heap tuyến tính được cấp phát riêng.
+- **Chặn Socket Thô**: Các lệnh gọi socket TCP/UDP trực tiếp bị khóa ở ranh giới WASI. Mọi truy cập mạng bắt buộc phải qua syscall `acton_net: http_request` hoặc `acton_ws: ws_*`.
+- **Tường lửa Tên miền Egress**: Lưu lượng HTTP ra ngoài được kiểm duyệt đối chiếu với danh sách `manifest.permissions.net_outbound`. Bất kỳ yêu cầu nào đến domain chưa cấp quyền đều bị từ chối lập tức.
+- **Cầu nối Bí mật Hardware Vault**: Plugin không bao giờ đọc khóa mã hóa trực tiếp; các yêu cầu lấy token đều đi qua syscall `acton_vault` và kiểm tra quyền trong `permissions.secrets`.
 
-| Tham số Cgroups v2 | Giá trị Giới hạn | Tác dụng Bảo vệ |
+---
+
+## 2. Cách ly Tiến trình & Tệp Cấp Hệ điều hành (Bubblewrap)
+
+Dành cho các lệnh shell (`native_exec`), trình biên dịch và script Python:
+- **Tệp Nhị phân Hệ thống**: `/usr`, `/lib`, `/lib64`, và `/bin` được gắn kết ở chế độ **Read-Only**.
+- **Thư mục Nhạy cảm**: `/etc`, `/root`, `/home`, và `/data/config` (chứa khóa Vault) bị **ẩn hoàn toàn** không thể truy cập.
+- **Truy cập Workspace**: Thư mục ghi duy nhất là `/data/workspace` (hoặc phạm vi đường dẫn cấp cho agent).
+- **Vùng tạm Thời vụ**: `tmpfs` độc lập được mount tại `/tmp` và tự động giải phóng khi tiến trình kết thúc.
+
+---
+
+## 3. Thực thi Giới hạn Tài nguyên (Cgroups v2)
+
+| Chỉ số Tài nguyên | Hạn mức Mặc định | Hệ quả khi Vượt ngưỡng |
 |:---|:---|:---|
-| `memory.max` | **512 MB** | Tránh cạn kiệt RAM hệ thống (Out-of-Memory chỉ dừng tiến trình vi phạm) |
-| `cpu.max` | **50000 100000** | Tối đa 50% một nhân CPU (chống chiếm dụng CPU toàn bộ hệ thống) |
-| `pids.max` | **30 tiến trình** | Ngăn chặn hoàn toàn các cuộc tấn công Fork-bomb |
-| `io.max` | **50 MB/s** | Ngăn chặn ghi đĩa liên tục gây nghẽn I/O |
-
----
-
-## 2. Phân quyền Hệ thống Tệp (Bubblewrap Mounts)
-
-- `/usr`, `/lib`, `/bin`: Gắn kết **Chỉ Đọc (Read-Only)**.
-- `/etc`, `/data/config`, `/data/tokens`: **Hoàn toàn bị ẩn và chặn truy cập**.
-- `/data/workspace`: Thư mục duy nhất được phép đọc/ghi.
+| **Bộ nhớ RAM Tối đa** | `512 MB` | Cơ chế Out-Of-Memory (OOM) của nhân Linux sẽ hủy tiến trình con mà không ảnh hưởng daemon `actond`. |
+| **Hạn ngạch CPU** | `50%` (0.5 core) | Cơ chế điều tiết CFS bandwidth ngăn chặn chiếm dụng 100% CPU. |
+| **Số Tiến trình (PIDs)** | `30` | Lệnh gọi `fork()` trả về `EAGAIN` nhằm triệt tiêu nguy cơ fork-bomb. |
+| **Thời gian Thực thi** | `60 giây` | Tự động gửi tín hiệu SIGKILL nếu script bị treo. |

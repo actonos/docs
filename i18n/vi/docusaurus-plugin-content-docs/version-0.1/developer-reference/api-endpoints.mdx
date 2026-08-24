@@ -1,67 +1,261 @@
 ---
 id: api-endpoints
-title: Danh mục Tra cứu REST API Endpoints
-sidebar_label: Tra cứu API Endpoints
+title: Tham chiếu API Endpoints
+sidebar_label: API Endpoints
 sidebar_position: 2
 ---
 
-# Danh mục Tra cứu REST API Endpoints
+# Tham chiếu API Endpoints
 
-Danh sách đầy đủ các API endpoints được cung cấp bởi ActonOS Core Daemon (`actond`).
-
----
-
-## 1. Hệ thống & Giám sát (System & Telemetry)
-
-| Phương thức | Đường dẫn Endpoint | Mô tả |
-|:---|:---|:---|
-| `GET` | `/api/health` | Kiểm tra tình trạng hoạt động (Healthcheck) |
-| `GET` | `/api/system/telemetry` | Lấy chỉ số CPU, RAM, Disk, Nhiệt độ và Uptime |
-| `POST` | `/api/system/backup` | Tạo và tải về gói snapshot sao lưu toàn diện |
-| `POST` | `/api/system/restore` | Phục hồi hệ thống từ tệp sao lưu `.tar.gz` |
-| `POST` | `/api/system/ota/check` | Kiểm tra các bản cập nhật OTA mới |
+Tài liệu tham chiếu chi tiết các API REST do tiến trình nền ActonOS (`actond`) cung cấp.
+Base URL: `http://localhost:8080/api`
 
 ---
 
-## 2. Quản lý Tác nhân (Agents API)
+## 1. Hệ thống & Sức khỏe (Health & System)
 
-| Phương thức | Đường dẫn Endpoint | Mô tả |
-|:---|:---|:---|
-| `GET` | `/api/agents` | Danh sách toàn bộ Agent manifests |
-| `POST` | `/api/agents` | Tạo một Agent mới |
-| `GET` | `/api/agents/{id}` | Lấy chi tiết cấu hình của một Agent |
-| `PUT` | `/api/agents/{id}` | Cập nhật cấu hình Agent |
-| `DELETE` | `/api/agents/{id}` | Xóa bỏ một Agent |
+### `GET /api/health`
+Trả về trạng thái sức khỏe, phiên bản, thời gian hoạt động (uptime), chế độ runtime và tài nguyên tải. Không yêu cầu xác thực.
+
+**Phản hồi:**
+```json
+{
+  "status": "healthy",
+  "version": "0.1.0",
+  "uptime_seconds": 3600,
+  "runtime_mode": "baremetal",
+  "agents_active": 3,
+  "memory_usage_mb": 42.5,
+  "cpu_percent": 1.8,
+  "disk_usage_percent": 12.4,
+  "tailscale_connected": true
+}
+```
+
+### `GET /api/models`
+Lấy danh mục catalog chuẩn của tất cả các mô hình LLM được hỗ trợ, thông số nhà cung cấp, nhãn badge và hạn mức. Đây là nguồn dữ liệu chuẩn duy nhất của toàn hệ thống.
+
+**Phản hồi:**
+```json
+{
+  "models": [
+    {
+      "id": "anthropic/claude-sonnet-4-6",
+      "name": "Claude Sonnet 4.6",
+      "provider_id": "anthropic",
+      "provider_name": "Anthropic Claude",
+      "context_window": 200000,
+      "badge": "Recommended"
+    }
+  ]
+}
+```
+
+### `GET /api/system/audit/verify`
+Xác thực chuỗi băm mật mã SHA-256 của tệp `/data/logs/audit.jsonl` để phát hiện can thiệp dữ liệu trái phép.
+
+### `GET /api/system/backup`
+Tải bản sao lưu SQLite nhất quán theo giao dịch được tạo qua `VACUUM INTO`.
 
 ---
 
-## 3. Trò chuyện & Luồng SSE (Chat API)
+## 2. Xác thực & Danh tính Quản trị
 
-| Phương thức | Đường dẫn Endpoint | Mô tả |
-|:---|:---|:---|
-| `GET` | `/api/chat/conversations` | Danh sách các cuộc trò chuyện |
-| `POST` | `/api/chat/conversations` | Tạo cuộc trò chuyện mới |
-| `POST` | `/api/chat/messages` | Gửi tin nhắn và nhận phản hồi SSE trực tiếp |
-| `GET` | `/api/chat/conversations/{id}/messages` | Lấy lịch sử tin nhắn của một cuộc trò chuyện |
+### `GET /api/auth/status`
+Trả về trạng thái khởi tạo và phiên đăng nhập hiện tại.
 
----
+### `POST /api/auth/setup`
+Khởi tạo danh tính Quản trị viên và đặt mật khẩu chính trong quá trình thiết lập ban đầu.
 
-## 4. Nhiệm vụ & Phê duyệt (Missions & Approvals)
+### `POST /api/auth/login`
+Xác thực bằng mật khẩu chính và nhận mã phiên Bearer JWT.
 
-| Phương thức | Đường dẫn Endpoint | Mô tả |
-|:---|:---|:---|
-| `GET` | `/api/missions` | Danh sách các nhiệm vụ đang chạy và lịch sử |
-| `POST` | `/api/missions` | Khởi chạy một mục tiêu nhiệm vụ DAG mới |
-| `GET` | `/api/approvals/pending` | Danh sách các yêu cầu đang chờ phê duyệt |
-| `POST` | `/api/approvals/{id}/resolve` | Phê duyệt hoặc Từ chối hành động của Agent |
+### `POST /api/auth/logout`
+Thu hồi và hủy phiên đăng nhập hiện tại.
+
+### `PUT /api/auth/password`
+Thay đổi mật khẩu quản trị viên.
 
 ---
 
-## 5. Quản lý Tệp (Workspace API)
+## 3. Quản trị Agents
 
-| Phương thức | Đường dẫn Endpoint | Mô tả |
-|:---|:---|:---|
-| `GET` | `/api/workspace/tree` | Lấy cây thư mục và danh sách tệp |
-| `GET` | `/api/workspace/file?path={path}` | Đọc nội dung tệp tin |
-| `POST` | `/api/workspace/file` | Tạo hoặc ghi nội dung tệp tin |
-| `DELETE` | `/api/workspace/file?path={path}` | Xóa tệp hoặc thư mục |
+### `GET /api/agents`
+Liệt kê tất cả các Agent đã đăng ký.
+
+### `POST /api/agents`
+Tạo mới một cấu hình Agent.
+
+**Body Yêu cầu:**
+```json
+{
+  "id": "researcher",
+  "name": "Research Agent",
+  "description": "Thực hiện nghiên cứu web chuyên sâu và viết báo cáo markdown",
+  "system_prompt": "Bạn là chuyên gia nghiên cứu dữ liệu...",
+  "primary_model": "anthropic:claude-3-7-sonnet",
+  "fallback_model": "google:gemini-2.0-flash",
+  "temperature": 0.2,
+  "tools": ["native_web_search", "native_browser_headless", "native_workspace_write"],
+  "allowed_paths": ["docs/*", "research/*"]
+}
+```
+
+### `PUT /api/agents/{id}`
+Cập nhật cấu hình của một Agent có sẵn.
+
+### `DELETE /api/agents/{id}`
+Xóa Agent khỏi hệ thống.
+
+---
+
+## 4. Trò chuyện & Luồng Thực thi (Chat Streams)
+
+### `POST /api/agents/{id}/chat`
+Gửi tin nhắn đồng bộ đến một Agent.
+
+### `GET /api/agents/{id}/chat/stream`
+Khởi tạo luồng Server-Sent Events (SSE) để truyền dữ liệu sinh token theo thời gian thực và thẻ thực thi công cụ trực tiếp.
+
+---
+
+## 5. Sổ cái Phê duyệt (Approvals Ledger)
+
+### `GET /api/approvals?status=pending`
+Liệt kê danh sách các yêu cầu đột biến chờ phê duyệt (`pending`, `approved`, `rejected`, `all`).
+
+### `POST /api/approvals/{id}/approve`
+Chấp thuận hành động chính xác và tiếp tục luồng thực thi của Agent.
+
+### `POST /api/approvals/{id}/reject`
+Từ chối hành động mà không thực thi lệnh đột biến.
+
+---
+
+## 6. Phân hệ Plugin (WASMLoader)
+
+### `GET /api/plugins`
+Liệt kê tất cả các Plugin WASM đã cài đặt kèm manifest, khả năng (`tool`, `channel`, `connector`), phân quyền và trạng thái runtime.
+
+**Phản hồi:**
+```json
+{
+  "plugins": [
+    {
+      "id": "channel-discord",
+      "name": "Discord Bot Channel",
+      "version": "2.0.0",
+      "author": "ActonOS Core Team",
+      "capabilities": ["channel"],
+      "enabled": true,
+      "status": "running",
+      "permissions": {
+        "net_outbound": ["discord.com", "gateway.discord.gg"],
+        "secrets": ["discord_bot_tokens.*"],
+        "storage": true
+      }
+    }
+  ]
+}
+```
+
+### `POST /api/plugins/upload`
+Tải lên gói `.actonpkg` hoặc tệp nhị phân `.wasm` qua `multipart/form-data` (`file`). Xác thực manifest và hot-load vào môi trường sandbox Wazero.
+
+### `GET /api/plugins/{id}`
+Lấy thông tin chi tiết manifest và schema cấu hình giao diện của plugin.
+
+### `POST /api/plugins/{id}/config`
+Cập nhật giá trị cấu hình động và lưu trữ khóa bí mật vào Hardware Vault. Tự động kích hoạt cơ chế Hot-reload của plugin.
+
+### `POST /api/plugins/{id}/enable` | `POST /api/plugins/{id}/disable`
+Bật hoặc Tắt plugin tại thời điểm chạy mà không cần khởi động lại `actond`.
+
+### `DELETE /api/plugins/{id}`
+Gỡ cài đặt plugin và xóa thư mục lưu trữ khỏi `/data/plugins/{id}`.
+
+### `GET /api/plugins/{id}/logs`
+Lấy nhật ký thực thi và đo kiểm phát ra từ sandbox của plugin WASM.
+
+---
+
+## 7. Tài khoản Kênh & Ghép đôi Thiết bị (Pairing)
+
+### `GET /api/integrations/channels` | `POST /api/integrations/channels`
+Lấy hoặc cấu hình thông tin xác thực kênh chat đa tài khoản và quy tắc định tuyến Agent.
+
+### `GET /api/integrations/channels/accounts`
+Liệt kê tất cả tài khoản kênh đang hoạt động kèm huy hiệu trạng thái kết nối trực tiếp.
+
+### `POST /api/integrations/pairing/code`
+Tạo mã ghép đôi 6 chữ số để xác thực người vận hành kênh chat.
+
+### `POST /api/integrations/pairing/verify`
+Xác thực mã PIN ghép đôi từ tin nhắn đến để cấp quyền điều hành cho User ID.
+
+### `GET /api/integrations/authorizations` | `DELETE /api/integrations/authorizations`
+Xem danh sách hoặc thu hồi quyền của các người gửi chat bên ngoài.
+
+---
+
+## 8. Khóa bí mật Hardware Vault
+
+### `GET /api/vault/secrets`
+Liệt kê siêu dữ liệu của toàn bộ khóa bí mật được mã hóa trong Hardware Vault.
+
+### `POST /api/vault/secrets`
+Lưu trữ khóa bí mật được mã hóa gắn liền với UUID và CPU serial phần cứng.
+
+### `DELETE /api/vault/secrets/{name}`
+Xóa một bản ghi khóa bí mật khỏi Vault.
+
+---
+
+## 9. Công cụ & Chợ Tiện ích (Tools & Hub)
+
+### `GET /api/tools`
+Liệt kê tất cả công cụ hoạt động qua các danh mục Native, MCP, WASM Plugin và Skill-as-a-Folder.
+
+### `POST /api/tools/mcp` | `DELETE /api/tools/mcp/{serverID}`
+Đăng ký hoặc ngắt kết nối máy chủ MCP (`stdio` hoặc `sse`). Các thao tác rủi ro cao trả về mã `202 Accepted` chờ duyệt.
+
+### `GET /api/tools/hub/catalog`
+Lấy danh mục các công cụ từ Chợ tiện ích Cộng đồng.
+
+### `POST /api/tools/hub/install` | `POST /api/tools/hub/uninstall`
+Cài đặt hoặc gỡ cài đặt một gói kỹ năng cộng đồng.
+
+---
+
+## 10. Quản lý Tệp Workspace
+
+### `GET /api/workspace/files?dir=docs`
+Liệt kê tệp và thư mục theo đường dẫn tương đối kèm trạng thái lập chỉ mục vector.
+
+### `GET /api/workspace/file?path=docs/notes.md`
+Lấy nội dung văn bản và siêu dữ liệu của tệp.
+
+### `GET /api/workspace/raw?path=docs/diagram.png`
+Truyền tải byte nhị phân thô (hỗ trợ HTTP Range) cho hình ảnh, media hoặc PDF.
+
+### `POST /api/workspace/file`
+Tạo hoặc cập nhật tệp và tự động đưa vào hàng đợi lập chỉ mục vector.
+
+### `DELETE /api/workspace/file?path=reports/old.md`
+Xóa tệp hoặc thư mục khỏi không gian làm việc.
+
+---
+
+## 11. Trung tâm Thông báo (Notifications)
+
+### `GET /api/notifications`
+Lấy danh sách thông báo hệ thống và nhiệm vụ có phân trang.
+
+### `POST /api/notifications/mark-read`
+Đánh dấu thông báo đã đọc (`{ "id": "notif_..." }` hoặc `{ "all": true }`).
+
+### `GET /api/notifications/push/vapid-key`
+Lấy khóa công khai VAPID cho thông báo đẩy trình duyệt.
+
+### `POST /api/notifications/push/subscribe`
+Đăng ký Service Worker nhận thông báo đẩy cấp hệ điều hành.

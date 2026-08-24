@@ -9,14 +9,14 @@ sidebar_position: 1
 
 **ActonOS** is a purpose-built, secure operating system and orchestration engine engineered to run autonomous AI agents and multi-agent swarms 24/7 on dedicated hardware or within containerized environments.
 
-Unlike conventional operating systems retrofitted with AI wrappers, ActonOS places the **Agent Engine**, **Sandboxed Tool Runtime**, **Hardware-Bound Security Vault**, and **Hybrid Memory System** directly into the core system layer.
+Unlike conventional operating systems retrofitted with AI wrappers, ActonOS places the **Agent Engine**, **WASMLoader Plugin Sandbox**, **Hardware-Bound Security Vault**, and **Hybrid Memory System** directly into the core system layer.
 
 ```mermaid
 graph TB
-    subgraph "Layer 1 - Connectivity & Access"
+    subgraph "Layer 1 - Connectivity & Ingress"
         TSNET["Tailscale tsnet<br/>E2E Encrypted Mesh VPN"]
         WEBUI["Web UI SPA<br/>React 19 + Tailwind v4 + Soft Meadow"]
-        CHANNELS["Omnichannel Adapters<br/>Telegram · Discord · Slack · Webhook"]
+        CHANNELS["WASM Channel Plugins<br/>Telegram · Discord · Slack · WhatsApp · Zalo"]
         PORTAL["Zero-Config Portal<br/>Captive DNS @ 192.168.4.1"]
     end
 
@@ -27,9 +27,9 @@ graph TB
         HEARTBEAT["OpenClaw Heartbeat Daemon"]
     end
 
-    subgraph "Layer 3 - Dynamic Tooling Hub"
+    subgraph "Layer 3 - Dynamic Tooling & Extensions"
         MCP["MCP Host Engine<br/>stdio / SSE Transports"]
-        WASM["WASM Runtime<br/>wazero Pure Go"]
+        WASM["WASMLoader Runtime<br/>wazero Pure Go (Tools · Channels · Connectors)"]
         SKILLS["Skill-as-a-Folder<br/>fsnotify Hot-Reload"]
         NATIVE["Native Built-in Tools<br/>Chromium · Ripgrep · Shell"]
     end
@@ -78,10 +78,10 @@ ActonOS automatically detects its environment at startup:
 ### 2. Universal Agent Framework & Multi-Agent Swarm
 Create unlimited AI agents with custom personas, system directives, model cascade preferences, tool scopes, and delegation budgets. Agents can operate independently or form **Swarms** where parent orchestrators decompose complex goals into dependency-aware DAGs and delegate subtasks across specialized child agents via concurrent Goroutines.
 
-### 3. Dynamic Hot-Swappable Tooling
-ActonOS supports three pluggable tool protocols with zero daemon restarts:
+### 3. Unified WASMLoader & Dynamic Extension Engine
+ActonOS provides an extensible, sandboxed extension model running on the pure-Go **Wazero JIT runtime**:
+- **WASM Plugins (`.actonpkg`)**: Sandboxed WebAssembly packages for Tools, Chat Channels, and SaaS Connectors with dynamic schema configuration and Hardware Vault secret brokering.
 - **Model Context Protocol (MCP)**: Native stdio and HTTP/SSE JSON-RPC client for external tool servers.
-- **Pure Go WebAssembly (WASM)**: Ultra-fast, sandboxed plugins executed with `wazero`.
 - **Skill-as-a-Folder**: Hot-reloading directory scripts containing `skill.json` and executable Bash/Python code monitored via `fsnotify`.
 
 ### 4. Hybrid Semantic Memory (RAG)

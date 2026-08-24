@@ -7,24 +7,24 @@ sidebar_position: 8
 
 # SaaS Connectors & OAuth 2.1
 
-The **Connectors** framework enables ActonOS agents to safely access cloud productivity suites and developer services via **OAuth 2.1 PKCE (S256)** without storing long-lived plaintext passwords.
+The **Connectors** framework enables ActonOS agents to safely access cloud productivity suites and developer platforms via **WASM Connector Plugins** (`WasmConnectorBridge`) using industry-standard **OAuth 2.1 PKCE (S256)** without storing long-lived plaintext passwords.
 
 ```mermaid
 sequenceDiagram
     participant User as Operator
     participant UI as ActonOS Web UI
-    participant Auth as OAuth Daemon
+    participant Auth as OAuth Daemon / Plugin
     participant SaaS as Google / GitHub
     participant Vault as Hardware Vault
 
-    User->>UI: Click "Connect Google Workspace"
+    User->>UI: Click "Connect Service" in Plugin Settings
     UI->>Auth: Initiate PKCE (S256) Flow
     Auth->>SaaS: Redirect to Provider Consent Screen
-    User->>SaaS: Authorize Permissions (Gmail, Drive)
+    User->>SaaS: Authorize Permissions (Gmail, Drive, Repos)
     SaaS-->>Auth: Callback with Authorization Code
     Auth->>SaaS: Exchange Code + Code Verifier for Tokens
     SaaS-->>Auth: Access Token + Refresh Token
-    Auth->>Vault: Encrypt & Store in oauth_tokens.vault
+    Auth->>Vault: Encrypt & Store in Hardware Vault
     Auth-->>UI: Connected Status Badge
     
     loop Every 45 Minutes (Background Daemon)
@@ -36,30 +36,33 @@ sequenceDiagram
 
 ---
 
-## 1. Supported 1-Click Connectors
+## 1. Supported SaaS Connector Plugins
 
-| Provider | Supported Agent Capabilities | Scopes Required |
+Every connector plugin bundles typed actions that automatically bridge into ReAct Agent Tools (`conn.AsTools()`):
+
+| Provider Plugin | Supported Agent Capabilities | Bridged Tools |
 |:---|:---|:---|
-| **Google Workspace** | Read/search Gmail, create calendar events, read/write Google Drive docs and spreadsheets | `gmail.readonly`, `gmail.send`, `drive.file`, `calendar.events` |
-| **GitHub** | Search code, list/create issues, open pull requests, review commits | `repo`, `read:user`, `workflow` |
-| **Notion** | Query databases, create pages, update task boards | `read_content`, `update_content` |
-| **Slack** | Read channel history, post rich message cards, upload files | `channels:history`, `chat:write` |
+| **Google Workspace** | Read/search Gmail, create calendar events, read/write Google Drive files. | `google_mail_search`, `google_calendar_create`, `google_drive_read` |
+| **GitHub** | Search code, list/create issues, open pull requests, review commits. | `github_list_repos`, `github_create_issue`, `github_open_pr` |
+| **Notion** | Query databases, create pages, update task boards. | `notion_query_database`, `notion_create_page` |
+| **Slack** | Read channel history, post rich message cards, upload files. | `slack_post_message`, `slack_read_history` |
+| **Linear** | Manage issues, search projects, update sprint cycles. | `linear_search_issues`, `linear_create_issue` |
 
 ---
 
-## 2. Setting Up a Connector
+## 2. Setting Up a Connector Plugin
 
-1. Navigate to **Connectors** in the left sidebar.
-2. Choose the service you wish to link (e.g., **GitHub**).
-3. Click **Connect Service**.
-4. A popup window will prompt you to authenticate with the third-party provider and approve requested permission scopes.
-5. Upon authorization, ActonOS securely exchanges the OAuth code for an access token and refresh token.
-6. The status changes to 🟢 **Connected**, and registered agent tools immediately gain access.
+1. Navigate to **Extensions** → **Plugins** in the left sidebar.
+2. Choose your desired SaaS plugin (e.g., **GitHub Connector**) and click **Configure**.
+3. Provide your OAuth 2.1 `Client ID` and `Client Secret` (stored securely in Hardware Vault).
+4. Click **Connect Account**. A popup window will prompt you to authenticate with the third-party provider and approve requested permission scopes.
+5. Upon authorization, ActonOS exchanges the code for tokens and encrypts them into `/data/config/vault.db`.
+6. The status changes to 🟢 **Connected**, and bridged tools immediately become callable by authorized agents.
 
 ---
 
 ## 3. Background Token Refresh Daemon
 
-- ActonOS runs a background token refresh daemon that inspects token expiration timestamps every 5 minutes.
+- ActonOS runs an automated token refresh daemon that inspects token expiration timestamps every 5 minutes.
 - Expiring access tokens are automatically refreshed in the background before they expire.
-- If a token refresh fails (e.g., user revoked permissions in their Google account settings), ActonOS marks the connector as 🔴 **Re-authentication Required** and dispatches a notification alert.
+- If a token refresh fails (e.g., user revoked permissions in their account settings), ActonOS marks the connector as 🔴 **Re-authentication Required** and dispatches a notification alert.

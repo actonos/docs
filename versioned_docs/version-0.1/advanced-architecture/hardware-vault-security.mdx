@@ -7,17 +7,17 @@ sidebar_position: 3
 
 # Hardware-Bound Vault & Cryptography
 
-ActonOS implements a zero-trust credential storage system where sensitive secrets, API keys, and OAuth refresh tokens are encrypted using **AES-256-GCM** with keys derived cryptographically from physical hardware identifiers.
+ActonOS implements a zero-trust credential storage system where sensitive secrets, API keys, bot tokens, and OAuth refresh tokens are encrypted at rest using **AES-256-GCM** with keys derived cryptographically from physical hardware identifiers and master password salts.
 
 ```mermaid
 flowchart TD
     A["DMI System UUID<br/>/sys/class/dmi/id/product_uuid"] --> C["Hardware Seed Collector"]
     B["CPU Processor Serial / Machine ID<br/>/etc/machine-id"] --> C
-    D["User Admin PIN Salt"] --> E["Key Derivation Function<br/>Argon2id (Memory-Hard)"]
+    D["User Admin Password Salt"] --> E["Key Derivation Function<br/>Argon2id (Memory-Hard)"]
     C --> E
     E --> F["Master Encryption Key (256-bit)"]
     F --> G["AES-256-GCM Engine"]
-    H["Plaintext API Keys & OAuth Tokens"] --> G
+    H["Bot Tokens, API Keys & OAuth Secrets"] --> G
     G --> I[("Encrypted Vault File<br/>/data/config/vault.db")]
 ```
 
@@ -27,20 +27,38 @@ flowchart TD
 
 On Bare-Metal hosts, the Vault derives its root encryption key from:
 1. **DMI System UUID**: Unique hardware identifier from the motherboard BIOS.
-2. **System Machine ID**: Pinned machine identifier.
-3. **Argon2id KDF**: Key derivation with 64 MB memory cost and 4 parallel iterations.
+2. **System Machine ID**: Pinned CPU and motherboard identifier.
+3. **Argon2id KDF**: Memory-hard key derivation function (64 MB RAM cost, 4 iterations).
 
 :::important Theft & Drive Cloning Resistance
-If an attacker physically extracts the NVMe SSD or clones the disk image to a different machine, the derived hardware key will not match, rendering the contents of `/data/config/vault.db` and `/data/tokens/oauth_tokens.vault` completely unreadable.
+If an attacker physically extracts the NVMe SSD or clones the disk image to a different machine, the derived hardware key will not match, rendering the contents of `/data/config/vault.db` completely unreadable.
 :::
 
 ---
 
-## 2. Docker Container Vault Fallback
+## 2. Dynamic Secret Brokering for WASM Plugins
 
-In containerized environments where DMI hardware tables are masked:
-- ActonOS uses a cryptographically generated vault master seed saved during initial setup or injected via the `VAULT_ENCRYPTION_KEY` environment variable.
-- In-memory encryption guarantees that secrets are never leaked to logs or unencrypted memory dumps.
+Plugins never access raw cryptographic master keys or read `/data/config/vault.db` directly. Instead, secret retrieval operates through a broker pattern:
+
+```mermaid
+sequenceDiagram
+    participant Plugin as WASM Plugin (Guest)
+    participant Gate as ActonOS Security Gate
+    participant Vault as Hardware Vault (Host)
+
+    Plugin->>Gate: Syscall acton_vault: get_secret("tokens.bot_primary")
+    Gate->>Gate: Verify key against manifest.permissions.secrets
+    alt Permission Granted
+        Gate->>Vault: Decrypt secret from vault.db
+        Vault-->>Gate: Decrypted token
+        Gate-->>Plugin: Stream decrypted bytes into WASM linear memory
+    else Permission Denied
+        Gate-->>Plugin: Return 0 bytes (Error: Permission Denied)
+    end
+```
+
+- **Manifest Declaration**: Plugins must explicitly declare requested secret patterns under `manifest.permissions.secrets` (e.g. `["discord_bot_tokens.*"]`).
+- **Granular RBAC**: Requests for undeclared keys are immediately rejected and logged in the security audit ledger.
 
 ---
 

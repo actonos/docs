@@ -5,46 +5,46 @@ sidebar_label: Tổng quan & Triết lý
 sidebar_position: 1
 ---
 
-# ActonOS: Hệ điều hành AI Bản địa cho Tác nhân Tự trị
+# ActonOS: Hệ điều hành Tự trị Bản địa AI
 
-**ActonOS** là hệ điều hành và nền tảng điều phối tác nhân tự trị (Autonomous Agent Hub) thế hệ mới, được thiết kế chuyên biệt để vận hành các nhóm tác nhân AI (Multi-Agent Swarms) liên tục 24/7 trên phần cứng chuyên dụng hoặc trong môi trường container.
+**ActonOS** là hệ điều hành và động cơ điều phối được thiết kế chuyên biệt để vận hành các Agent AI tự trị và mạng lưới Multi-Agent Swarm liên tục 24/7 trên phần cứng chuyên dụng hoặc môi trường container.
 
-Không giống các framework bọc ngoài truyền thống, ActonOS đưa trực tiếp **Động cơ Agent**, **Môi trường cách ly Sandbox**, **Két bảo mật phần cứng Hardware Vault** và **Bộ nhớ ngữ nghĩa Hybrid RAG** vào tầng lõi của hệ điều hành.
+Khác với các hệ điều hành truyền thống được gắn thêm lớp giao diện AI bên ngoài, ActonOS đặt **Động cơ Agent**, **Môi trường Sandbox Plugin WASMLoader**, **Két Bảo mật Phần cứng**, và **Hệ thống Bộ nhớ Ngữ nghĩa Kết hợp** trực tiếp vào phân tầng nhân hệ thống.
 
 ```mermaid
 graph TB
     subgraph "Tầng 1 - Kết nối & Truy cập"
-        TSNET["Tailscale tsnet<br/>Mesh VPN mã hóa đầu-cuối"]
-        WEBUI["Giao diện Web SPA<br/>React 19 + Tailwind v4 + Soft Meadow"]
-        CHANNELS["Bộ điều hợp Kênh chat<br/>Telegram · Discord · Slack · Webhook"]
-        PORTAL["Cổng Onboarding tự động<br/>Captive DNS @ 192.168.4.1"]
+        TSNET["Tailscale tsnet<br/>VPN Mesh Mã hóa Đầu cuối"]
+        WEBUI["Web UI SPA<br/>React 19 + Tailwind v4 + Soft Meadow"]
+        CHANNELS["Plugin Kênh WASM<br/>Telegram · Discord · Slack · WhatsApp · Zalo"]
+        PORTAL["Cổng Thiết lập Không Cấu hình<br/>Captive DNS @ 192.168.4.1"]
     end
 
     subgraph "Tầng 2 - Động cơ Agent Tự trị"
-        STUDIO["Agent Studio & Manifests"]
-        SWARM["Điều phối Swarm<br/>Phân công Goroutine"]
-        DELEGATION["Phân quyền & Ngân sách"]
-        HEARTBEAT["Daemon Nhịp tim OpenClaw"]
+        STUDIO["Agent Studio & Khai báo Manifest"]
+        SWARM["Điều phối Swarm<br/>Phân quyền Goroutine"]
+        DELEGATION["Phạm vi & Hạn ngạch Zero-Trust"]
+        HEARTBEAT["Tiến trình Nhịp đập OpenClaw"]
     end
 
-    subgraph "Tầng 3 - Trung tâm Công cụ Động"
-        MCP["Máy chủ Host MCP<br/>stdio / SSE Transports"]
-        WASM["Runtime WASM<br/>wazero Thuần Go"]
-        SKILLS["Skill-as-a-Folder<br/>Nạp nóng fsnotify"]
-        NATIVE["Công cụ Tích hợp Sẵn<br/>Chromium · Ripgrep · Shell"]
+    subgraph "Tầng 3 - Công cụ & Tiện ích Mở rộng Động"
+        MCP["Máy chủ MCP Host<br/>Giao vận stdio / SSE"]
+        WASM["WASMLoader Runtime<br/>wazero Thuần Go (Tools · Channels · Connectors)"]
+        SKILLS["Kỹ năng Thư mục<br/>fsnotify Hot-Reload"]
+        NATIVE["Công cụ Native Tích hợp Sẵn<br/>Chromium · Ripgrep · Shell"]
     end
 
-    subgraph "Tầng 4 - Daemon Lõi & Bộ nhớ"
-        BUS["Bus Sự kiện Hợp nhất"]
-        REACT["Điều phối ReAct & Lập kế hoạch"]
-        CASCADE["Bộ định tuyến LLM Cascade"]
-        MEMORY["Bộ nhớ lai RAG<br/>SQLite FTS5 + Vector ONNX + Decay"]
-        VAULT["Két bảo mật phần cứng<br/>AES-256-GCM + Argon2id"]
+    subgraph "Tầng 4 - Tiến trình Nhân & Bộ nhớ"
+        BUS["Bus Sự kiện Thống nhất"]
+        REACT["Điều phối & Lập kế hoạch ReAct"]
+        CASCADE["Bộ định tuyến Phân tầng LLM"]
+        MEMORY["Bộ nhớ RAG Kết hợp<br/>SQLite FTS5 + Vector ONNX + Quên lãng"]
+        VAULT["Hardware Vault<br/>AES-256-GCM + Argon2id"]
     end
 
     subgraph "Tầng 5 - Lớp Trừu tượng Phần cứng (HAL)"
         BARE["Chế độ Bare-Metal<br/>NetworkManager · Bubblewrap · Cgroups v2"]
-        DOCKER["Chế độ Docker Container<br/>Bộ công cụ tích hợp sẵn · Subshell Jail"]
+        DOCKER["Chế độ Container Docker<br/>Bộ công cụ Tiện ích Đầy đủ · Subshell Jail"]
     end
 
     WEBUI --> STUDIO
@@ -70,30 +70,39 @@ graph TB
 
 ## Các Trụ cột & Nguyên lý Thiết kế Cốt lõi
 
-### 1. Lớp Trừu tượng Phần cứng Kép (Dual-Runtime HAL)
-ActonOS tự động phát hiện môi trường thực thi khi khởi động:
-- **Chế độ Bare-Metal MiniPC**: Bản cài đặt hệ điều hành bất biến trên phần cứng x86_64 (như Intel N100 / AMD Ryzen). Tích hợp Linux D-Bus, NetworkManager quản lý Wi-Fi Hotspot, Bubblewrap cách ly namespace và Cgroups v2 giới hạn tài nguyên.
-- **Chế độ Docker Container**: Đóng gói container Linux tiêu chuẩn với đầy đủ bộ công cụ phát triển tích hợp sẵn (Python, Node.js, Chromium, Ripgrep, SQLite).
+### 1. Lớp Trừu tượng Phần cứng Chế độ Kép (Dual-Runtime HAL)
+ActonOS tự động nhận diện môi trường phần cứng khi khởi động:
+- **Chế độ Bare-Metal MiniPC**: Bản cài hệ điều hành bất biến trên phần cứng x86_64 chuyên dụng (như Intel N100 / AMD Ryzen). Tích hợp Linux D-Bus, NetworkManager cho điểm phát sóng Wi-Fi, Bubblewrap cho cách ly namespace và Cgroups v2 để quản trị tài nguyên.
+- **Chế độ Container Docker**: Gói container Linux tiêu chuẩn đi kèm toàn bộ bộ công cụ lập trình sẵn có (Python, Node.js, Chromium, Ripgrep, SQLite).
 
-### 2. Khung Tác nhân Đa năng & Multi-Agent Swarm
-Tạo không giới hạn các Agent với persona, chỉ thị hệ thống, mô hình LLM, quyền hạn công cụ và ngân sách đại biểu riêng biệt. Các Agent có thể hoạt động độc lập hoặc tạo thành **Swarm**, trong đó Agent điều phối sẽ phân rã mục tiêu lớn thành đồ thị phụ thuộc DAG và phân công cho các Agent con qua Goroutines.
+### 2. Khung làm việc Agent Vạn năng & Swarm Đa Agent
+Tạo không giới hạn số lượng Agent AI với tính cách, chỉ thị hệ thống, mô hình LLM phân tầng, phạm vi công cụ và ngân sách ủy quyền riêng biệt. Các Agent có thể vận hành độc lập hoặc tạo thành **Mạng lưới Swarm**, trong đó Agent chỉ huy phân rã mục tiêu lớn thành đồ thị DAG và ủy quyền tác vụ con qua Goroutine song song.
 
-### 3. Nạp nóng Công cụ Động (Hot-Swappable Tools)
-Hỗ trợ 3 giao thức mở rộng linh hoạt mà không cần khởi động lại daemon:
-- **Model Context Protocol (MCP)**: Máy khách MCP native hỗ trợ giao thức stdio và HTTP/SSE JSON-RPC.
-- **WebAssembly thuần Go (WASM)**: Thực thi plugin siêu tốc, an toàn qua runtime `wazero`.
-- **Skill-as-a-Folder**: Tạo thư mục chứa file `skill.json` và script Bash/Python, tự động nạp nóng qua `fsnotify`.
+### 3. Động cơ Mở rộng WASMLoader Động
+ActonOS cung cấp mô hình mở rộng an toàn thực thi trên engine **Wazero JIT runtime** thuần Go 100%:
+- **Plugin WASM (`.actonpkg`)**: Đóng gói WebAssembly cho Công cụ, Kênh chat và Kết nối SaaS với biểu mẫu cấu hình động và bảo mật qua Hardware Vault.
+- **Giao thức Ngữ cảnh Mô hình (MCP)**: Máy chủ máy khách native stdio và HTTP/SSE JSON-RPC cho các server công cụ bên ngoài.
+- **Kỹ năng Thư mục (Skill-as-a-Folder)**: Các script tự động hot-reload chứa `skill.json` và mã nguồn Bash/Python được giám sát qua `fsnotify`.
 
-### 4. Bộ nhớ Ngữ nghĩa Lai (Hybrid RAG)
-- **Tìm kiếm từ khóa**: SQLite FTS5 với thuật toán xếp hạng BM25.
-- **Tìm kiếm Vector**: Kho vector `chromem-go` kết hợp daemon `embeddingd` cục bộ chạy mô hình ONNX `multilingual-e5-small`.
-- **Suy giảm Nhận thức Ebbinghaus**: Áp dụng đường cong quên lãng để cân bằng giữa ngữ cảnh gần đây và tri thức dài hạn.
+### 4. Bộ nhớ Ngữ nghĩa Kết hợp (Hybrid Memory RAG)
+Ngữ cảnh dài hạn và tệp trong workspace được lập chỉ mục kết hợp:
+- **Tìm kiếm Từ khóa**: SQLite FTS5 với xếp hạng BM25 để truy xuất chính xác cụm từ.
+- **Tìm kiếm Vector**: Kho vector `chromem-go` kết hợp tiến trình nội bộ `embeddingd` chạy mô hình ONNX `multilingual-e5-small`.
+- **Suy giảm Trí nhớ Ebbinghaus**: Mô hình toán học suy giảm ký ức cũ, ưu tiên thông tin thường xuyên sử dụng.
 
-### 5. Bảo mật Ràng buộc Phần cứng & Hệ thống Bất biến
-- **Két mã hóa AES-256-GCM**: Khóa mã hóa được sinh từ định danh phần cứng (DMI UUID + CPU Serial) kết hợp Argon2id.
-- **Cách ly Sandbox**: Giới hạn nghiêm ngặt tài nguyên (512 MB RAM, 50% CPU, 30 PIDs) và namespace hệ thống tệp.
-- **Sổ cái Kiểm toán Bất biến**: Toàn bộ thao tác và token tiêu thụ được nối vào chuỗi băm SHA-256 (`audit.jsonl`).
+### 5. Bảo mật Gắn liền Phần cứng & Hệ thống Tệp Bất biến
+- **Hardware Vault AES-256-GCM**: Thông tin xác thực và token OAuth được mã hóa bằng khóa dẫn xuất từ định danh phần cứng (DMI UUID + CPU serial) qua Argon2id.
+- **Thực thi Cách ly (Sandbox)**: Công cụ của Agent chạy trong hạn ngạch tài nguyên nghiêm ngặt (RAM 512 MB, CPU 50%, 30 PIDs).
+- **Sổ cái Kiểm toán Mật mã**: Mọi lệnh thực thi công cụ và sự kiện bảo mật đều được ghi nối tiếp vào chuỗi băm SHA-256 bất biến (`audit.jsonl`).
 
-### 6. Kết nối Tiện lợi Không cần Mở cổng Modem
-- **Captive Portal**: Khi khởi động lần đầu, MiniPC phát Wi-Fi `ActonOS-XXXX` mở trang cài đặt tự động tại `192.168.4.1`.
-- **Tailscale `tsnet` Tích hợp Sẵn**: Truy cập từ xa an toàn qua mạng Mesh VPN mã hóa đầu-cuối mà không cần mở port modem.
+### 6. Kết nối Không cần Cấu hình (Zero-Config)
+- **Cổng Captive Portal**: Khi khởi động lần đầu trên MiniPC, hệ thống tự động phát Wi-Fi `ActonOS-XXXX` mở trang hướng dẫn thiết lập chỉ trong 1 phút.
+- **Nhúng Tailscale `tsnet`**: Truy cập từ xa an toàn qua mạng riêng ảo WireGuard mesh mã hóa đầu cuối mà không cần mở port modem hay cấu hình Dynamic DNS.
+
+---
+
+## Các Bước Tiếp theo
+
+- Xem [Yêu cầu Hệ thống](system-requirements) để chuẩn bị phần cứng hoặc máy chủ.
+- Triển khai bằng [Docker](docker-deployment) để trải nghiệm nhanh trên hạ tầng có sẵn.
+- Cài đặt trên [MiniPC Bare-metal](baremetal-installation) để có trải nghiệm thiết bị chuyên dụng hoàn chỉnh.

@@ -7,61 +7,54 @@ sidebar_position: 9
 
 # Tools, MCP & Skill Runtimes
 
-ActonOS provides an extensible, multi-protocol execution engine supporting **Native Built-in Tools**, **Model Context Protocol (MCP) Servers**, **Pure Go WASM Plugins**, and **Skill-as-a-Folder Scripts**.
+ActonOS provides an extensible, multi-protocol execution engine organized into 3 distinct extension tiers: **Tier 1 (Native Tools & MCP Servers)**, **Tier 2 (Unified WASM Plugins)**, and **Tier 3 (Skill-as-a-Folder Scripts)**.
+
+```mermaid
+graph LR
+    subgraph "Extension Tiers"
+        direction TB
+        T1["Tier 1: Native Tools & MCP\nstdio / SSE\nSingle Execution Boundary"]
+        T2["Tier 2: WASM Plugins (wazero)\n/data/plugins/\nTools · Channels · Connectors"]
+        T3["Tier 3: Skill-as-a-Folder\n/data/skills/<name>/\nskill.json + run.sh/run.py\nfsnotify hot-reload"]
+    end
+
+    LLM["LLM ReAct Loop"] --> T1
+    LLM --> T2
+    LLM --> T3
+```
 
 ---
 
-## 1. Native Built-in Tools
+## 1. Tier 1: Native Built-in Tools & MCP Servers
 
-Pre-compiled directly into the `actond` static daemon for maximum speed:
-
+### Native Tools
+Pre-compiled directly into the `actond` static binary for maximum speed:
 - `native_web_search`: Query DuckDuckGo, Brave Search, or Tavily for current web information.
-- `native_browser_headless`: Full Chromium web automation via `chromedp` (renders JavaScript, navigates pages, extracts text/DOM, captures screenshots).
+- `native_browser_headless`: Chromium web automation via `chromedp` (DOM extraction, JavaScript rendering, full-page screenshots).
 - `native_workspace_read` & `native_workspace_write`: Sandboxed file operations under `/workspace`.
 - `native_exec`: Execute shell commands inside the isolated Bubblewrap/Subshell sandbox.
 - `native_sql_query`: Query structured application databases and workspace SQLite files.
 
----
-
-## 2. Model Context Protocol (MCP) Integration
-
+### Model Context Protocol (MCP) Integration
 ActonOS acts as a native MCP Host implementing the open standard by Anthropic:
-
-### Supported Transports
-- **`stdio`**: Spawns local CLI tools or containerized processes communicating over stdin/stdout JSON-RPC.
+- **`stdio`**: Spawns local CLI binaries or containerized processes communicating over stdin/stdout JSON-RPC.
 - **`http` / `sse`**: Connects to remote or network-accessible MCP endpoints over Server-Sent Events.
-
-### Configuring an MCP Server
-1. Navigate to **Tools** → **MCP Servers** → click **+ Add MCP Server**.
-2. Provide server metadata:
-   ```json
-   {
-     "id": "github-mcp",
-     "name": "GitHub Official MCP",
-     "transport": "stdio",
-     "command": "npx",
-     "args": ["-y", "@modelcontextprotocol/server-github"],
-     "env": {
-       "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxxxxxxxxx"
-     }
-   }
-   ```
-3. ActonOS stores sensitive environment variables in the encrypted Hardware Vault under `mcp.env.<id>`.
-4. The server is discovered and its tools are registered dynamically into the Agent Tool Registry.
+- Sensitive environment variables are stored in the Hardware Vault under `mcp.env.<id>`.
 
 ---
 
-## 3. WebAssembly (WASM) Plugins via `wazero`
+## 2. Tier 2: Unified WASM Plugins (WASMLoader)
 
-For sandboxed, high-performance extensions without external dependencies:
-- Plugins compile to `.wasm` binaries and run inside the pure-Go `wazero` runtime.
-- Absolute memory safety, zero CGO requirements, and instant millisecond execution.
+High-performance, polyglot extensions compiled to WebAssembly (`wasip1` / `wasm32-wasi`) running on the pure-Go **Wazero JIT runtime**:
+- **Sandboxed Execution**: Isolated linear memory instances with zero host file system access except through host syscalls.
+- **Egress Firewall**: Network requests are strictly constrained to hostnames whitelisted in `manifest.permissions.net_outbound`.
+- **Capabilities**: Unifies **Agent Tools**, **Chat Channels**, and **SaaS Connectors** into standardized `.actonpkg` packages.
 
 ---
 
-## 4. Skill-as-a-Folder Architecture
+## 3. Tier 3: Skill-as-a-Folder Architecture
 
-Users and developers can author custom skills simply by dropping a folder into `/data/skills/`:
+Users and developers can author custom lightweight skills simply by creating a directory inside `/data/skills/`:
 
 ```
 /data/skills/my_custom_skill/
