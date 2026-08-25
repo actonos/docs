@@ -30,10 +30,11 @@ graph LR
 ### Native Tools
 Pre-compiled directly into the `actond` static binary for maximum speed:
 - `native_web_search`: Query DuckDuckGo, Brave Search, or Tavily for current web information.
-- `native_browser_headless`: Chromium web automation via `chromedp` (DOM extraction, JavaScript rendering, full-page screenshots).
-- `native_workspace_read` & `native_workspace_write`: Sandboxed file operations under `/workspace`.
-- `native_exec`: Execute shell commands inside the isolated Bubblewrap/Subshell sandbox.
-- `native_sql_query`: Query structured application databases and workspace SQLite files.
+- `native_browser_navigate` & `native_browser_screenshot`: Open a page in headless Chromium, extract rendered text, or capture a screenshot.
+- `native_workspace_search`, `native_workspace_read`, `native_workspace_write`, `native_workspace_delete`: Work with **your** documents on the Workspace page. Files keep their original names (`report.pdf`). For PDFs and other binaries, the agent opens them by name instead of dumping the whole file into chat.
+- `native_file_read` / `native_file_write`: The agent’s **private scratchpad** (temporary scripts and in-progress work). These files are not listed on the Workspace page until they are published with `native_workspace_write`.
+- `native_exec`: Execute shell commands inside the isolated Bubblewrap/Subshell sandbox. User documents are available by original name under `user-workspace/` (environment variable `ACTONOS_USER_WORKSPACE`).
+- `native_channel_notify`: Send a text message **or a workspace file** through an installed chat plugin (Telegram, Discord, Slack, WhatsApp, Zalo). ActonOS only forwards the file; the plugin uploads it. Pick a specific channel when attaching a file.
 
 ### Model Context Protocol (MCP) Integration
 ActonOS acts as a native MCP Host implementing the open standard by Anthropic:

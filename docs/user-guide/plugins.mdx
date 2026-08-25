@@ -85,3 +85,18 @@ Each running WASM plugin outputs structured logs via the `acton_sys: log` host s
 - **Enable / Disable Toggle**: Toggle a plugin off to pause its event loops and unregister its tools without losing saved configurations or Vault secrets. Toggle back on to resume instantly.
 - **Hot Configuration Updates**: Editing parameters in the configuration modal immediately signals the Wazero sandbox to refresh runtime context without interrupting other active agents.
 - **Clean Uninstall**: Clicking **Uninstall Plugin** gracefully stops active connections, unbinds registered tools and channels, removes the plugin directory from `/data/plugins/{id}`, and purges isolated KV storage.
+
+---
+
+## 6. Channel plugins send the files
+
+When an agent sends a document to Telegram, Discord, Slack, WhatsApp, or Zalo, ActonOS **only forwards the file** to the installed channel plugin. The plugin is responsible for uploading it to that chat app.
+
+That split matters in two ways:
+
+1. **You install the chat app as a plugin.** There is no hardcoded Telegram or Zalo uploader inside the core OS.
+2. **You should re-install channel plugins after an ActonOS update** so they match the current file-delivery format. Older plugins may report success while the file never appears (especially on Zalo), or a downloaded PDF may open with broken fonts.
+
+To refresh a plugin: **Uninstall**, then **Upload** the latest `.actonpkg` from the official channel packages.
+
+For how sending looks from the user’s side, see [Sending files to chat](channels#sending-files-to-chat). Plugin authors: see [WASM plugin development — sending files](../developer-reference/wasm-plugin-development#sending-files).

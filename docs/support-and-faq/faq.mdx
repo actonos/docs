@@ -35,7 +35,7 @@ Unlike Python-based CLI frameworks that run unconstrained scripts, ActonOS is a 
 Any x86_64 MiniPC with an **Intel Processor N100** (e.g., Beelink EQ12, Minisforum UN100, GMKtec G2) with 8 GB to 16 GB of RAM and 128 GB+ NVMe SSD offers the best balance of low power draw (6W–15W) and 24/7 autonomous swarm performance.
 
 ### Can I install ActonOS on a Raspberry Pi?
-Currently, ActonOS v0.1 targets **x86_64 architecture**. ARM64 support (including Raspberry Pi 5 and Apple Silicon Docker containers) is in active development for the v0.2 release.
+Currently, ActonOS v1 targets **x86_64 architecture**. ARM64 support (including Raspberry Pi 5 and Apple Silicon Docker containers) is in active development.
 
 ---
 
@@ -46,3 +46,29 @@ All sensitive secrets are encrypted using **AES-256-GCM** inside `/data/config/v
 
 ### Can agents or plugins accidentally delete operating system files?
 **No.** On Bare-Metal MiniPCs, the system root partition is mounted **Read-Only**. Furthermore, all tool executions run inside an unprivileged Bubblewrap namespace or sandboxed Wazero linear memory where host system folders cannot be modified.
+
+---
+
+## Workspace files & sending documents to chat
+
+### Can the agent open a PDF I uploaded by its real name?
+**Yes.** Upload `report.pdf` (or ask the agent to save it to the Workspace). Then say “Open `report.pdf`” or “Extract the table from `report.pdf`.” The agent uses the original filename. You do not need to copy internal IDs.
+
+Files on the **Workspace** page are yours. The agent also has a private scratchpad for temporary scripts; those files are not listed until they are saved into the Workspace. See [Workspace](../user-guide/workspace).
+
+### How do I send a file from ActonOS to Telegram / Discord / Zalo?
+Ask the agent in Chat or in the chat app itself, for example: “Send `report.pdf` from the workspace to Telegram.” The agent finds the file and **hands it to the installed channel plugin**. ActonOS does not upload to Telegram or Zalo itself. See [Sending files to chat](../user-guide/channels#sending-files-to-chat).
+
+### The agent said the file was sent, but nothing appeared in Zalo
+Zalo’s bot API is **not** the same as Telegram’s. Files go out as JSON (a public URL, or a small file encoded in the request), not as a Telegram-style multipart upload. Also, HTTP 200 from Zalo can still mean the request failed (`ok: false`).
+
+What to do:
+1. Re-install the latest **Zalo** `.actonpkg` from **Plugins**.
+2. Open the plugin **Logs**. A current plugin reports Zalo’s error instead of pretending success.
+3. Confirm the bot is allowed to send files in that Zalo conversation.
+
+### I downloaded a PDF from Telegram and the fonts look broken
+That usually means an **older channel plugin** sent the file through a text JSON field, which corrupts binary bytes (PDF fonts are a typical symptom). Re-install the latest Telegram / Discord / Slack plugin, then send the file again from the Workspace. The current plugins send binary data without that conversion.
+
+### Can I send one file to every connected chat at once?
+**No.** Pick one installed channel (Telegram, Discord, Zalo, and so on). Broadcasting a file to “all channels” is blocked on purpose.

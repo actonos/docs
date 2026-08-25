@@ -160,7 +160,13 @@ type DiscordChannel struct {
 
 func (c *DiscordChannel) SendMessage(ctx sdk.Context, msg sdk.OutboundMessage) error {
 	token, _ := ctx.Vault().GetSecret("discord_bot_tokens." + msg.AccountID)
-	// Dispatch message over HTTP or active WebSocket...
+	if name, mime, data, ok := msg.AttachedFile(); ok {
+		// Host already forwarded the file. Upload it with this platform's API.
+		_ = name
+		_ = mime
+		_ = data
+	}
+	// Dispatch text over HTTP or active WebSocket...
 	return nil
 }
 
@@ -308,3 +314,47 @@ curl -X POST http://localhost:8080/api/plugins/upload \
 ```
 
 The daemon immediately verifies the package manifest, allocates sandboxed memory in Wazero, binds required bridges (`WasmToolBridge`, `WasmChannelBridge`, or `WasmConnectorBridge`), and activates the plugin without restarting `actond`.
+
+---
+
+## 8. Sending files from the host to a channel plugin {#sending-files}
+
+When a user asks an agent to send `report.pdf` to Telegram (or another chat), **ActonOS does not upload the file itself**. The host loads the document from the User Workspace and forwards the raw bytes to your plugin’s `acton_channel_send` handler.
+
+Your plugin is responsible for talking to the chat app.
+
+### Envelope fields
+
+`sdk.OutboundMessage` includes:
+
+| Field | Meaning |
+|:---|:---|
+| `FileName` | Original download name (`report.pdf`) |
+| `MIMEType` | Content type (`application/pdf`) |
+| `FileData` | Raw file bytes (JSON-encoded as base64 on the wire) |
+| `Content` | Optional caption |
+| `Kind` | `media` when a file is attached |
+
+Use `msg.AttachedFile()` to read the triple `(name, mime, data)`. Helpers: `sdk.NewOutboundFile(...)`.
+
+### Keep binary files intact
+
+Do **not** put PDF or image bytes into a JSON string field and `json.Marshal` them. Invalid UTF-8 is replaced with `U+FFFD`, which shows up as **broken fonts** when the user downloads the file.
+
+For Telegram-style `multipart/form-data` uploads:
+
+```go
+contentType, body, err := sdk.EncodeMultipart(fields, "document", name, data)
+resp, err := ctx.HTTP().PostBinary(url, contentType, body)
+```
+
+`PostBinary` sends `body_base64` to the host HTTP syscall. That keeps the exact bytes. Do not use a text `body` for binary payloads.
+
+### Follow each chat app’s API
+
+| Platform | Typical upload |
+|:---|:---|
+| **Telegram, Discord, Slack, WhatsApp** | Multipart file upload (`EncodeMultipart` + `PostBinary`) |
+| **Zalo Bot API** | JSON over HTTPS. The file field is a **public HTTPS URL** (or a small `data:` URI). Multipart bodies are ignored. Treat HTTP 200 with `"ok": false` as a **failure** — Zalo often returns 200 even when the send did not work. |
+
+If your plugin reports success but the user never sees the file, check that you are using that platform’s real API — not Telegram’s — and that you surface `ok: false` errors in logs.

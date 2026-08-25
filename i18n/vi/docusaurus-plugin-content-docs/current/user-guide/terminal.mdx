@@ -18,7 +18,7 @@ Mọi câu lệnh chạy trong terminal đều được kiểm soát nghiêm ng�
 ### Trên MiniPC Bare-Metal:
 - Chạy qua **Bubblewrap (`bwrap`)** và Linux **Cgroups v2**.
 - Các thư mục hệ thống (`/usr`, `/lib`, `/bin`) được gắn kết ở chế độ **Chỉ Đọc (Read-Only)**.
-- Thư mục duy nhất được phép ghi là `/data/workspace`.
+- Vùng được phép ghi gồm thư mục tạm của agent và tài liệu **Workspace** của bạn, mở được theo tên gốc (ví dụ `report.pdf` trong `user-workspace/`).
 - Giới hạn cứng: **512 MB RAM**, **50% CPU** và tối đa **30 tiến trình đồng thời**.
 
 ### Trên Docker Container:

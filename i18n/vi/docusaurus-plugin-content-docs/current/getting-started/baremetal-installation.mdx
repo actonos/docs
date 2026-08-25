@@ -11,7 +11,7 @@ Cài đặt ActonOS trực tiếp lên phần cứng biến MiniPC x86_64 thành
 
 ```mermaid
 flowchart LR
-    A["Tải file ISO<br/>ActonOS-v0.1.iso"] --> B["Ghi vào USB<br/>Rufus / BalenaEtcher / dd"]
+    A["Tải file ISO<br/>ActonOS-v1.iso"] --> B["Ghi vào USB<br/>Rufus / BalenaEtcher / dd"]
     B --> C["Khởi động MiniPC<br/>Chọn boot từ USB UEFI"]
     C --> D["Cài đặt Tự động<br/>Tự phân vùng ESP, Root, Data"]
     D --> E["Khởi động lại & Rút USB<br/>Chạy Daemon ActonOS"]
@@ -23,7 +23,7 @@ flowchart LR
 ## Bước 1: Tải file ISO ActonOS
 
 Tải file ISO chính thức từ trang phát hành:
-- **Tên file**: `ActonOS-v0.1-amd64.iso`
+- **Tên file**: `ActonOS-v1-amd64.iso`
 
 ---
 
@@ -34,13 +34,13 @@ Chuẩn bị một chiếc USB có dung lượng tối thiểu **4 GB**.
 ### Cách 1: Sử dụng Rufus (Windows)
 1. Cắm USB vào máy tính và mở **[Rufus](https://rufus.ie/)**.
 2. Chọn USB tại mục **Device**.
-3. Bấm **Select** và chọn file `ActonOS-v0.1-amd64.iso`.
+3. Bấm **Select** và chọn file `ActonOS-v1-amd64.iso`.
 4. Tại mục Partition scheme chọn **GPT**, Target system chọn **UEFI (non-CSM)**.
 5. Bấm **START** và chọn **Write in DD Image mode** khi được hỏi.
 
 ### Cách 2: Sử dụng BalenaEtcher (macOS, Windows, Linux)
 1. Mở **[BalenaEtcher](https://etcher.balena.io/)**.
-2. Chọn **Flash from file** và duyệt đến file `ActonOS-v0.1-amd64.iso`.
+2. Chọn **Flash from file** và duyệt đến file `ActonOS-v1-amd64.iso`.
 3. Chọn USB của bạn và bấm **Flash!**.
 
 ### Cách 3: Sử dụng lệnh `dd` (Linux / macOS CLI)
@@ -50,7 +50,7 @@ Chuẩn bị một chiếc USB có dung lượng tối thiểu **4 GB**.
 lsblk
 
 # Ghi trực tiếp image vào USB
-sudo dd if=ActonOS-v0.1-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync
+sudo dd if=ActonOS-v1-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync
 ```
 
 ---

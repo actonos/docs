@@ -17,15 +17,14 @@ ActonOS sử dụng lệnh `VACUUM INTO` trực tiếp trên SQLite để tạo 
 
 ```bash
 # Tạo bản sao lưu tức thì qua REST API
-curl -X POST http://localhost:8080/api/system/backup \
+curl http://localhost:8080/api/system/backup \
   -H "Authorization: Bearer <ADMIN_TOKEN>" \
-  -o actonos_backup_$(date +%Y%m%d_%H%M%S).tar.gz
+  -o actonos_backup_$(date +%Y%m%d_%H%M%S).db
 ```
 
 Gói sao lưu bao gồm:
-- Toàn bộ cơ sở dữ liệu SQLite (`storage/app.db`).
+- Toàn bộ cơ sở dữ liệu SQLite (`storage/app.db`) — agents, MCP, token OAuth, chỉ mục.
 - Cấu hình Két mã hóa (`config/vault.db`).
-- Manifest các Agent (`agents/agent_manifests.json`).
 - Danh sách công cụ và không gian làm việc (`skills/`, `workspace/`).
 
 ---

@@ -160,7 +160,13 @@ type DiscordChannel struct {
 
 func (c *DiscordChannel) SendMessage(ctx sdk.Context, msg sdk.OutboundMessage) error {
 	token, _ := ctx.Vault().GetSecret("discord_bot_tokens." + msg.AccountID)
-	// Gửi tin nhắn qua HTTP hoặc WebSocket...
+	if name, mime, data, ok := msg.AttachedFile(); ok {
+		// Host đã chuyển tệp sẵn. Tải lên bằng API của nền tảng này.
+		_ = name
+		_ = mime
+		_ = data
+	}
+	// Gửi tin nhắn chữ qua HTTP hoặc WebSocket...
 	return nil
 }
 
@@ -308,3 +314,47 @@ curl -X POST http://localhost:8080/api/plugins/upload \
 ```
 
 Hệ thống sẽ lập tức kiểm tra manifest, khởi tạo sandbox trong Wazero, liên kết các cầu nối tương ứng (`WasmToolBridge`, `WasmChannelBridge`, hoặc `WasmConnectorBridge`), và kích hoạt plugin mà không cần khởi động lại `actond`.
+
+---
+
+## 8. Host chuyển tệp cho plugin kênh {#sending-files}
+
+Khi người dùng nhờ agent gửi `report.pdf` sang Telegram (hoặc kênh khác), **ActonOS không tự tải tệp lên**. Host đọc tài liệu từ User Workspace rồi chuyển nguyên byte sang hàm `acton_channel_send` của plugin.
+
+Plugin của bạn phải tự nói chuyện với ứng dụng chat.
+
+### Các trường trong envelope
+
+`sdk.OutboundMessage` gồm:
+
+| Trường | Ý nghĩa |
+|:---|:---|
+| `FileName` | Tên tải về gốc (`report.pdf`) |
+| `MIMEType` | Kiểu nội dung (`application/pdf`) |
+| `FileData` | Byte thô của tệp (trên dây được mã hóa JSON base64) |
+| `Content` | Chú thích tùy chọn |
+| `Kind` | `media` khi có đính kèm tệp |
+
+Dùng `msg.AttachedFile()` để lấy bộ ba `(name, mime, data)`. Hàm hỗ trợ: `sdk.NewOutboundFile(...)`.
+
+### Giữ nguyên tệp nhị phân
+
+**Không** nhét byte PDF hay ảnh vào trường chuỗi JSON rồi `json.Marshal`. UTF-8 không hợp lệ bị thay bằng `U+FFFD`, người dùng tải về sẽ thấy **lỗi font**.
+
+Với tải `multipart/form-data` kiểu Telegram:
+
+```go
+contentType, body, err := sdk.EncodeMultipart(fields, "document", name, data)
+resp, err := ctx.HTTP().PostBinary(url, contentType, body)
+```
+
+`PostBinary` gửi `body_base64` tới syscall HTTP của host, giữ đúng từng byte. Đừng dùng `body` dạng chữ cho payload nhị phân.
+
+### Làm theo API của từng ứng dụng
+
+| Nền tảng | Cách tải lên thường dùng |
+|:---|:---|
+| **Telegram, Discord, Slack, WhatsApp** | Tải tệp multipart (`EncodeMultipart` + `PostBinary`) |
+| **Zalo Bot API** | JSON qua HTTPS. Trường tệp là **URL HTTPS công khai** (hoặc `data:` URI nhỏ). Body multipart bị bỏ qua. HTTP 200 kèm `"ok": false` phải coi là **thất bại** — Zalo thường trả 200 dù gửi không thành công. |
+
+Nếu plugin báo thành công nhưng người dùng không thấy tệp, hãy kiểm tra bạn đang gọi đúng API của nền tảng đó — không phải API Telegram — và ghi log khi gặp `ok: false`.

@@ -41,7 +41,7 @@ Hướng dẫn thực hành từng bước giúp bạn tạo AI Agent tự trị
    - **Nhiệt độ (Temperature)**: `0.3` (cho kết quả chính xác, bám sát thực tế).
 6. Tại mục **Phạm vi Công cụ & Phân quyền**:
    - Tích chọn `native_web_search` (tìm kiếm DuckDuckGo / Tavily).
-   - Tích chọn `native_browser_headless` (trình duyệt Chromium bóc tách web).
+   - Tích chọn `native_browser_navigate` (đọc trang web bằng Chromium ẩn).
    - Tích chọn `native_workspace_write` (ghi kết quả vào thư mục workspace).
 7. Bấm **Lưu Manifest Agent**.
 
@@ -61,7 +61,7 @@ Hướng dẫn thực hành từng bước giúp bạn tạo AI Agent tự trị
 1. **Phân tầng Mô hình**: ActonOS gửi câu lệnh đến LLM chính qua luồng SSE (Server-Sent Events).
 2. **Kích hoạt Công cụ**: Agent tự động quyết định gọi `native_web_search("Go 1.26 release notes")`.
 3. **Thẻ Thực thi Trực tiếp**: Một thẻ tương tác xuất hiện trên dòng thời gian chat hiển thị tham số đầu vào, thời gian chạy và dữ liệu JSON trả về.
-4. **Tự động Ghi Tệp**: Agent gọi `native_workspace_write` để tạo tệp `/workspace/go_126_summary.md`.
+4. **Tự động Ghi Tệp**: Agent gọi `native_workspace_write` để tạo `go_126_summary.md` trong Workspace của bạn (đúng tên bạn yêu cầu).
 5. **Phản hồi Tức thì**: Agent trình bày câu trả lời định dạng Markdown ngay trong khung chat.
 
 ---
@@ -83,5 +83,5 @@ Hãy tiếp tục khám phá các tài liệu nâng cao:
 - **[Hướng dẫn Agent Studio](../user-guide/agent-studio)**: Xây dựng mạng lưới Swarm đa Agent với cơ chế ủy quyền.
 - **[Nhiệm vụ Tự trị](../user-guide/missions)**: Chạy quy trình DAG phức tạp kèm điểm dừng phê duyệt từ con người.
 - **[Plugins & Tiện ích Mở rộng WASM](../user-guide/plugins)**: Cài đặt công cụ, bot kênh chat và kết nối SaaS dưới dạng WASM.
-- **[Kênh Giao tiếp Đa kênh](../user-guide/channels)**: Kết nối Agent với Telegram, Discord và Slack.
+- **[Kênh Giao tiếp Đa kênh](../user-guide/channels)**: Kết nối Agent với Telegram, Discord, Slack, WhatsApp hoặc Zalo — kể cả gửi tệp từ workspace.
 - **[Công cụ & Máy chủ MCP](../user-guide/tools-and-skills)**: Thêm máy chủ MCP và kỹ năng thư mục tùy chỉnh.

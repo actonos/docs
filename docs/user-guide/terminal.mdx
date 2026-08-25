@@ -19,7 +19,7 @@ To ensure safety, commands executed in the terminal do not run with root privile
 - Powered by **Bubblewrap (`bwrap`)** and Linux **Cgroups v2**.
 - Operates inside an unprivileged user namespace with a private mount table.
 - System root directories (`/usr`, `/lib`, `/bin`) are mounted **Read-Only**.
-- The only writable partition is `/data/workspace`.
+- Writable areas are the agent scratchpad and your **Workspace** documents, available by original name (for example `report.pdf` via `user-workspace/`).
 - Strictly capped at **512 MB RAM**, **50% CPU quota**, and a maximum of **30 concurrent PIDs**.
 
 ### Docker Container Mode

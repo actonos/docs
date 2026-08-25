@@ -21,7 +21,7 @@ Returns system status, active version, uptime, runtime mode, and resource load. 
 ```json
 {
   "status": "healthy",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "uptime_seconds": 3600,
   "runtime_mode": "baremetal",
   "agents_active": 3,
@@ -89,15 +89,18 @@ Creates a new agent definition.
 **Request Body:**
 ```json
 {
-  "id": "researcher",
+  "agent_id": "researcher",
   "name": "Research Agent",
   "description": "Performs deep web research and generates markdown reports",
-  "system_prompt": "You are a professional research agent...",
-  "primary_model": "anthropic:claude-3-7-sonnet",
-  "fallback_model": "google:gemini-2.0-flash",
-  "temperature": 0.2,
-  "tools": ["native_web_search", "native_browser_headless", "native_workspace_write"],
-  "allowed_paths": ["docs/*", "research/*"]
+  "system_instructions": "You are a professional research agent...",
+  "model_config": {
+    "primary_model": "anthropic/claude-sonnet-4-6",
+    "fallback_model": "google/gemini-2.0-flash"
+  },
+  "authorized_tools": ["native_web_search", "native_browser_navigate", "native_workspace_write"],
+  "delegation_scope": {
+    "allowed_workspace_paths": ["*"]
+  }
 }
 ```
 
@@ -114,7 +117,7 @@ Removes an agent from the registry.
 ### `POST /api/agents/{id}/chat`
 Synchronously sends a message to an agent.
 
-### `GET /api/agents/{id}/chat/stream`
+### `POST /api/agents/{id}/chat/stream`
 Initiates a Server-Sent Events (SSE) stream for real-time token streaming and live tool execution cards.
 
 ---
@@ -161,9 +164,6 @@ Lists all installed WASM plugins with manifests, capabilities (`tool`, `channel`
 
 ### `POST /api/plugins/upload`
 Upload an `.actonpkg` bundle or `.wasm` binary via `multipart/form-data` (`file`). Validates the manifest and hot-loads into the Wazero runtime sandbox.
-
-### `GET /api/plugins/{id}`
-Returns complete manifest details and configuration schema for a specific plugin.
 
 ### `POST /api/plugins/{id}/config`
 Updates dynamic configuration values and persists declared secrets into Hardware Vault. Automatically triggers hot-reloading of the plugin instance.
@@ -229,20 +229,28 @@ Installs or uninstalls a verified community skill package.
 
 ## 10. Workspace File Management
 
-### `GET /api/workspace/files?dir=docs`
-Lists files and directories under the specified relative workspace path with semantic vector status.
+The Workspace page shows original names (`report.pdf`). The API identifies files by opaque `id` / `parent_id`. `path` and `dir` still resolve as a compatibility fallback.
 
-### `GET /api/workspace/file?path=docs/notes.md`
-Returns the content and metadata of a specific text file.
+### `GET /api/workspace/files?parent_id=`
+Lists children of a folder. Omit `parent_id` for the workspace root. Each item includes `name`, `virtual_path`, and semantic index status.
 
-### `GET /api/workspace/raw?path=docs/diagram.png`
-Streams raw binary bytes (with HTTP Range support) for media and image previews.
+### `GET /api/workspace/file?id=`
+Returns metadata. Text files include UTF-8 `content`; binary files include `raw_url` instead of a base64 payload.
+
+### `GET /api/workspace/raw?id=`
+Streams original file bytes (HTTP Range supported) for PDF, image, audio, and video.
 
 ### `POST /api/workspace/file`
-Creates or updates a file and enqueues it for semantic vector indexing.
+Creates or updates a file (`parent_id`, `name`, plus `content` or `content_base64`) and enqueues semantic indexing.
 
-### `DELETE /api/workspace/file?path=reports/old.md`
-Deletes a file or directory from the workspace.
+### `DELETE /api/workspace/file?id=`
+Deletes a file or folder.
+
+### `POST /api/workspace/mkdir` | `POST /api/workspace/upload` | `POST /api/workspace/rename` | `POST /api/workspace/duplicate`
+Folder create, multipart upload, rename/move, and duplicate.
+
+### `GET /api/workspace/stats` | `GET /api/workspace/zip?id=` | `POST /api/workspace/reindex` | `GET /api/workspace/chunks?id=`
+Storage breakdown, zip download, manual reindex, and semantic chunks for a file.
 
 ---
 

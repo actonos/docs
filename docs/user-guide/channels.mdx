@@ -69,3 +69,49 @@ ActonOS continuously monitors the runtime health of all active channel adapters:
 - **Long-Polling & WebSocket Watchdog**: If a polling loop stalls or a socket disconnects, the daemon automatically initiates reconnection with exponential backoff.
 - **Health Badges**: The Plugins and Operations dashboards display real-time statuses: 🟢 `Connected`, 🟡 `Reconnecting`, or 🔴 `Error`.
 - **Failure Escalation**: If a token is revoked or rate-limited by the upstream provider, ActonOS generates an immediate notification in the Notification Center with actionable diagnostic logs.
+
+---
+
+## 5. Sending files to chat {#sending-files-to-chat}
+
+After a file is in your [Workspace](workspace), you can ask the agent to send it through a connected chat app.
+
+**In ActonOS Chat:**
+
+```
+Send report.pdf from the workspace to the Telegram group.
+```
+
+**On Telegram, Discord, or Zalo (to the bot):**
+
+```
+Gửi file report.pdf sang đây.
+```
+
+What happens behind the scenes:
+
+1. The agent finds the file in your workspace by its original name.
+2. ActonOS **hands the file bytes to the installed channel plugin** (Telegram, Discord, Zalo, and so on).
+3. That plugin uploads the file using the chat app’s own API.
+
+The core system does **not** talk to Telegram or Zalo itself. File delivery is the plugin’s job. If sending fails, open **Plugins** → the channel card → **Logs**.
+
+:::note One chat app at a time
+When attaching a file, pick a **specific** installed channel (for example Telegram). Sending a file to “all channels” is not supported.
+:::
+
+### What the recipient sees
+
+| App | What arrives |
+|:---|:---|
+| **Telegram, Discord, Slack, WhatsApp** | A normal file attachment with the original name (`report.pdf`). |
+| **Zalo** | A file the bot posts through Zalo’s JSON API (a public HTTPS URL, or a small file encoded in the request). Zalo does **not** use Telegram-style multipart uploads. |
+
+### Keep channel plugins up to date
+
+After you update ActonOS, re-install the latest channel plugin (`.actonpkg`) from **Plugins**. Older plugins may:
+
+- Say the file was sent while nothing appears in the chat (common on Zalo).
+- Deliver a PDF that opens with **broken fonts** (the file bytes were corrupted in transit).
+
+Use the rebuilt official packages for Telegram, Discord, Slack, WhatsApp, and Zalo so binary files stay intact.

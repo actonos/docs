@@ -30,10 +30,11 @@ graph LR
 ### Công cụ Native Tích hợp Sẵn
 Biên dịch trực tiếp vào tệp nhị phân tĩnh `actond` nhằm đạt tốc độ thực thi tối đa:
 - `native_web_search`: Tìm kiếm thông tin web qua DuckDuckGo, Brave Search hoặc Tavily.
-- `native_browser_headless`: Tự động hóa trình duyệt Chromium qua `chromedp` (trích xuất DOM, render JavaScript, chụp ảnh màn hình).
-- `native_workspace_read` & `native_workspace_write`: Đọc và ghi tệp cách ly trong thư mục `/workspace`.
-- `native_exec`: Thực thi lệnh shell trong môi trường Bubblewrap/Subshell jail.
-- `native_sql_query`: Truy vấn cơ sở dữ liệu ứng dụng và các tệp SQLite trong workspace.
+- `native_browser_navigate` & `native_browser_screenshot`: Mở trang trong Chromium ẩn, trích văn bản đã render, hoặc chụp ảnh màn hình.
+- `native_workspace_search`, `native_workspace_read`, `native_workspace_write`, `native_workspace_delete`: Làm việc với **tài liệu của bạn** trên trang Workspace. Tệp giữ nguyên tên gốc (`report.pdf`). Với PDF và tệp nhị phân, agent mở theo tên thay vì nhét cả tệp vào khung chat.
+- `native_file_read` / `native_file_write`: **Thư mục tạm riêng** của agent (script, bản nháp). Những tệp này không hiện trên trang Workspace cho đến khi được xuất bằng `native_workspace_write`.
+- `native_exec`: Thực thi lệnh shell trong môi trường Bubblewrap/Subshell. Tài liệu của bạn mở được theo tên gốc trong `user-workspace/` (biến môi trường `ACTONOS_USER_WORKSPACE`).
+- `native_channel_notify`: Gửi tin nhắn chữ **hoặc tệp workspace** qua plugin chat đã cài (Telegram, Discord, Slack, WhatsApp, Zalo). ActonOS chỉ chuyển tệp; plugin tự tải lên. Khi gửi tệp hãy chọn đúng một kênh.
 
 ### Tích hợp Giao thức Ngữ cảnh Mô hình (MCP)
 ActonOS hoạt động như một máy chủ MCP Host triển khai theo chuẩn mở của Anthropic:

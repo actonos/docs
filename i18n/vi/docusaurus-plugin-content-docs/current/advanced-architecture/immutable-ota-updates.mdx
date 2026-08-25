@@ -20,8 +20,8 @@ sequenceDiagram
     Cloud-->>Daemon: Thông tin phiên bản mới + Chữ ký số
     Daemon->>Cloud: Tải binary actond.new
     Daemon->>Daemon: Xác thực chữ ký số SHA-256
-    Daemon->>Disk: Lưu vào /data/bin/actond.v0.2
-    Daemon->>Disk: Đổi liên kết mềm nguyên tử (/data/bin/actond -> v0.2)
+    Daemon->>Disk: Lưu vào /data/bin/actond.v1
+    Daemon->>Disk: Đổi liên kết mềm nguyên tử (/data/bin/actond -> v1)
     Daemon->>Daemon: Khởi động lại dịch vụ hệ thống
     
     Watchdog->>Daemon: Bắt đầu đếm ngược 30 giây

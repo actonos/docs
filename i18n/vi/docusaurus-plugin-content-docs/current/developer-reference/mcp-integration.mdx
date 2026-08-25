@@ -11,28 +11,23 @@ ActonOS hỗ trợ tích hợp các máy chủ **Model Context Protocol (MCP)** 
 
 ---
 
-## 1. Cấu hình Máy chủ MCP qua `stdio`
+## 1. Cấu hình Máy chủ MCP
 
-Thêm cấu hình vào `/data/mcp-servers/config.json`:
+Đăng ký máy chủ từ trang Công cụ hoặc qua `POST /api/tools/mcp`. Cấu hình lưu trong cơ sở dữ liệu ActonOS (không phải tệp JSON trên đĩa). Kết nối hoặc ngắt MCP có thể trả về `202 Accepted` cho đến khi người vận hành phê duyệt.
 
 ```json
 {
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/data/workspace"]
-    },
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "vault:secrets/github_token"
-      }
-    }
-  }
+  "id": "github-mcp",
+  "name": "GitHub MCP",
+  "transport": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-github"],
+  "enabled": true
 }
 ```
 
-:::tip Bảo mật qua Vault
-Giá trị bắt đầu bằng `vault:` sẽ được ActonOS tự động giải mã an toàn từ Két bảo mật phần cứng khi khởi chạy tiến trình, không bao giờ lộ token ra tệp cấu hình thô.
-:::
+Với tài liệu Workspace, hãy dùng công cụ có sẵn `native_workspace_*`. Chúng giữ tên gốc. Đừng trỏ máy chủ filesystem MCP vào `/data/workspace` — thư mục đó lưu mã nội bộ, không phải tên bạn thấy trên trang Workspace.
+
+Hỗ trợ hai transport:
+- **`stdio`**: Daemon khởi chạy tiến trình MCP và nói chuyện qua stdin/stdout JSON-RPC.
+- **`http` / `sse`**: Kết nối máy chủ MCP từ xa.

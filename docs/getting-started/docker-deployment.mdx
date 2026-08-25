@@ -176,18 +176,13 @@ All persistent database tables, encrypted API keys, agent manifests, and custom 
 /data/
 ├── config/
 │   └── vault.db           # Hardware/Env-encrypted API keys & OAuth secrets
-├── agents/
-│   └── agent_manifests.json # User-created agent definitions
-├── tokens/
-│   └── oauth_tokens.vault # Encrypted OAuth 2.1 refresh tokens
 ├── storage/
-│   └── app.db             # SQLite relational database, FTS5 index, vector embeddings
+│   └── app.db             # SQLite: agents, MCP, OAuth tokens, FTS5, vector index
 ├── logs/
 │   └── audit.jsonl        # Cryptographically chained SHA-256 audit ledger
 ├── plugins/               # Sandboxed WASM plugin binaries (.wasm)
 ├── skills/                # Custom skill directories (JSON + scripts)
-├── mcp-servers/           # Model Context Protocol server configurations
-└── workspace/             # Sandboxed workspace for agent file I/O
+└── workspace/             # Your documents (original filenames) + agent file I/O
 ```
 
 :::warning Backup Your Volume

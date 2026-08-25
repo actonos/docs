@@ -35,15 +35,27 @@ To attach files:
 - Click the 📎 **Paperclip icon** in the composer.
 - Or simply **drag and drop** files directly onto the chat window.
 
+Chat attachments are for **this conversation**. To keep a document for later, ask the agent to save it to the [Workspace](workspace) (for example: “Save this as `brief.pdf` in the workspace”). Workspace files keep their original names, so you can later say “Open `brief.pdf`” or “Send `brief.pdf` to Telegram.”
+
+### Send a workspace file to a chat app
+
+If Telegram, Discord, Slack, WhatsApp, or Zalo is installed, you can ask in chat:
+
+```
+Send report.pdf from the workspace to Telegram.
+```
+
+The agent finds the file by name and hands it to that channel’s plugin. See [Sending files to chat](channels#sending-files-to-chat).
+
 ---
 
 ## 3. Real-Time Tool Execution Cards
 
-When an agent invokes external tools (e.g., executing a Python script, browsing a website, or querying an SQLite database), ActonOS renders an interactive **Tool Execution Card** directly in the message timeline:
+When an agent invokes external tools (e.g., executing a Python script or browsing a website), ActonOS renders an interactive **Tool Execution Card** directly in the message timeline:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ ⚡ native_browser_headless                                   │
+│ ⚡ native_browser_navigate                                   │
 │ Target: https://github.com/actonos/actonos                   │
 ├─────────────────────────────────────────────────────────────┤
 │ Status: Completed in 1.42s · Extracted 2,840 bytes           │

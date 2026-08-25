@@ -7,7 +7,7 @@ sidebar_position: 6
 
 # Tự động hóa & Nhịp tim OpenClaw
 
-ActonOS kết hợp **Lập lịch Tự động (Cron/Interval Triggers)** với **Daemon Nhịp tim Heartbeat** tuân thủ nghiêm ngặt theo [Chuẩn OpenClaw Heartbeat Contract](https://docs.openclaw.ai/vi/gateway/heartbeat).
+ActonOS kết hợp **lịch cron** với **Daemon Nhịp tim Heartbeat** tuân thủ nghiêm ngặt theo [Chuẩn OpenClaw Heartbeat Contract](https://docs.openclaw.ai/vi/gateway/heartbeat).
 
 ```mermaid
 flowchart TD
@@ -36,9 +36,5 @@ flowchart TD
 
 1. Bấm vào mục **Tự động (Automations)** trên menu.
 2. Bấm **+ Tạo Tự động hóa Mới**.
-3. Chọn loại kích hoạt:
-   - **Biểu thức Cron**: Cron 5 trường (ví dụ `0 9 * * 1-5` chạy lúc 9h sáng các ngày trong tuần).
-   - **Khoảng thời gian (Interval)**: Chạy định kỳ mỗi $N$ phút hoặc giờ.
-   - **Sự kiện (Event)**: Kích hoạt khi có sự kiện hệ thống (ví dụ: tệp mới được tạo).
-   - **Webhook**: Kích hoạt khi có HTTP POST request.
+3. Nhập **biểu thức Cron** (5 trường, ví dụ `0 9 * * 1-5` chạy lúc 9h sáng các ngày trong tuần).
 4. Chọn Agent xử lý và Kênh nhận thông báo báo cáo.

@@ -69,3 +69,49 @@ ActonOS liên tục kiểm tra trạng thái hoạt động của các bộ đi�
 - **Bộ giám sát Polling & WebSocket Watchdog**: Khi vòng lặp bị gián đoạn hoặc mất socket, daemon tự động thực hiện tái kết nối theo thuật toán exponential backoff.
 - **Huy hiệu Trạng thái**: Bảng điều khiển Plugins và Operations hiển thị trạng thái trực tiếp: 🟢 `Connected`, 🟡 `Reconnecting`, hoặc 🔴 `Error`.
 - **Cảnh báo Tự động**: Nếu token bị thu hồi hoặc bị chặn API, ActonOS sẽ gửi thông báo khẩn cấp đến Trung tâm Thông báo kèm log chẩn đoán chi tiết.
+
+---
+
+## 5. Gửi tệp sang chat {#sending-files-to-chat}
+
+Khi tệp đã nằm trong [Workspace](workspace), bạn có thể nhờ agent gửi tệp đó qua ứng dụng chat đã kết nối.
+
+**Trong Chat ActonOS:**
+
+```
+Gửi report.pdf trong workspace sang nhóm Telegram.
+```
+
+**Trên Telegram, Discord hoặc Zalo (nhắn với bot):**
+
+```
+Gửi file report.pdf sang đây.
+```
+
+Điều xảy ra phía sau:
+
+1. Agent tìm tệp trong workspace theo **tên gốc**.
+2. ActonOS **chuyển nguyên nội dung tệp cho plugin kênh** đã cài (Telegram, Discord, Zalo, …).
+3. Plugin đó tự tải tệp lên theo API của ứng dụng chat.
+
+Hệ điều hành **không** tự nói chuyện với Telegram hay Zalo. Việc gửi tệp thuộc về plugin. Nếu gửi thất bại, mở **Plugins** → thẻ kênh đó → **Logs**.
+
+:::note Mỗi lần gửi một ứng dụng
+Khi đính kèm tệp, hãy chọn **một** kênh đã cài (ví dụ Telegram). Không gửi tệp tới “tất cả kênh” cùng lúc.
+:::
+
+### Người nhận thấy gì
+
+| Ứng dụng | Những gì hiện trong chat |
+|:---|:---|
+| **Telegram, Discord, Slack, WhatsApp** | Tệp đính kèm bình thường, đúng tên gốc (`report.pdf`). |
+| **Zalo** | Bot gửi tệp qua API JSON của Zalo (đường dẫn HTTPS công khai, hoặc tệp nhỏ được mã hóa trong yêu cầu). Zalo **không** dùng kiểu tải multipart như Telegram. |
+
+### Cập nhật plugin kênh cho khớp phiên bản mới
+
+Sau khi cập nhật ActonOS, hãy cài lại plugin kênh mới nhất (`.actonpkg`) tại **Plugins**. Plugin cũ có thể:
+
+- Báo “đã gửi” nhưng chat không hiện tệp (hay gặp trên Zalo).
+- Gửi PDF tải về bị **lỗi font** (dữ liệu tệp bị hỏng trên đường truyền).
+
+Dùng gói chính thức đã build lại cho Telegram, Discord, Slack, WhatsApp và Zalo để tệp nhị phân được giữ nguyên.

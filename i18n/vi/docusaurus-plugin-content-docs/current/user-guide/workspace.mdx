@@ -29,7 +29,48 @@ ActonOS tích hợp sẵn các trình xem chuyên dụng:
 
 ---
 
-## 3. Lập Chỉ mục Bộ nhớ Ngữ nghĩa Tự động (Vector RAG)
+## 3. Tệp giữ nguyên tên bạn đặt
+
+Khi bạn tải lên `report.pdf` hoặc nhờ agent lưu `weekly-notes.md`, đó chính là tên hiện trên trang Workspace — và cũng là tên agent dùng để tìm, mở, xử lý tệp.
+
+Bạn có thể nói:
+
+- “Tóm tắt `report.pdf` trong workspace.”
+- “Lưu thành `weekly-notes.md`.”
+- “Mở PDF tôi tải hôm qua rồi trích bảng số liệu.”
+
+Agent tìm tệp theo tên rồi đọc hoặc xử lý. Bạn không cần nhớ mã ID bên trong hệ thống.
+
+:::tip Workspace và thư mục tạm của agent
+**Workspace** là thư mục của bạn. Tệp ở đây hiện trên giao diện và giữ nguyên cho đến khi bạn xóa.
+
+Agent còn có **thư mục tạm riêng** (scratchpad) để chạy script, soạn nháp. Những tệp đó **không** hiện trên trang Workspace trừ khi agent **xuất** chúng (ví dụ: “lưu PDF này vào workspace của tôi”).
+:::
+
+### Mở PDF và tài liệu khác bằng script
+
+Khi bạn nhờ agent chạy Python (hoặc lệnh khác) trên tệp đã tải lên, agent dùng **đúng tên gốc**. Quy trình thường gặp:
+
+1. Bạn tải `report.pdf`, hoặc agent lưu tệp đó vào workspace.
+2. Bạn nói: “Trích trang đầu của `report.pdf`.”
+3. Agent tìm tệp rồi mở bằng đúng tên đó.
+
+Cách này dùng được với PDF, ảnh, ZIP, Word, Excel và các tệp nhị phân khác. Tệp không bị chuyển thành chữ trong khung chat trước, nên font và bố cục được giữ nguyên.
+
+### Lưu tệp agent tạo ra vào Workspace
+
+Hãy nhờ agent ghi kết quả **vào workspace** để bạn mở hoặc tải về:
+
+- “Viết tóm tắt vào `go_126_summary.md` trong workspace.”
+- “Tạo `invoice.pdf` rồi lưu vào workspace của tôi.”
+
+Với PDF và tệp nhị phân khác, ActonOS sao chép nguyên tệp đã hoàn thiện. Mở trang **Workspace**, bấm vào tệp rồi tải về.
+
+Bạn cũng có thể nhờ agent [gửi tệp workspace sang Telegram, Discord, Slack, WhatsApp hoặc Zalo](channels#sending-files-to-chat).
+
+---
+
+## 4. Lập Chỉ mục Bộ nhớ Ngữ nghĩa Tự động (Vector RAG)
 
 Mọi tệp văn bản và mã nguồn trong `/data/workspace/` đều được tự động đưa vào bộ nhớ vector:
 1. **Hàng đợi Giảm tải Debounce (60s)**: Gom các lần sửa đổi liên tiếp để tránh tính toán thừa.

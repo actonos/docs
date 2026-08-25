@@ -16,7 +16,7 @@ graph LR
     C --> D["Quản trị & Phân quyền<br/>Giới hạn vòng lặp · Đường dẫn · Phê duyệt"]
     D --> E["Cấp quyền Công cụ<br/>Native · MCP · WASM · Skills"]
     E --> F["Kênh chat & Ủy quyền<br/>Trigger đầu vào · Nhóm Agent con"]
-    F --> G["Lưu Manifest Agent<br/>agent_manifests.json"]
+    F --> G["Lưu Manifest Agent<br/>(SQLite)"]
 ```
 
 ---
@@ -39,7 +39,7 @@ Bạn là chuyên gia DevOps chịu trách nhiệm giám sát dịch vụ ActonO
 
 # Quy tắc Vận hành
 1. Luôn kiểm tra lệnh ở chế độ dry-run trước khi áp dụng cấu hình.
-2. Lưu các tệp kết quả tạm thời trong thư mục `/workspace/scratch/`.
+2. Giữ script tạm trong thư mục tạm riêng. Xuất tài liệu hoàn chỉnh vào Workspace của người dùng với tên gốc (ví dụ `diagnostics.md`).
 3. Nếu thao tác cần khởi động lại dịch vụ hệ thống, hãy yêu cầu phê duyệt từ người dùng.
 ```
 
@@ -64,10 +64,10 @@ ActonOS tích hợp bộ định tuyến mô hình thông minh nhằm tối ưu 
   - `*` - Cho phép toàn bộ công cụ.
   - `native_*` - Chỉ cho phép các công cụ lõi hệ thống.
   - `mcp_github_*` - Chỉ cho phép các công cụ thuộc MCP GitHub.
-- **Ngưỡng Phê duyệt**:
-  - `Luôn hỏi`: Bắt buộc con người phê duyệt mọi thao tác ghi/sửa.
-  - `Chỉ thao tác nguy cơ cao`: Yêu cầu phê duyệt khi sửa file, chạy lệnh shell hoặc gọi API bên ngoài.
-  - `Tự trị hoàn toàn`: Tự động thực thi không cần ngắt quãng.
+- **Mức phê duyệt**:
+  - `Low`: Chạy các công cụ đã cấp quyền mà không hỏi.
+  - `Medium`: Được ghi Workspace; lệnh shell, xóa, cron và thay đổi tiện ích vẫn cần duyệt.
+  - `High`: Xác nhận mọi thao tác nhạy cảm trước khi chạy.
 - **Giới hạn Vòng lặp (Iteration Budget)**: Số bước suy luận tối đa cho một tác vụ (mặc định: `25`).
 
 ---

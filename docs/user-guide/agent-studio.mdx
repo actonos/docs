@@ -16,7 +16,7 @@ graph LR
     C --> D["Governance & Scopes<br/>Iteration Limits · Allowed Paths · Approvals"]
     D --> E["Tool Authorization<br/>Native · MCP · WASM · Skills"]
     E --> F["Channels & Delegation<br/>Inbound Triggers · Swarm Child Agents"]
-    F --> G["Saved Agent Manifest<br/>agent_manifests.json"]
+    F --> G["Saved Agent Manifest<br/>(SQLite)"]
 ```
 
 ---
@@ -39,7 +39,7 @@ You are an expert DevOps engineer tasked with monitoring ActonOS services, diagn
 
 # Operating Constraints
 1. Always test commands in a dry-run mode before modifying configuration.
-2. Store temporary diagnostic output in `/workspace/scratch/`.
+2. Keep temporary scripts in your private scratchpad. Publish finished documents to the user Workspace with their original names (for example `diagnostics.md`).
 3. If an action requires restarting a daemon, ask for human approval.
 ```
 
@@ -74,10 +74,10 @@ Define strict security boundaries for each agent:
   - `*` - Grants access to all installed tools.
   - `native_*` - Restricts access only to built-in system tools.
   - `mcp_github_*` - Restricts access to GitHub MCP tools.
-- **Approval Threshold**:
-  - `Always Ask`: Requires human approval for all mutations.
-  - `High-Risk Only`: Requires approval for file writes, shell execution, and SaaS mutations.
-  - `Autonomous`: Executes all authorized tools automatically without interruption.
+- **Approval Level**:
+  - `Low`: Run authorized tools without asking.
+  - `Medium`: Workspace writes can run; shell, delete, cron, and extension changes still need approval.
+  - `High`: Confirm every sensitive action before it runs.
 - **Allowed Workspace Paths**: Restrict file read/write operations to specific subdirectories (e.g., `["docs/*", "reports/*"]`).
 - **Iteration Budget**: Set the maximum number of ReAct loop steps allowed per single task (default: `25`).
 

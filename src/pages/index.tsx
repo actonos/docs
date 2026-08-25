@@ -12,7 +12,7 @@ function HomepageHeader() {
     <header className={clsx('hero', styles.heroBanner)}>
       <div className="container">
         <div className={styles.badgeContainer}>
-          <span className={styles.versionBadge}>ActonOS v0.1 Documentation</span>
+          <span className={styles.versionBadge}>ActonOS v1 Documentation</span>
           <span className={styles.statusPill}>● Production-Ready Architecture</span>
         </div>
         <Heading as="h1" className={styles.heroTitle}>
@@ -128,7 +128,7 @@ function HomepageFeatures(): ReactNode {
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Everything You Need to Orchestrate Autonomous AI</h2>
           <p className={styles.sectionSubtitle}>
-            Explore our curated documentation guides to install, configure, develop, and operate ActonOS v0.1.
+            Explore our curated documentation guides to install, configure, develop, and operate ActonOS v1.
           </p>
         </div>
         <div className="row">
@@ -145,7 +145,7 @@ export default function Home(): ReactNode {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title={`${siteConfig.title} | v0.1`}
+      title={`${siteConfig.title} | v1`}
       description="Comprehensive user guides, architecture specifications, and developer API references for ActonOS.">
       <HomepageHeader />
       <main>

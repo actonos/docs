@@ -18,34 +18,22 @@ ActonOS acts as a full-featured **MCP Host**, allowing agents to seamlessly disc
 
 ---
 
-## 2. Adding an MCP Server via Manifest
+## 2. Adding an MCP Server
 
-Add your server definition to `/data/mcp-servers/servers.json` or via `POST /api/tools/mcp`:
+Register a server from the Tools page or with `POST /api/tools/mcp`. Configurations are stored in the ActonOS database (not a JSON file on disk). Connecting or disconnecting an MCP server may return `202 Accepted` until an operator approves the change.
 
 ```json
 {
-  "servers": [
-    {
-      "id": "filesystem-mcp",
-      "name": "Local Filesystem MCP",
-      "transport": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/data/workspace"],
-      "enabled": true
-    },
-    {
-      "id": "remote-analytics",
-      "name": "Remote Analytics Server",
-      "transport": "sse",
-      "url": "https://mcp.analytics.internal/sse",
-      "headers": {
-        "Authorization": "Bearer SECRETS_FROM_VAULT"
-      },
-      "enabled": true
-    }
-  ]
+  "id": "github-mcp",
+  "name": "GitHub MCP",
+  "transport": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-github"],
+  "enabled": true
 }
 ```
+
+For workspace documents, prefer the built-in `native_workspace_*` tools. Those keep original filenames. Do not point a filesystem MCP server at `/data/workspace` — that folder stores internal IDs, not the names you see on the Workspace page.
 
 ---
 

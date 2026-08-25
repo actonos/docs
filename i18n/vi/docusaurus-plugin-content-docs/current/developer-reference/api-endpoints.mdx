@@ -21,7 +21,7 @@ Trả về trạng thái sức khỏe, phiên bản, thời gian hoạt động 
 ```json
 {
   "status": "healthy",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "uptime_seconds": 3600,
   "runtime_mode": "baremetal",
   "agents_active": 3,
@@ -89,15 +89,18 @@ Tạo mới một cấu hình Agent.
 **Body Yêu cầu:**
 ```json
 {
-  "id": "researcher",
+  "agent_id": "researcher",
   "name": "Research Agent",
   "description": "Thực hiện nghiên cứu web chuyên sâu và viết báo cáo markdown",
-  "system_prompt": "Bạn là chuyên gia nghiên cứu dữ liệu...",
-  "primary_model": "anthropic:claude-3-7-sonnet",
-  "fallback_model": "google:gemini-2.0-flash",
-  "temperature": 0.2,
-  "tools": ["native_web_search", "native_browser_headless", "native_workspace_write"],
-  "allowed_paths": ["docs/*", "research/*"]
+  "system_instructions": "Bạn là chuyên gia nghiên cứu dữ liệu...",
+  "model_config": {
+    "primary_model": "anthropic/claude-sonnet-4-6",
+    "fallback_model": "google/gemini-2.0-flash"
+  },
+  "authorized_tools": ["native_web_search", "native_browser_navigate", "native_workspace_write"],
+  "delegation_scope": {
+    "allowed_workspace_paths": ["*"]
+  }
 }
 ```
 
@@ -114,7 +117,7 @@ Xóa Agent khỏi hệ thống.
 ### `POST /api/agents/{id}/chat`
 Gửi tin nhắn đồng bộ đến một Agent.
 
-### `GET /api/agents/{id}/chat/stream`
+### `POST /api/agents/{id}/chat/stream`
 Khởi tạo luồng Server-Sent Events (SSE) để truyền dữ liệu sinh token theo thời gian thực và thẻ thực thi công cụ trực tiếp.
 
 ---
@@ -161,9 +164,6 @@ Liệt kê tất cả các Plugin WASM đã cài đặt kèm manifest, khả nă
 
 ### `POST /api/plugins/upload`
 Tải lên gói `.actonpkg` hoặc tệp nhị phân `.wasm` qua `multipart/form-data` (`file`). Xác thực manifest và hot-load vào môi trường sandbox Wazero.
-
-### `GET /api/plugins/{id}`
-Lấy thông tin chi tiết manifest và schema cấu hình giao diện của plugin.
 
 ### `POST /api/plugins/{id}/config`
 Cập nhật giá trị cấu hình động và lưu trữ khóa bí mật vào Hardware Vault. Tự động kích hoạt cơ chế Hot-reload của plugin.
@@ -229,20 +229,28 @@ Cài đặt hoặc gỡ cài đặt một gói kỹ năng cộng đồng.
 
 ## 10. Quản lý Tệp Workspace
 
-### `GET /api/workspace/files?dir=docs`
-Liệt kê tệp và thư mục theo đường dẫn tương đối kèm trạng thái lập chỉ mục vector.
+Trang Workspace hiện **tên gốc** (`report.pdf`). API định danh tệp bằng `id` / `parent_id`. `path` và `dir` vẫn được nhận như lối tương thích cũ.
 
-### `GET /api/workspace/file?path=docs/notes.md`
-Lấy nội dung văn bản và siêu dữ liệu của tệp.
+### `GET /api/workspace/files?parent_id=`
+Liệt kê con của một thư mục. Bỏ `parent_id` để lấy gốc. Mỗi mục có `name`, `virtual_path` và trạng thái lập chỉ mục.
 
-### `GET /api/workspace/raw?path=docs/diagram.png`
-Truyền tải byte nhị phân thô (hỗ trợ HTTP Range) cho hình ảnh, media hoặc PDF.
+### `GET /api/workspace/file?id=`
+Trả về siêu dữ liệu. Tệp chữ kèm `content` UTF-8; tệp nhị phân kèm `raw_url` (không nhét base64).
+
+### `GET /api/workspace/raw?id=`
+Truyền nguyên byte tệp (hỗ trợ HTTP Range) cho PDF, ảnh, audio, video.
 
 ### `POST /api/workspace/file`
-Tạo hoặc cập nhật tệp và tự động đưa vào hàng đợi lập chỉ mục vector.
+Tạo hoặc cập nhật (`parent_id`, `name`, cộng `content` hoặc `content_base64`) và đưa vào hàng đợi lập chỉ mục.
 
-### `DELETE /api/workspace/file?path=reports/old.md`
-Xóa tệp hoặc thư mục khỏi không gian làm việc.
+### `DELETE /api/workspace/file?id=`
+Xóa tệp hoặc thư mục.
+
+### `POST /api/workspace/mkdir` | `POST /api/workspace/upload` | `POST /api/workspace/rename` | `POST /api/workspace/duplicate`
+Tạo thư mục, tải lên multipart, đổi tên/di chuyển, nhân bản.
+
+### `GET /api/workspace/stats` | `GET /api/workspace/zip?id=` | `POST /api/workspace/reindex` | `GET /api/workspace/chunks?id=`
+Thống kê dung lượng, tải zip, lập chỉ mục lại, và các đoạn ngữ nghĩa của một tệp.
 
 ---
 

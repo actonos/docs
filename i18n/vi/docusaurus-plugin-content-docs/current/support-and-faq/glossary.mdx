@@ -52,3 +52,15 @@ Thư viện Tailscale thuần Go được nhúng trực tiếp vào daemon `acto
 
 ### Cập nhật Tự phục hồi OTA (Self-Healing OTA)
 Cơ chế cập nhật nguyên tử tráo đổi symlink `/data/bin/actond` sang phiên bản mới, tự động hoàn tác về phiên bản cũ nếu bộ đếm watchdog 30 giây phát hiện sự cố.
+
+### User Workspace (Không gian làm việc)
+Tài liệu bạn thấy trên trang **Workspace**. Tệp tải lên hoặc lưu lại giữ nguyên tên gốc (`report.pdf`). Agent đọc, ghi và gửi những tệp này bằng công cụ `native_workspace_*`. Khác với thư mục tạm riêng của agent.
+
+### Góc nhìn tên gốc (`user-workspace/`)
+Thư mục gồm các tệp theo đúng tên gốc để script và `native_exec` (Python, shell) mở được. Biến môi trường `ACTONOS_USER_WORKSPACE` trỏ tới đây. Bạn vẫn làm việc với tên như `report.pdf`; không cần đưa mã lưu trữ nội bộ cho Python.
+
+### Thư mục tạm của agent (scratchpad)
+Thư mục làm việc riêng cho script tạm và tệp chưa hoàn thiện. Những tệp này **không** hiện trên trang Workspace cho đến khi agent xuất chúng (ví dụ bằng `native_workspace_write`).
+
+### Gửi tệp qua kênh chat
+Khi bạn nhờ agent gửi tài liệu workspace sang Telegram, Discord, Slack, WhatsApp hoặc Zalo, ActonOS đọc tệp rồi **chuyển byte cho plugin kênh đã cài**. Plugin tự tải lên ứng dụng chat. Hệ điều hành không tự triển khai API tải tệp của Telegram hay Zalo.

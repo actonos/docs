@@ -17,7 +17,7 @@ graph TD
     B -- "Plugin WASM (.actonpkg)" --> W["Wazero JIT Runtime"]
     
     subgraph "Cách ly Cấp Hệ điều hành (bwrap + Cgroups v2)"
-        D["Mount Namespaces:<br/>• /usr, /lib, /bin -> Read-Only<br/>• /proc -> Procfs Biệt lập<br/>• /workspace -> Giới hạn Read-Write"]
+        D["Mount Namespaces:<br/>• /usr, /lib, /bin -> Read-Only<br/>• /proc -> Procfs Biệt lập<br/>• scratchpad + user-workspace (tên gốc) -> Giới hạn Read-Write"]
         G["Giới hạn Tài nguyên:<br/>• RAM tối đa 512 MB<br/>• 50% CPU Quota<br/>• 30 PIDs (Chống Fork-bomb)"]
     end
     
@@ -51,7 +51,7 @@ Toàn bộ plugin (`.actonpkg` / `.wasm`) thực thi bên trong engine **Wazero 
 Dành cho các lệnh shell (`native_exec`), trình biên dịch và script Python:
 - **Tệp Nhị phân Hệ thống**: `/usr`, `/lib`, `/lib64`, và `/bin` được gắn kết ở chế độ **Read-Only**.
 - **Thư mục Nhạy cảm**: `/etc`, `/root`, `/home`, và `/data/config` (chứa khóa Vault) bị **ẩn hoàn toàn** không thể truy cập.
-- **Truy cập Workspace**: Thư mục ghi duy nhất là `/data/workspace` (hoặc phạm vi đường dẫn cấp cho agent).
+- **Truy cập Workspace**: Tài liệu của người dùng mở được theo **tên gốc** (ví dụ `report.pdf`) qua góc nhìn `user-workspace/` và biến môi trường `ACTONOS_USER_WORKSPACE`. Thư mục tạm riêng của agent là vùng ghi khác. Đường dẫn cấu hình host và Vault vẫn bị ẩn.
 - **Vùng tạm Thời vụ**: `tmpfs` độc lập được mount tại `/tmp` và tự động giải phóng khi tiến trình kết thúc.
 
 ---

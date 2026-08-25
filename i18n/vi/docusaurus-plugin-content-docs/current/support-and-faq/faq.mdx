@@ -35,7 +35,7 @@ Không giống các thư viện Python chạy script không kiểm soát, ActonO
 Bất kỳ máy tính MiniPC x86_64 nào trang bị chip **Intel Processor N100** (như Beelink EQ12, Minisforum UN100, GMKtec G2) kèm 8 GB – 16 GB RAM và ổ cứng 128 GB+ NVMe SSD đều mang lại sự cân bằng tối ưu giữa tiết kiệm điện năng (6W–15W) và khả năng hoạt động 24/7.
 
 ### Tôi có thể cài đặt ActonOS trên Raspberry Pi không?
-Hiện tại, phiên bản ActonOS v0.1 tập trung tối ưu cho **kiến trúc x86_64**. Hỗ trợ ARM64 (bao gồm Raspberry Pi 5 và Docker trên Apple Silicon) đang được hoàn thiện tích cực cho bản phát hành v0.2.
+Hiện tại, phiên bản ActonOS v1 tập trung tối ưu cho **kiến trúc x86_64**. Hỗ trợ ARM64 (bao gồm Raspberry Pi 5 và Docker trên Apple Silicon) đang được hoàn thiện.
 
 ---
 
@@ -46,3 +46,29 @@ Toàn bộ bí mật được mã hóa bằng thuật toán **AES-256-GCM** tron
 
 ### Agent hay Plugin có thể vô tình xóa tệp hệ điều hành không?
 **Không.** Trên Bare-Metal MiniPC, phân vùng gốc hệ điều hành được gắn kết ở chế độ **Read-Only**. Hơn nữa, mọi công cụ đều chạy trong namespace Bubblewrap hoặc bộ nhớ tuyến tính Wazero được kiểm tra biên nghiêm ngặt.
+
+---
+
+## Tệp Workspace & gửi tài liệu sang chat
+
+### Agent có mở được PDF tôi tải lên theo đúng tên không?
+**Có.** Tải `report.pdf` lên (hoặc nhờ agent lưu vào Workspace). Sau đó nói “Mở `report.pdf`” hoặc “Trích bảng trong `report.pdf`.” Agent dùng tên gốc. Bạn không cần sao chép mã ID bên trong.
+
+Tệp trên trang **Workspace** là của bạn. Agent còn có thư mục tạm riêng cho script; những tệp đó không hiện ra cho đến khi được lưu vào Workspace. Xem [Workspace](../user-guide/workspace).
+
+### Làm sao gửi tệp từ ActonOS sang Telegram / Discord / Zalo?
+Nhờ agent trong Chat hoặc ngay trên ứng dụng chat, ví dụ: “Gửi `report.pdf` trong workspace sang Telegram.” Agent tìm tệp rồi **chuyển cho plugin kênh đã cài**. ActonOS không tự tải lên Telegram hay Zalo. Xem [Gửi tệp sang chat](../user-guide/channels#sending-files-to-chat).
+
+### Agent báo đã gửi tệp nhưng Zalo không hiện gì
+API bot Zalo **khác** Telegram. Tệp được gửi bằng JSON (đường dẫn URL công khai, hoặc tệp nhỏ mã hóa trong yêu cầu), không phải multipart kiểu Telegram. HTTP 200 từ Zalo vẫn có thể nghĩa là thất bại (`ok: false`).
+
+Cần làm:
+1. Cài lại plugin **Zalo** `.actonpkg` mới nhất từ **Plugins**.
+2. Mở **Logs** của plugin. Plugin hiện tại ghi rõ lỗi Zalo thay vì giả thành công.
+3. Kiểm tra bot có được phép gửi tệp trong cuộc trò chuyện Zalo đó không.
+
+### Tôi tải PDF từ Telegram về thì bị lỗi font
+Thường do **plugin kênh cũ** gửi tệp qua trường JSON dạng chữ, làm hỏng byte nhị phân (bảng font PDF hay bị ảnh hưởng). Cài lại plugin Telegram / Discord / Slack mới nhất, rồi gửi lại tệp từ Workspace. Plugin hiện tại gửi đúng dữ liệu nhị phân, không qua bước chuyển chữ đó.
+
+### Tôi có gửi một tệp tới mọi kênh đã kết nối cùng lúc được không?
+**Không.** Hãy chọn một kênh đã cài (Telegram, Discord, Zalo, …). Cố ý chặn gửi tệp tới “tất cả kênh.”

@@ -41,7 +41,7 @@ This hands-on tutorial walks you through creating your first autonomous AI agent
    - **Temperature**: `0.3` (for grounded, precise output).
 6. In the **Tool Scopes & Permissions** section:
    - Check `native_web_search` (DuckDuckGo / Tavily integration).
-   - Check `native_browser_headless` (Chromium web scraper).
+   - Check `native_browser_navigate` (headless Chromium page reader).
    - Check `native_workspace_write` (Save findings to workspace).
 7. Click **Save Agent Manifest**.
 
@@ -61,7 +61,7 @@ This hands-on tutorial walks you through creating your first autonomous AI agent
 1. **Model Cascade**: ActonOS streams the prompt to your configured primary LLM via Server-Sent Events (SSE).
 2. **Tool Invocations**: The agent decides to call `native_web_search("Go 1.26 release notes")`.
 3. **Execution Card**: A real-time collapsible card appears in the chat timeline showing the tool's input arguments, execution time, and raw JSON output.
-4. **Autonomous File Write**: The agent calls `native_workspace_write` to create `/workspace/go_126_summary.md`.
+4. **Autonomous File Write**: The agent calls `native_workspace_write` to create `go_126_summary.md` in your Workspace (the original filename you asked for).
 5. **Streaming Response**: The agent provides a formatted Markdown summary directly in the chat window.
 
 ---
@@ -83,5 +83,5 @@ Explore the rest of the guides to unlock advanced capabilities:
 - **[Agent Studio Guide](../user-guide/agent-studio)**: Build Multi-Agent Swarms with delegation.
 - **[Autonomous Missions](../user-guide/missions)**: Run complex DAG workflows with human approval checkpoints.
 - **[Plugins & WASM Extensions](../user-guide/plugins)**: Install sandboxed tools, chat channel bots, and SaaS connectors.
-- **[Channels & Omnichannel Messaging](../user-guide/channels)**: Connect your agent to Telegram, Discord, and Slack.
+- **[Channels & Omnichannel Messaging](../user-guide/channels)**: Connect your agent to Telegram, Discord, Slack, WhatsApp, or Zalo — including sending workspace files.
 - **[Tools & MCP Servers](../user-guide/tools-and-skills)**: Add MCP servers and custom folder-based skills.

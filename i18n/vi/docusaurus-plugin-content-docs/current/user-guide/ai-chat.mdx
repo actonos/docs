@@ -35,11 +35,23 @@ ActonOS tích hợp bộ tiền xử lý tự động trích xuất nội dung t
 - Bấm vào biểu tượng 📎 **Kẹp ghim** trong khung soạn thảo.
 - Hoặc **kéo và thả** tệp trực tiếp vào cửa sổ chat.
 
+Tệp đính kèm trong chat chỉ phục vụ **cuộc trò chuyện này**. Muốn giữ tài liệu để dùng sau, hãy nhờ agent lưu vào [Workspace](workspace) (ví dụ: “Lưu thành `brief.pdf` trong workspace”). Tệp trên Workspace giữ nguyên tên gốc, nên sau đó bạn có thể nói “Mở `brief.pdf`” hoặc “Gửi `brief.pdf` sang Telegram.”
+
+### Gửi tệp workspace sang ứng dụng chat
+
+Nếu đã cài Telegram, Discord, Slack, WhatsApp hoặc Zalo, bạn có thể nhờ trong khung chat:
+
+```
+Gửi report.pdf trong workspace sang Telegram.
+```
+
+Agent tìm tệp theo tên rồi chuyển cho plugin của kênh đó. Xem [Gửi tệp sang chat](channels#sending-files-to-chat).
+
 ---
 
 ## 3. Thẻ Thực thi Công cụ Trực tiếp (Live Tool Cards)
 
-Khi một Agent gọi công cụ bên ngoài (ví dụ: chạy script Python, duyệt web, truy vấn cơ sở dữ liệu), một **Thẻ Thực thi Công cụ** sẽ xuất hiện ngay trong dòng thời gian:
+Khi một Agent gọi công cụ bên ngoài (ví dụ: chạy script Python hoặc duyệt web), một **Thẻ Thực thi Công cụ** sẽ xuất hiện ngay trong dòng thời gian:
 
 - **Chỉ báo Trạng thái**: Cho biết công cụ đang `Chạy`, `Hoàn tất` hoặc `Gặp lỗi`.
 - **Kiểm tra Tham số**: Bấm mở rộng thẻ để xem chi tiết tham số đầu vào dạng JSON và dữ liệu đầu ra trả về.

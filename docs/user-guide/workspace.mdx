@@ -31,12 +31,53 @@ ActonOS includes specialized viewers tailored for different file formats:
 
 ---
 
-## 3. Automated Semantic Memory (Local Vector RAG)
+## 3. Your files keep their original names
+
+When you upload `report.pdf` or ask the agent to save `weekly-notes.md`, those are the names you see on the Workspace page — and the same names the agent uses.
+
+You can say things like:
+
+- “Summarize `report.pdf` in the workspace.”
+- “Save this as `weekly-notes.md`.”
+- “Open the PDF I uploaded yesterday and extract the table.”
+
+The agent looks up the file by name, then reads or processes it. You do not need internal IDs.
+
+:::tip Workspace vs the agent’s scratchpad
+**Workspace** is your folder. Files here appear in the UI and stay until you delete them.
+
+The agent also has a **private scratchpad** for temporary scripts and unfinished work. Those files do **not** show up on the Workspace page unless the agent **publishes** them (for example: “save this PDF to my workspace”).
+:::
+
+### Opening PDFs and other documents in scripts
+
+If you ask the agent to run Python (or another script) on an uploaded file, it uses the **original filename**. Typical flow:
+
+1. You upload `report.pdf`, or the agent saves it to the workspace.
+2. You ask: “Extract the first page of `report.pdf`.”
+3. The agent finds the file, then opens it by that name.
+
+This works for PDF, images, ZIP, Word, Excel, and similar files. The file is not converted to chat text first, so fonts and layout stay intact.
+
+### Saving generated files back to Workspace
+
+Ask the agent to write results **to the workspace** so you can open or download them:
+
+- “Write a summary to `go_126_summary.md` in the workspace.”
+- “Create `invoice.pdf` and save it to my workspace.”
+
+For PDFs and other binary files, ActonOS copies the finished file as-is. Open **Workspace**, click the file, and download it.
+
+You can also ask the agent to [send a workspace file to Telegram, Discord, Slack, WhatsApp, or Zalo](channels#sending-files-to-chat).
+
+---
+
+## 4. Automated Semantic Memory (Local Vector RAG)
 
 Every text document, markdown file, or source code file placed in `/data/workspace/` is automatically processed into the **Hybrid Semantic Memory** index:
 
 1. **Debounce Queue (1-Minute)**: Edits are enqueued in a durable SQLite debounce table to avoid thrashing during rapid file modifications.
 2. **Chunking**: Text is split into semantic paragraphs with sliding window overlaps.
 3. **Local ONNX Embeddings**: Chunks are vectorized using the local `multilingual-e5-small` model running in the loopback `embeddingd` daemon.
-4. **Hybrid Retrieval**: Agents can query `/api/workspace/chunks` or execute hybrid search across SQLite FTS5 (lexical) and Chromem-go (vector).
+4. **Hybrid Retrieval**: Agents search workspace text through semantic memory (SQLite FTS5 + vector). The UI can also load chunks for a file via `GET /api/workspace/chunks?id=`.
 5. **Manual Reindex**: Click the **Reindex Semantic Memory** button anytime to force a complete re-embedding of the workspace.

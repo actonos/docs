@@ -176,16 +176,11 @@ Toàn bộ cấu hình, database và workspace được lưu trữ tại `/data`
 /data/
 ├── config/
 │   └── vault.db           # Két mã hóa API keys & OAuth secrets
-├── agents/
-│   └── agent_manifests.json # Danh sách cấu hình Agent
-├── tokens/
-│   └── oauth_tokens.vault # Tokens OAuth 2.1 đã mã hóa
 ├── storage/
-│   └── app.db             # SQLite database, FTS5 index, vector embeddings
+│   └── app.db             # SQLite: agents, MCP, OAuth, FTS5, vector
 ├── logs/
 │   └── audit.jsonl        # Nhật ký kiểm toán chuỗi băm SHA-256
 ├── plugins/               # Plugin WebAssembly (.wasm)
 ├── skills/                # Thư mục chứa Custom Skills
-├── mcp-servers/           # Cấu hình máy chủ MCP
-└── workspace/             # Không gian làm việc đọc/ghi của Agent
+└── workspace/             # Tài liệu của bạn (tên gốc) + đọc/ghi của Agent
 ```

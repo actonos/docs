@@ -7,7 +7,7 @@ sidebar_position: 6
 
 # Automations & OpenClaw Heartbeat
 
-ActonOS features a robust automation framework combining **Standard Cron/Interval Triggers** with an **Autonomous Heartbeat Daemon** built in strict alignment with the [OpenClaw Heartbeat Contract](https://docs.openclaw.ai/vi/gateway/heartbeat).
+ActonOS features a robust automation framework combining **cron schedules** with an **Autonomous Heartbeat Daemon** built in strict alignment with the [OpenClaw Heartbeat Contract](https://docs.openclaw.ai/vi/gateway/heartbeat).
 
 ```mermaid
 flowchart TD
@@ -46,11 +46,7 @@ The ActonOS Heartbeat daemon runs periodic system checkups to maintain proactive
 
 1. Navigate to **Automations** in the left sidebar.
 2. Click **+ New Automation**.
-3. Choose the **Trigger Type**:
-   - **Cron Expression**: Standard 5-field cron (e.g., `0 9 * * 1-5` for 9:00 AM every weekday).
-   - **Interval**: Run every $N$ minutes or hours.
-   - **Event Trigger**: Triggered when specific bus events occur (e.g., `file.created`, `channel.message`).
-   - **Webhook Trigger**: Expose an authenticated HTTP webhook endpoint.
+3. Enter a **Cron Expression** (standard 5-field cron, e.g. `0 9 * * 1-5` for 9:00 AM every weekday).
 4. Define the **Action**:
    - Assign an agent and provide the standing instruction (e.g., `Check open GitHub pull requests, summarize reviews, and post to Slack`).
    - Select the target output channel for completed reports.

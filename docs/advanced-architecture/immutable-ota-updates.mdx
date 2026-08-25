@@ -17,17 +17,17 @@ sequenceDiagram
     participant Sys as systemd (actond.service)
     participant WD as Health Watchdog
 
-    Cloud->>OTA: Notify New Version (v0.2.0)
-    OTA->>FS: Download binary to /data/releases/v0.2.0/actond
+    Cloud->>OTA: Notify New Version (v1.0.0)
+    OTA->>FS: Download binary to /data/releases/v1.0.0/actond
     OTA->>OTA: Verify SHA-256 Checksum + GPG Signature
-    OTA->>FS: Atomic Symlink Swap: /data/bin/actond -> releases/v0.2.0/actond
+    OTA->>FS: Atomic Symlink Swap: /data/bin/actond -> releases/v1.0.0/actond
     OTA->>Sys: systemctl restart actond
     Sys->>WD: Start 30-second Health Monitoring Loop
 
     loop Every 5s for 30s
         WD->>Sys: GET http://127.0.0.1:8080/api/health
         alt HTTP 200 OK & Status Healthy
-            WD->>FS: Mark v0.2.0 as Stable Release ✅
+            WD->>FS: Mark v1.0.0 as Stable Release ✅
         else Crash / CrashLoop (>3 Failures)
             WD->>FS: Revert Symlink to Previous Build (v0.1.0) ❌
             WD->>Sys: systemctl restart actond (Auto-Rollback)
@@ -49,11 +49,11 @@ The physical SSD is partitioned into strictly isolated zones:
 
 All executions of the core daemon invoke the binary via a symbolic link:
 ```
-/data/bin/actond -> /data/releases/v0.1.0/actond
+/data/bin/actond -> /data/releases/v1.0.0/actond
 ```
 
 When an update is applied:
-1. The new binary is downloaded and verified in isolation under `/data/releases/v0.2.0/`.
+1. The new binary is downloaded and verified in isolation under `/data/releases/v1.0.0/`.
 2. An atomic filesystem symlink swap (`ln -sfn`) switches `/data/bin/actond` to point to the new release directory instantly.
 3. The system service restarts.
 

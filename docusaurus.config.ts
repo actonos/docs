@@ -46,16 +46,16 @@ const config: Config = {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/actonos/docs/tree/main/',
-          lastVersion: '0.1',
+          lastVersion: 'current',
           versions: {
             current: {
-              label: 'v0.2 (Next)',
-              path: 'next',
-              banner: 'unreleased',
+              label: 'v1',
+              banner: 'none',
             },
             '0.1': {
-              label: 'v0.1 (Stable)',
-              banner: 'none',
+              label: 'v0.1',
+              path: '0.1',
+              banner: 'unmaintained',
             },
           },
         },
@@ -165,7 +165,7 @@ const config: Config = {
           title: 'More',
           items: [
             {
-              label: 'Release Notes (v0.1)',
+              label: 'Release Notes (v1)',
               to: '/blog',
             },
             {

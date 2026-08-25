@@ -52,3 +52,15 @@ The pure-Go Tailscale client embedded directly within the `actond` daemon, provi
 
 ### Self-Healing OTA Update
 An atomic update mechanism that downloads new binaries to versioned release folders, swaps the `/data/bin/actond` symlink, and automatically rolls back to the previous version if a 30-second health check watchdog fails.
+
+### User Workspace
+The documents you see on the **Workspace** page. Uploaded and saved files keep their original names (`report.pdf`). Agents read, write, and send these files with `native_workspace_*` tools. This is separate from the agent’s private scratchpad.
+
+### Named file view (`user-workspace/`)
+A folder of original filenames that scripts and `native_exec` (Python, shell) can open. The environment variable `ACTONOS_USER_WORKSPACE` points here. You still work with names like `report.pdf`; you do not pass internal storage IDs to Python.
+
+### Agent scratchpad
+A private working folder for temporary scripts and unfinished files. Those files are **not** listed on the Workspace page until the agent publishes them (for example with `native_workspace_write`).
+
+### Channel file send
+When you ask an agent to send a workspace document to Telegram, Discord, Slack, WhatsApp, or Zalo, ActonOS loads the file and **forwards the bytes to the installed channel plugin**. The plugin uploads to that chat app. The core OS does not implement Telegram or Zalo upload APIs itself.

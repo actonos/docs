@@ -85,3 +85,18 @@ Mỗi plugin WASM đang chạy đều có thể xuất log có cấu trúc thôn
 - **Nút Bật / Tắt (Enable / Disable)**: Tạm dừng vòng lặp sự kiện và hủy đăng ký công cụ của plugin mà không làm mất cấu hình đã lưu hay khóa bí mật trong Vault. Bật lại để kích hoạt tức thì.
 - **Cập nhật Cấu hình Nóng (Hot Updates)**: Việc chỉnh sửa tham số trong modal cấu hình sẽ báo hiệu sandbox Wazero làm mới ngữ cảnh ngay lập tức mà không ảnh hưởng các agent khác.
 - **Gỡ cài đặt Sạch sẽ (Clean Uninstall)**: Bấm **Uninstall Plugin** để đóng kết nối an toàn, hủy các công cụ và kênh đã đăng ký, xóa thư mục trong `/data/plugins/{id}` và dọn dẹp phân vùng KV SQLite.
+
+---
+
+## 6. Plugin kênh mới là nơi gửi tệp
+
+Khi agent gửi tài liệu sang Telegram, Discord, Slack, WhatsApp hoặc Zalo, ActonOS **chỉ chuyển tệp** cho plugin kênh đã cài. Plugin tự tải tệp lên ứng dụng chat đó.
+
+Hai điều cần nhớ:
+
+1. **Ứng dụng chat là một plugin.** Hệ điều hành không viết cứng bộ tải tệp cho Telegram hay Zalo.
+2. **Sau khi cập nhật ActonOS, hãy cài lại plugin kênh** để khớp định dạng gửi tệp hiện tại. Plugin cũ có thể báo thành công trong khi chat không hiện tệp (hay gặp trên Zalo), hoặc PDF tải về bị lỗi font.
+
+Cách làm mới plugin: **Uninstall**, rồi **Upload** gói `.actonpkg` mới nhất.
+
+Cách gửi tệp phía người dùng: [Gửi tệp sang chat](channels#sending-files-to-chat). Người viết plugin: [Phát triển plugin WASM — gửi tệp](../developer-reference/wasm-plugin-development#sending-files).

@@ -17,7 +17,7 @@ graph TD
     B -- "WASM Plugins (.actonpkg)" --> W["Wazero JIT Runtime"]
     
     subgraph "OS-Level Sandbox (bwrap + Cgroups v2)"
-        D["Mount Namespaces:<br/>• /usr, /lib, /bin -> Read-Only<br/>• /proc -> Isolated Procfs<br/>• /workspace -> Scoped Read-Write"]
+        D["Mount Namespaces:<br/>• /usr, /lib, /bin -> Read-Only<br/>• /proc -> Isolated Procfs<br/>• scratchpad + user-workspace (original names) -> Scoped Read-Write"]
         G["Resource Limits:<br/>• 512 MB RAM Max<br/>• 50% CPU Quota<br/>• 30 PIDs (Fork-bomb protection)"]
     end
     
@@ -51,7 +51,7 @@ All plugins (`.actonpkg` / `.wasm`) run inside the pure-Go **Wazero WebAssembly 
 For shell commands (`native_exec`), code compilers, and Python scripts:
 - **System Binaries**: `/usr`, `/lib`, `/lib64`, and `/bin` are mounted **Read-Only** from the host image.
 - **Sensitive Directories**: `/etc`, `/root`, `/home`, and `/data/config` (containing Vault keys) are **completely hidden** and unmounted.
-- **Workspace Access**: The only writable directory is `/data/workspace` (or the agent's explicitly configured path scope).
+- **Workspace Access**: User documents are available by **original filename** (for example `report.pdf`) through the named view `user-workspace/` and the environment variable `ACTONOS_USER_WORKSPACE`. The agent’s private scratchpad is a separate writable folder. Host config and Vault paths stay hidden.
 - **Ephemeral Scratch**: A private `tmpfs` is mounted at `/tmp` and discarded upon process termination.
 
 ---

@@ -11,7 +11,7 @@ Installing ActonOS directly on bare-metal hardware transforms an x86_64 MiniPC i
 
 ```mermaid
 flowchart LR
-    A["Download ISO<br/>ActonOS-v0.1.iso"] --> B["Flash to USB<br/>Rufus / BalenaEtcher / dd"]
+    A["Download ISO<br/>ActonOS-v1.iso"] --> B["Flash to USB<br/>Rufus / BalenaEtcher / dd"]
     B --> C["Boot MiniPC<br/>Select UEFI USB Drive"]
     C --> D["Automated Install<br/>Auto-partitioning ESP, Root, Data"]
     D --> E["Reboot & Eject USB<br/>Launches ActonOS Daemon"]
@@ -24,12 +24,12 @@ flowchart LR
 
 Download the latest official ISO release from the ActonOS repository:
 
-- **Latest Release**: `ActonOS-v0.1-amd64.iso`
+- **Latest Release**: `ActonOS-v1-amd64.iso`
 - **SHA-256 Checksum**: Verify integrity before writing to media.
 
 ```bash
 # Example verification in terminal
-sha256sum -c ActonOS-v0.1-amd64.iso.sha256
+sha256sum -c ActonOS-v1-amd64.iso.sha256
 ```
 
 ---
@@ -42,13 +42,13 @@ You will need a USB flash drive with at least **4 GB** capacity.
 1. Insert your USB flash drive.
 2. Download and launch **[Rufus](https://rufus.ie/)**.
 3. Select your USB drive under **Device**.
-4. Click **Select** and choose `ActonOS-v0.1-amd64.iso`.
+4. Click **Select** and choose `ActonOS-v1-amd64.iso`.
 5. Under Partition scheme, select **GPT** and Target system **UEFI (non-CSM)**.
 6. Click **START** and select **Write in DD Image mode** when prompted.
 
 ### Option B: Using BalenaEtcher (macOS, Windows, Linux)
 1. Download and open **[BalenaEtcher](https://etcher.balena.io/)**.
-2. Click **Flash from file** and select `ActonOS-v0.1-amd64.iso`.
+2. Click **Flash from file** and select `ActonOS-v1-amd64.iso`.
 3. Select your target USB drive.
 4. Click **Flash!** and wait for verification to complete.
 
@@ -59,7 +59,7 @@ You will need a USB flash drive with at least **4 GB** capacity.
 lsblk
 
 # Flash the image directly (replace /dev/sdX with your actual device)
-sudo dd if=ActonOS-v0.1-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync
+sudo dd if=ActonOS-v1-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync
 ```
 
 ---
