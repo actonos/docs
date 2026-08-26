@@ -1,108 +1,82 @@
 ---
 id: overview
-title: Tổng quan & Triết lý Cốt lõi
-sidebar_label: Tổng quan & Triết lý
+title: ActonOS là gì?
+sidebar_label: ActonOS là gì?
 sidebar_position: 1
 ---
 
-# ActonOS: Hệ điều hành Tự trị Bản địa AI
+# ActonOS là gì?
 
-**ActonOS** là hệ điều hành và động cơ điều phối được thiết kế chuyên biệt để vận hành các Agent AI tự trị và mạng lưới Multi-Agent Swarm liên tục 24/7 trên phần cứng chuyên dụng hoặc môi trường container.
+**ActonOS** là hệ điều hành dành cho agent AI: chạy trên MiniPC, máy chủ nhà, hoặc Docker. Bạn chat với agent, giao công cụ và tệp, kết nối Telegram hay GitHub, rồi để chúng làm việc nền — có phê duyệt, sandbox, và kho bí mật mã hóa sẵn trong hệ thống.
 
-Khác với các hệ điều hành truyền thống được gắn thêm lớp giao diện AI bên ngoài, ActonOS đặt **Động cơ Agent**, **Môi trường Sandbox Plugin WASMLoader**, **Két Bảo mật Phần cứng**, và **Hệ thống Bộ nhớ Ngữ nghĩa Kết hợp** trực tiếp vào phân tầng nhân hệ thống.
+Bộ tài liệu này dành cho người **dùng** ActonOS: cài đặt, tạo agent, nối app chat, và (nếu muốn) viết plugin. Phần sâu về nội bộ nằm ở [Kiến trúc nâng cao](../advanced-architecture/dual-runtime-hal).
+
+---
+
+## Bạn có thể làm gì
+
+| Bạn muốn… | Bắt đầu từ đây |
+|:---|:---|
+| Cài đặt và mở dashboard | [Yêu cầu hệ thống](system-requirements) → [Docker](docker-deployment) hoặc [Bare-metal](baremetal-installation) |
+| Tạo agent và chạy việc đầu tiên | [Hướng dẫn 5 phút](quickstart-tutorial) |
+| Chat, đính tệp, lưu công việc | [Chat](../user-guide/ai-chat) và [Workspace](../user-guide/workspace) |
+| Nối Telegram, Discord, Slack, WhatsApp hoặc Zalo | [Kênh chat](../user-guide/channels) |
+| Nối GitHub, Notion, Google Workspace… | [Connectors](../user-guide/connectors) |
+| Cài hoặc tự viết plugin | [Plugins](../user-guide/plugins) và [Plugin SDK](../plugin-sdk/overview) |
+
+---
+
+## Một ngày làm việc điển hình
+
+1. Mở dashboard, xem agent, CPU và đĩa còn ổn không.
+2. Chat với agent, đính PDF, hoặc nhờ ghi tệp vào **Workspace**.
+3. Mở **Nhiệm vụ** khi công việc cần nhiều bước và checkpoint.
+4. Để **Tự động hóa** (heartbeat / cron) chạy việc lặp trong giờ làm.
+5. Nhận **Thông báo** khi có thứ cần bạn phê duyệt.
+
+Bạn không cần biết Go, WebAssembly hay nội bộ daemon.
+
+---
+
+## ActonOS được ghép như thế nào
+
+ActonOS là một daemon (`actond`) cộng giao diện web. Agent suy luận, gọi công cụ, nhớ tệp. Plugin, máy chủ MCP và skill thêm năng lực mà không cần khởi động lại OS.
 
 ```mermaid
-graph TB
-    subgraph "Tầng 1 - Kết nối & Truy cập"
-        TSNET["Tailscale tsnet<br/>VPN Mesh Mã hóa Đầu cuối"]
-        WEBUI["Web UI SPA<br/>React 19 + Tailwind v4 + Soft Meadow"]
-        CHANNELS["Plugin Kênh WASM<br/>Telegram · Discord · Slack · WhatsApp · Zalo"]
-        PORTAL["Cổng Thiết lập Không Cấu hình<br/>Captive DNS @ 192.168.4.1"]
+flowchart TB
+    subgraph You["Bạn"]
+        UI["Dashboard web"]
+        ChatApps["Telegram · Discord · Slack · WhatsApp · Zalo"]
     end
 
-    subgraph "Tầng 2 - Động cơ Agent Tự trị"
-        STUDIO["Agent Studio & Khai báo Manifest"]
-        SWARM["Điều phối Swarm<br/>Phân quyền Goroutine"]
-        DELEGATION["Phạm vi & Hạn ngạch Zero-Trust"]
-        HEARTBEAT["Tiến trình Nhịp đập OpenClaw"]
+    subgraph Core["ActonOS"]
+        Agents["Agent và swarm"]
+        Tools["Công cụ · plugin · MCP · skill"]
+        Memory["Workspace và bộ nhớ"]
+        Vault["Kho bí mật mã hóa"]
     end
 
-    subgraph "Tầng 3 - Công cụ & Tiện ích Mở rộng Động"
-        MCP["Máy chủ MCP Host<br/>Giao vận stdio / SSE"]
-        WASM["WASMLoader Runtime<br/>wazero Thuần Go (Tools · Channels · Connectors)"]
-        SKILLS["Kỹ năng Thư mục<br/>fsnotify Hot-Reload"]
-        NATIVE["Công cụ Native Tích hợp Sẵn<br/>Chromium · Ripgrep · Shell"]
-    end
-
-    subgraph "Tầng 4 - Tiến trình Nhân & Bộ nhớ"
-        BUS["Bus Sự kiện Thống nhất"]
-        REACT["Điều phối & Lập kế hoạch ReAct"]
-        CASCADE["Bộ định tuyến Phân tầng LLM"]
-        MEMORY["Bộ nhớ RAG Kết hợp<br/>SQLite FTS5 + Vector ONNX + Quên lãng"]
-        VAULT["Hardware Vault<br/>AES-256-GCM + Argon2id"]
-    end
-
-    subgraph "Tầng 5 - Lớp Trừu tượng Phần cứng (HAL)"
-        BARE["Chế độ Bare-Metal<br/>NetworkManager · Bubblewrap · Cgroups v2"]
-        DOCKER["Chế độ Container Docker<br/>Bộ công cụ Tiện ích Đầy đủ · Subshell Jail"]
-    end
-
-    WEBUI --> STUDIO
-    CHANNELS --> BUS
-    TSNET --> WEBUI
-    PORTAL --> WEBUI
-    STUDIO --> SWARM
-    SWARM --> DELEGATION
-    SWARM --> REACT
-    REACT --> MCP
-    REACT --> WASM
-    REACT --> SKILLS
-    REACT --> NATIVE
-    REACT --> CASCADE
-    REACT --> MEMORY
-    CASCADE --> VAULT
-    MEMORY --> VAULT
-    BUS --> BARE
-    BUS --> DOCKER
+    UI --> Agents
+    ChatApps --> Agents
+    Agents --> Tools
+    Agents --> Memory
+    Tools --> Vault
 ```
 
----
+Cam kết quan trọng, nói giản dị:
 
-## Các Trụ cột & Nguyên lý Thiết kế Cốt lõi
+- **Hai cách cài**: ảnh MiniPC chuyên dụng, hoặc Docker trên máy bạn đã có. ActonOS tự nhận ra.
+- **Agent nằm trong sandbox**: công cụ không được tùy ý sửa hệ điều hành. Việc rủi ro dừng lại chờ bạn.
+- **Bí mật được mã hóa**: token bot và API key vào vault gắn phần cứng, không phải file plaintext.
+- **Plugin bị giới hạn**: chỉ gọi được website và bí mật mà manifest cho phép.
 
-### 1. Lớp Trừu tượng Phần cứng Chế độ Kép (Dual-Runtime HAL)
-ActonOS tự động nhận diện môi trường phần cứng khi khởi động:
-- **Chế độ Bare-Metal MiniPC**: Bản cài hệ điều hành bất biến trên phần cứng x86_64 chuyên dụng (như Intel N100 / AMD Ryzen). Tích hợp Linux D-Bus, NetworkManager cho điểm phát sóng Wi-Fi, Bubblewrap cho cách ly namespace và Cgroups v2 để quản trị tài nguyên.
-- **Chế độ Container Docker**: Gói container Linux tiêu chuẩn đi kèm toàn bộ bộ công cụ lập trình sẵn có (Python, Node.js, Chromium, Ripgrep, SQLite).
-
-### 2. Khung làm việc Agent Vạn năng & Swarm Đa Agent
-Tạo không giới hạn số lượng Agent AI với tính cách, chỉ thị hệ thống, mô hình LLM phân tầng, phạm vi công cụ và ngân sách ủy quyền riêng biệt. Các Agent có thể vận hành độc lập hoặc tạo thành **Mạng lưới Swarm**, trong đó Agent chỉ huy phân rã mục tiêu lớn thành đồ thị DAG và ủy quyền tác vụ con qua Goroutine song song.
-
-### 3. Động cơ Mở rộng WASMLoader Động
-ActonOS cung cấp mô hình mở rộng an toàn thực thi trên engine **Wazero JIT runtime** thuần Go 100%:
-- **Plugin WASM (`.actonpkg`)**: Đóng gói WebAssembly cho Công cụ, Kênh chat và Kết nối SaaS với biểu mẫu cấu hình động và bảo mật qua Hardware Vault.
-- **Giao thức Ngữ cảnh Mô hình (MCP)**: Máy chủ máy khách native stdio và HTTP/SSE JSON-RPC cho các server công cụ bên ngoài.
-- **Kỹ năng Thư mục (Skill-as-a-Folder)**: Các script tự động hot-reload chứa `skill.json` và mã nguồn Bash/Python được giám sát qua `fsnotify`.
-
-### 4. Bộ nhớ Ngữ nghĩa Kết hợp (Hybrid Memory RAG)
-Ngữ cảnh dài hạn và tệp trong workspace được lập chỉ mục kết hợp:
-- **Tìm kiếm Từ khóa**: SQLite FTS5 với xếp hạng BM25 để truy xuất chính xác cụm từ.
-- **Tìm kiếm Vector**: Kho vector `chromem-go` kết hợp tiến trình nội bộ `embeddingd` chạy mô hình ONNX `multilingual-e5-small`.
-- **Suy giảm Trí nhớ Ebbinghaus**: Mô hình toán học suy giảm ký ức cũ, ưu tiên thông tin thường xuyên sử dụng.
-
-### 5. Bảo mật Gắn liền Phần cứng & Hệ thống Tệp Bất biến
-- **Hardware Vault AES-256-GCM**: Thông tin xác thực và token OAuth được mã hóa bằng khóa dẫn xuất từ định danh phần cứng (DMI UUID + CPU serial) qua Argon2id.
-- **Thực thi Cách ly (Sandbox)**: Công cụ của Agent chạy trong hạn ngạch tài nguyên nghiêm ngặt (RAM 512 MB, CPU 50%, 30 PIDs).
-- **Sổ cái Kiểm toán Mật mã**: Mọi lệnh thực thi công cụ và sự kiện bảo mật đều được ghi nối tiếp vào chuỗi băm SHA-256 bất biến (`audit.jsonl`).
-
-### 6. Kết nối Không cần Cấu hình (Zero-Config)
-- **Cổng Captive Portal**: Khi khởi động lần đầu trên MiniPC, hệ thống tự động phát Wi-Fi `ActonOS-XXXX` mở trang hướng dẫn thiết lập chỉ trong 1 phút.
-- **Nhúng Tailscale `tsnet`**: Truy cập từ xa an toàn qua mạng riêng ảo WireGuard mesh mã hóa đầu cuối mà không cần mở port modem hay cấu hình Dynamic DNS.
+Chi tiết kỹ thuật: [Dual-Runtime HAL](../advanced-architecture/dual-runtime-hal) và [Hardware Vault](../advanced-architecture/hardware-vault-security).
 
 ---
 
-## Các Bước Tiếp theo
+## Chọn cách cài
 
-- Xem [Yêu cầu Hệ thống](system-requirements) để chuẩn bị phần cứng hoặc máy chủ.
-- Triển khai bằng [Docker](docker-deployment) để trải nghiệm nhanh trên hạ tầng có sẵn.
-- Cài đặt trên [MiniPC Bare-metal](baremetal-installation) để có trải nghiệm thiết bị chuyên dụng hoàn chỉnh.
+- **Thử nhanh** trên laptop hoặc máy chủ sẵn có: [Triển khai Docker](docker-deployment).
+- **Chạy như appliance** trên MiniPC: [Cài bare-metal](baremetal-installation) và [Onboarding zero-config](zero-config-onboarding).
+
+Sau đó làm [hướng dẫn 5 phút](quickstart-tutorial) để tạo agent đầu tiên.

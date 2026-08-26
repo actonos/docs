@@ -1,68 +1,60 @@
 ---
 id: connectors
-title: SaaS Connectors & OAuth 2.1
-sidebar_label: Connectors (OAuth 2.1)
-sidebar_position: 8
+title: Connectors
+sidebar_label: Connectors
+sidebar_position: 9
 ---
 
-# SaaS Connectors & OAuth 2.1
+# Connectors
 
-The **Connectors** framework enables ActonOS agents to safely access cloud productivity suites and developer platforms via **WASM Connector Plugins** (`WasmConnectorBridge`) using industry-standard **OAuth 2.1 PKCE (S256)** without storing long-lived plaintext passwords.
+**Connectors** let agents use cloud apps (GitHub, Google Workspace, Notion, Slack, Linear, Jira, Figma) without you pasting long-lived passwords into chat. Each connector is a [plugin](plugins). Sign-in uses **OAuth 2.1** (or an API key / bearer token, depending on the app). Tokens sit in the encrypted vault.
 
-```mermaid
-sequenceDiagram
-    participant User as Operator
-    participant UI as ActonOS Web UI
-    participant Auth as OAuth Daemon / Plugin
-    participant SaaS as Google / GitHub
-    participant Vault as Hardware Vault
+---
 
-    User->>UI: Click "Connect Service" in Plugin Settings
-    UI->>Auth: Initiate PKCE (S256) Flow
-    Auth->>SaaS: Redirect to Provider Consent Screen
-    User->>SaaS: Authorize Permissions (Gmail, Drive, Repos)
-    SaaS-->>Auth: Callback with Authorization Code
-    Auth->>SaaS: Exchange Code + Code Verifier for Tokens
-    SaaS-->>Auth: Access Token + Refresh Token
-    Auth->>Vault: Encrypt & Store in Hardware Vault
-    Auth-->>UI: Connected Status Badge
-    
-    loop Every 45 Minutes (Background Daemon)
-        Auth->>Vault: Retrieve Refresh Token
-        Auth->>SaaS: Refresh Access Token
-        Auth->>Vault: Persist New Access Token
-    end
+## What you get after connecting
+
+Once a connector is green **Connected**, its actions become tools the agent can call — if you grant those tools in [Agent Studio](agent-studio).
+
+| Plugin | Agents can… |
+|:---|:---|
+| Google Workspace | Search Gmail, create calendar events, list Drive files, read Docs. |
+| GitHub | List repos, read/create issues, open pull requests, search code. |
+| Notion | Search pages, create pages, query databases. |
+| Slack | Post messages, list channels, read history. |
+| Linear | List, create, and update issues. |
+| Jira Cloud | Search with JQL, create issues, transition issues. |
+| Figma | Read files and comments, post comments. |
+
+Exact tool names are listed in [Official plugins](../plugin-sdk/official-plugins).
+
+---
+
+## Connect an account
+
+1. Open **Extensions → Plugins**.
+2. Open the connector (for example **GitHub**) and click **Configure**.
+3. Enter the app’s **Client ID** and **Client Secret** if the plugin asks for them. Those values go into the vault.
+4. Click **Connect Account** and approve the permissions on the provider’s site.
+5. When the popup closes, the badge turns **Connected**.
+
+ActonOS refreshes access tokens in the background. If you revoke access at GitHub/Google, the connector turns red **Re-authentication required** and you get a [notification](notifications).
+
+---
+
+## Use it from Chat
+
+Grant the connector tools to an agent, then say:
+
+```
+List my GitHub repositories and open an issue titled "Docs review" in actonos/docs.
 ```
 
----
-
-## 1. Supported SaaS Connector Plugins
-
-Every connector plugin bundles typed actions that automatically bridge into ReAct Agent Tools (`conn.AsTools()`):
-
-| Provider Plugin | Supported Agent Capabilities | Bridged Tools |
-|:---|:---|:---|
-| **Google Workspace** | Read/search Gmail, create calendar events, read/write Google Drive files. | `google_mail_search`, `google_calendar_create`, `google_drive_read` |
-| **GitHub** | Search code, list/create issues, open pull requests, review commits. | `github_list_repos`, `github_create_issue`, `github_open_pr` |
-| **Notion** | Query databases, create pages, update task boards. | `notion_query_database`, `notion_create_page` |
-| **Slack** | Read channel history, post rich message cards, upload files. | `slack_post_message`, `slack_read_history` |
-| **Linear** | Manage issues, search projects, update sprint cycles. | `linear_search_issues`, `linear_create_issue` |
+The agent calls the connector tool; you may still see an approval prompt if the agent’s approval level is Medium or High.
 
 ---
 
-## 2. Setting Up a Connector Plugin
+## Related pages
 
-1. Navigate to **Extensions** → **Plugins** in the left sidebar.
-2. Choose your desired SaaS plugin (e.g., **GitHub Connector**) and click **Configure**.
-3. Provide your OAuth 2.1 `Client ID` and `Client Secret` (stored securely in Hardware Vault).
-4. Click **Connect Account**. A popup window will prompt you to authenticate with the third-party provider and approve requested permission scopes.
-5. Upon authorization, ActonOS exchanges the code for tokens and encrypts them into `/data/config/vault.db`.
-6. The status changes to 🟢 **Connected**, and bridged tools immediately become callable by authorized agents.
-
----
-
-## 3. Background Token Refresh Daemon
-
-- ActonOS runs an automated token refresh daemon that inspects token expiration timestamps every 5 minutes.
-- Expiring access tokens are automatically refreshed in the background before they expire.
-- If a token refresh fails (e.g., user revoked permissions in their account settings), ActonOS marks the connector as 🔴 **Re-authentication Required** and dispatches a notification alert.
+- [Plugins](plugins) — install and logs.
+- [Agent Studio](agent-studio) — grant connector tools.
+- [Plugin SDK: Connectors](../plugin-sdk/connectors) — write your own.

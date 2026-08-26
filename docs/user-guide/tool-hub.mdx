@@ -1,40 +1,44 @@
 ---
 id: tool-hub
-title: Tool Hub & Community Marketplace
-sidebar_label: Tool Hub Marketplace
-sidebar_position: 10
+title: Tool Hub
+sidebar_label: Tool Hub
+sidebar_position: 11
 ---
 
-# Tool Hub & Community Marketplace
+# Tool Hub
 
-The **Tool Hub** is an integrated online registry where users can browse, discover, and install community-verified skills, MCP servers, and automation plugins with a single click.
-
----
-
-## 1. Browsing the Catalog
-
-1. Navigate to **Tools** → **Tool Hub** in the left sidebar.
-2. Filter tools by category:
-   - 🌐 **Web & Search** (Tavily, Brave Search, Puppeteer)
-   - 📁 **Files & Data Analysis** (Pandas Runner, PDF Parser, CSV Analyzer)
-   - 💻 **DevOps & Cloud** (Kubernetes, AWS CLI, Docker Manager, Git Automation)
-   - 💬 **Messaging & Social** (Twitter/X Poster, Reddit Scraper, Telegram Notify)
-   - 🔒 **Security & Cryptography** (Vulnerability Scanner, Certificate Checker)
-3. Use the search bar to find tools by name, author, or keyword tags.
+**Tool Hub** is the in-app catalog. Browse community skills and MCP-style tools and install them in one click.
 
 ---
 
-## 2. 1-Click Installation
+## Browse
 
-1. Click on any catalog entry (e.g., **Tavily AI Search**).
-2. Review the tool description, required API keys, execution permissions, and parameter schemas.
-3. Click the yellow **Install Skill** button.
-4. If the skill requires credentials (e.g., `TAVILY_API_KEY`), a prompt will ask for the key and store it securely in the encrypted Vault.
-5. ActonOS downloads the package into `/data/skills/<slug>/` and registers its functions immediately.
+1. Open **Tools → Tool Hub**.
+2. Filter by category (Web & Search, Files & Data, DevOps, Messaging, Security) or search by name, author, or tag.
+3. Open an entry to read the description, required keys, and permissions.
 
 ---
 
-## 3. Managing & Uninstalling Skills
+## Install
 
-- **Toggle Enable/Disable**: Temporarily disable a skill without removing its configuration.
-- **Uninstall**: Click **Uninstall** to cleanly delete the skill folder and its associated Vault keys.
+1. Click **Install Skill**.
+2. If a key is required (for example `TAVILY_API_KEY`), paste it when prompted. It is stored in the vault.
+3. ActonOS downloads the package into `/data/skills/<slug>/` and registers it immediately.
+
+Then enable that skill on the agents that should use it in [Agent Studio](agent-studio).
+
+---
+
+## Disable or remove
+
+- **Disable** — keep files and keys, hide the tools.
+- **Uninstall** — delete the skill folder and its vault keys.
+
+For WASM plugins (channels, connectors, custom tools), use [Plugins](plugins) instead of Tool Hub.
+
+---
+
+## Related pages
+
+- [Tools and skills](tools-and-skills) — the three extension kinds.
+- [Custom skills](../developer-reference/custom-skills-guide) — write a folder skill yourself.

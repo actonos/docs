@@ -1,0 +1,78 @@
+---
+id: official-plugins
+title: Plugin chính thức
+sidebar_label: Plugin chính thức
+sidebar_position: 9
+---
+
+# Plugin chính thức
+
+Các gói này nằm trong repo Plugin SDK (`plugins/`) và dạng `.actonpkg`. Cài từ **Extensions → Plugins**. Sau khi cập nhật ActonOS, **cài lại** gói kênh để gửi tệp còn tương thích.
+
+Bố cục nguồn:
+
+- `plugins/channels/` — adapter chat
+- `plugins/saas/` — connector SaaS
+- `plugins/tools/` — công cụ thêm (ví dụ tạo ảnh)
+
+---
+
+## Kênh chat
+
+| Plugin | Id | Bí mật vault | Host cho phép | Ghi chú |
+|:---|:---|:---|:---|:---|
+| Telegram | `channel-telegram` | `telegram_bot_token` | `api.telegram.org` | `accounts[]`, Markdown, quote, typing, reaction, tệp qua `sendDocument` / `sendPhoto`, định tuyến `@agent` |
+| Discord | `channel-discord` | `discord_bot_tokens.*` | `discord.com`, `gateway.discord.gg` | Gateway + REST, embed, typing, reaction, quote, tệp `files[0]` |
+| WhatsApp | `channel-whatsapp` | `whatsapp_access_token`, `whatsapp_phone_number_id` | `graph.facebook.com` | Cloud API, typing, reaction, quote, buffer webhook, tệp qua `/media` |
+| Slack | `channel-slack` | `slack_bot_token` | `slack.com` | `chat.postMessage`, `thread_ts`, `reactions.add`, tệp `files.upload` |
+| Zalo | `channel-zalo` | `zalo_bot_token` | `bot-api.zaloplatforms.com` | Markdown, typing, reaction, quote. Tệp là JSON (URL công khai hoặc `data:` nhỏ), không multipart |
+
+Mọi plugin kênh dùng schema `accounts[]` chuẩn. Bước vận hành: [Kênh chat](../user-guide/channels).
+
+---
+
+## Connector SaaS
+
+Action cũng đăng ký thành tool agent qua `conn.AsTools()`.
+
+| Plugin | Id | Auth | Bí mật vault | Host cho phép | Tool bắc cầu |
+|:---|:---|:---|:---|:---|:---|
+| Google Workspace | `connector-google-workspace` | `oauth2` | `google_workspace_access_token` | `gmail.googleapis.com`, `www.googleapis.com` | `send_email`, `create_calendar_event`, `list_drive_files`, `get_doc_content` |
+| GitHub | `connector-github` | `oauth2` | `github_access_token` | `api.github.com` | `list_repos`, `get_issue`, `create_issue`, `create_pull_request`, `search_code` |
+| Notion | `connector-notion` | `bearer` | `notion_api_key` | `api.notion.com` | `search_pages`, `create_page`, `query_database`, `append_block_children` |
+| Slack | `connector-slack` | `oauth2` | `slack_bot_token` | `slack.com` | `post_message`, `list_channels`, `get_history` |
+| Linear | `connector-linear` | `api_key` | `linear_api_key` | `api.linear.app` | `list_issues`, `create_issue`, `update_issue_status` |
+| Jira Cloud | `connector-jira` | `oauth2` | `jira_api_token`, `jira_cloud_id` | `api.atlassian.com` | `search_issues_jql`, `create_issue`, `transition_issue` |
+| Figma | `connector-figma` | `oauth2` | `figma_access_token` | `api.figma.com` | `get_file`, `get_comments`, `post_comment` |
+
+Tên tool đầy đủ là `connector_<id-bỏ-prefix>_<action>`, ví dụ `connector_github_list_repos`.
+
+---
+
+## Công cụ
+
+| Plugin | Id | Ghi chú |
+|:---|:---|:---|
+| Tạo ảnh | `tool-image-generator` | Tool agent gọi được; xem `plugins/tools/image-generator` |
+
+---
+
+## Build lại gói chính thức
+
+Từ repo SDK:
+
+```bash
+acton-plugin build --src plugins/channels/telegram --out dist/channel-telegram.wasm
+acton-plugin validate --manifest plugins/channels/telegram/manifest.json
+acton-plugin pack --manifest plugins/channels/telegram/manifest.json --wasm dist/channel-telegram.wasm --out dist/channel-telegram.actonpkg
+```
+
+Hoặc `acton-plugin build-all` để biên dịch cả cây `plugins/`.
+
+---
+
+## Trang liên quan
+
+- [Hướng dẫn: Plugins](../user-guide/plugins) — upload và log.
+- [Plugin kênh](channels) — implement app chat mới.
+- [Plugin connector](connectors) — implement SaaS mới.

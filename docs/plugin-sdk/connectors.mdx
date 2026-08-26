@@ -1,0 +1,115 @@
+---
+id: connectors
+title: Connector plugins
+sidebar_label: Connector plugins
+sidebar_position: 5
+---
+
+# Connector plugins
+
+A **connector** talks to a SaaS API with named actions. Tokens live in the vault. You can **bridge** those actions so agents call them as tools.
+
+```bash
+acton-plugin new my-saas --type=connector
+```
+
+---
+
+## Register actions and bridge tools
+
+```go
+package main
+
+import (
+	"github.com/actonos/plugin-sdk/sdk"
+)
+
+type ListReposInput struct {
+	PerPage int `json:"per_page" jsonschema:"description=Page size"`
+}
+
+func init() {
+	conn := sdk.NewBaseConnector("github", "GitHub", "oauth2").
+		WithSecretKey("github_access_token")
+
+	sdk.RegisterTypedAction(conn, "list_repos", "List GitHub repositories for the user", func(ctx sdk.Context, in ListReposInput) (any, error) {
+		token, err := conn.GetAuthToken(ctx)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := ctx.HTTP().GetWithBearer("https://api.github.com/user/repos", token)
+		if err != nil {
+			return nil, err
+		}
+		var repos []map[string]any
+		if err := resp.JSON(&repos); err != nil {
+			return nil, err
+		}
+		return repos, nil
+	})
+
+	sdk.RegisterConnector(conn)
+
+	for _, tool := range conn.AsTools() {
+		sdk.RegisterTool(tool)
+	}
+}
+
+func main() {
+	sdk.Serve()
+}
+```
+
+`AsTools()` names tools `connector_<name>_<action>` — for example `connector_github_list_repos`. The host also accepts shortened aliases (`list_repos`, `github_list_repos`).
+
+---
+
+## Auth types
+
+| `auth_type` | How the user signs in | Typical vault key |
+|:---|:---|:---|
+| `oauth2` | OAuth 2.1 PKCE in the ActonOS UI | `github_access_token` |
+| `api_key` | Pasted key in the plugin form (`x-secret: true`) | `linear_api_key` |
+| `bearer` | Pasted bearer token | `notion_api_key` |
+
+`GetAuthToken(ctx)` reads `SecretKeyName`. Override with `.WithSecretKey("...")`.
+
+Declare the key under `permissions.secrets` and the API host under `net_outbound`.
+
+---
+
+## Manifest snippet
+
+```json
+{
+  "capabilities": ["connector"],
+  "permissions": {
+    "net_outbound": ["api.github.com"],
+    "secrets": ["github_access_token"]
+  },
+  "connectors": [
+    {
+      "name": "github",
+      "display_name": "GitHub",
+      "auth_type": "oauth2",
+      "actions": ["list_repos", "create_issue"]
+    }
+  ]
+}
+```
+
+Keep `actions` in sync with `RegisterTypedAction` names.
+
+---
+
+## Operator flow
+
+Users connect the account on [Connectors](../user-guide/connectors). After the badge is green, they enable the bridged tools on an agent in Agent Studio. You do not implement the OAuth popup — ActonOS does. Your plugin only consumes the vault token at runtime.
+
+---
+
+## Related pages
+
+- [Tool plugins](tools) — the same `sdk.Tool` type `AsTools()` produces.
+- [Manifest](manifest) — `connectors[]` and UI schema.
+- [Official plugins](official-plugins) — Google, GitHub, Notion, Jira, Linear, Figma, Slack.

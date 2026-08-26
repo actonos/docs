@@ -1,0 +1,121 @@
+---
+id: manifest
+title: Manifest và quyền
+sidebar_label: Manifest
+sidebar_position: 6
+---
+
+# Manifest và quyền
+
+Mỗi plugin mang `manifest.json`. Host dùng để biết id, capability nào bind, host mạng và bí mật nào được phép, và form settings vẽ thế nào.
+
+`acton-plugin validate` kiểm tra tệp này. Schema chính thức là `spec/MANIFEST_SCHEMA.json` trong repo SDK.
+
+---
+
+## Trường bắt buộc
+
+| Trường | Quy tắc |
+|:---|:---|
+| `id` | `^[a-z0-9_-]+$` — tên thư mục và `/data/plugins/{id}` |
+| `name` | Tiêu đề cho người |
+| `version` | SemVer `MAJOR.MINOR.PATCH` (hậu tố sau số thứ ba vẫn được) |
+| `capabilities` | Mảng không rỗng: `tool`, `channel`, `connector` |
+
+Tùy chọn: `description`, `author`, `license` (mặc định `MIT`).
+
+---
+
+## Quyền
+
+```json
+"permissions": {
+  "net_outbound": ["api.github.com", "*.telegram.org"],
+  "secrets": ["github_access_token", "discord_bot_tokens.*"],
+  "storage": true,
+  "workspace": false,
+  "bus_events": ["channel.discord.received"]
+}
+```
+
+| Khóa | Mặc định | Ý nghĩa |
+|:---|:---|:---|
+| `net_outbound` | không | Whitelist hostname cho `ctx.HTTP()` và `ctx.WS()`. `*` chỉ được validate kèm **cảnh báo**. |
+| `secrets` | không | Khóa vault `ctx.Vault().GetSecret` được đọc. Hậu tố `.*` là prefix (token nhiều tài khoản). |
+| `storage` | `false` | Kho SQLite key-value riêng theo id plugin. |
+| `workspace` | `false` | API tệp Workspace user (`ctx.Workspace()`). |
+| `bus_events` | không | Topic `ctx.EventBus().Emit` được publish. |
+
+Sandbox fail-closed: host không nằm trong list thì bị từ chối.
+
+---
+
+## Khối capability
+
+### Tools
+
+```json
+"tools": [
+  {
+    "name": "convert_currency",
+    "description": "Convert currency amounts",
+    "category": "plugin",
+    "parameters": { "type": "object", "properties": {} }
+  }
+]
+```
+
+`parameters` / `schema` tùy chọn nếu `NewTypedTool` sinh schema runtime.
+
+### Channels
+
+```json
+"channels": [
+  {
+    "name": "telegram",
+    "display_name": "Telegram",
+    "requires_pairing": true
+  }
+]
+```
+
+### Connectors
+
+```json
+"connectors": [
+  {
+    "name": "github",
+    "display_name": "GitHub",
+    "auth_type": "oauth2",
+    "actions": ["list_repos", "create_issue"]
+  }
+]
+```
+
+`auth_type`: `oauth2`, `api_key`, hoặc `bearer`.
+
+---
+
+## `config_schema` (form settings)
+
+ActonOS vẽ form từ JSON Schema cộng gợi ý UI. Bạn không viết React.
+
+| Gợi ý | Hiệu lực |
+|:---|:---|
+| `x-secret: true` | Lưu vault phần cứng; plugin đọc bằng `ctx.Vault()` |
+| `x-ui-widget` | `password`, `agent-selector`, `textarea`, `code`, `slider` |
+| `x-ui-group` | Tiêu đề nhóm thu gọn |
+| `x-ui-placeholder` | Placeholder ô nhập |
+| `x-order` | Thứ tự trường |
+
+Trong Go: `ctx.Config().Bind(&cfg)` với struct khớp JSON.
+
+Ví dụ form kênh và Discord đầy đủ nằm ở bản tiếng Anh cùng trang — schema JSON giữ nguyên.
+
+---
+
+## Trang liên quan
+
+- [Bảo mật](security) — ít quyền nhất và ký.
+- [Tra cứu CLI](cli-reference) — `validate`.
+- [Plugin kênh](channels) — schema tài khoản.

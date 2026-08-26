@@ -1,41 +1,52 @@
 ---
 id: notifications
-title: Notification Center & Web Push
-sidebar_label: Notification Center
-sidebar_position: 13
+title: Notifications
+sidebar_label: Notifications
+sidebar_position: 14
 ---
 
-# Notification Center & Web Push
+# Notifications
 
-The **Notification Center** keeps operators informed of critical system events, mission milestones, pending approvals, and integration status transitions.
+The **Notification Center** lists events that need your eyes: approvals, finished missions, broken integrations, and system errors.
+
+Open **Notifications** in the sidebar.
 
 ---
 
-## 1. Notification Types & Categories
+## Types
 
-| Type | Badge | Description |
+| Type | Badge | What to do |
 |:---|:---|:---|
-| **Approval Required** | 🟠 `Approval` | An agent requires human confirmation for a sensitive action. Clicking takes you to the approval ledger. |
-| **Mission Milestone** | 🟢 `Success` | An autonomous mission or scheduled automation completed successfully. |
-| **Integration Warning** | 🟡 `Warning` | A channel bot (Telegram/Discord) or OAuth token encountered a transient disconnect. |
-| **System Error** | 🔴 `Error` | A fatal daemon error, disk space alert, or sandbox violation occurred. |
-| **Info / Telemetry** | 🔵 `Info` | General system updates, OTA release availability, or backup completion. |
+| Approval required | Orange | Open it and approve or reject the action. |
+| Mission milestone | Green | The mission or automation finished. |
+| Integration warning | Yellow | A chat bot or OAuth token dropped; reconnect if it stays red. |
+| System error | Red | Disk, sandbox, or daemon problem — see [Troubleshooting](../support-and-faq/troubleshooting). |
+| Info | Blue | Backup done, OTA update available, and similar. |
 
 ---
 
-## 2. Web Push Notifications (VAPID)
+## Browser push
 
-Receive real-time desktop or smartphone push notifications even when the ActonOS tab is closed:
+To get alerts when the ActonOS tab is closed:
 
-1. Navigate to **Notifications** → click **Enable Browser Push Notifications**.
-2. Click **Allow** on your browser permission prompt.
-3. ActonOS generates a unique cryptographic subscription using the server's **VAPID Public Key** (`GET /api/notifications/push/vapid-key`).
-4. You will receive immediate OS-level push notifications whenever high-priority approvals or mission warnings occur.
+1. Open **Notifications**.
+2. Click **Enable Browser Push Notifications**.
+3. Click **Allow** in the browser prompt.
+
+High-priority approvals and warnings then appear as OS notifications on the desktop or phone.
 
 ---
 
-## 3. Notification Management & Filtering
+## Inbox hygiene
 
-- **Filter by Category**: Toggle views for `All`, `Unread Only`, `Approvals`, or `Errors`.
-- **Mark as Read**: Mark individual notifications or click **Mark All as Read**.
-- **Clear History**: Delete old alerts with one click.
+- Filter: All, Unread, Approvals, Errors.
+- Mark one item read, or **Mark All as Read**.
+- **Clear History** removes old alerts.
+
+---
+
+## Related pages
+
+- [Dashboard](dashboard) — the same approvals as a banner.
+- [Channels](channels) — reconnect a bot after a warning.
+- [Connectors](connectors) — re-authenticate a SaaS app.

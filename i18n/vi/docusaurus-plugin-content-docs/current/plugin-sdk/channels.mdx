@@ -1,0 +1,185 @@
+---
+id: channels
+title: Plugin kênh
+sidebar_label: Plugin kênh
+sidebar_position: 4
+---
+
+# Plugin kênh
+
+Plugin **channel** nối app nhắn tin với ActonOS. Host gọi adapter của bạn để **gửi** (text, typing, reaction, tệp) và **poll** (hoặc bạn stream bằng `ctx.WS()`).
+
+```bash
+acton-plugin new my-chat --type=channel
+```
+
+Adapter chính thức (Telegram, Discord, Slack, WhatsApp, Zalo) nằm ở [Plugin chính thức](official-plugins). Hãy copy envelope của chúng — đừng tự bịa format tin nhắn song song.
+
+---
+
+## Hợp đồng adapter
+
+Implement `sdk.ChannelAdapter` (hoặc nhúng `sdk.BaseChannel`):
+
+```go
+type ChannelAdapter interface {
+    Name() string
+    DisplayName() string
+    RequiresPairing() bool
+    SendMessage(ctx sdk.Context, msg sdk.OutboundMessage) error
+    PollMessages(ctx sdk.Context) ([]sdk.InboundMessage, error)
+}
+```
+
+Đăng ký một lần trong `init`:
+
+```go
+func init() {
+    ch := &MyChannel{
+        BaseChannel: sdk.BaseChannel{
+            ChannelName:        "mychat",
+            ChannelDisplayName: "My Chat",
+            PairingRequired:    true,
+        },
+    }
+    sdk.RegisterChannel(ch)
+}
+```
+
+---
+
+## Schema tài khoản
+
+`config_schema` gốc là `{ poll_interval_seconds, accounts[] }`. Mỗi account theo `spec/CHANNEL_ACCOUNT_SCHEMA.json`:
+
+| Trường | Bắt buộc | Ghi chú |
+|:---|:---|:---|
+| `account_id` | có | `^[a-z0-9_-]+$` |
+| `display_name` | | Nhãn UI |
+| credential | có | Theo nền tảng (`bot_token`, hoặc WhatsApp `access_token` + `phone_number_id`) |
+| `default_agent` | có | `x-ui-widget: agent-selector` |
+| `listen_target` | | Lọc hội thoại tùy chọn (`listen_channel_id` là alias) |
+| `enable_typing_indicator` | | mặc định `true` |
+| `enable_ack_reaction` | | mặc định `true` |
+| `enable_reply_quote` | | mặc định `true` |
+| `ack_reaction_emoji` | | mặc định `👀` |
+
+Nhúng `sdk.ChannelAccount` trong struct account. Token ở root kiểu cũ vẫn được đọc như `account_id=default`.
+
+---
+
+## Envelope vào / ra
+
+**Inbound** (`sdk.InboundMessage`): `kind`, `message_id`, `chat_id`, `thread_id`, `timestamp`, `reaction`, cộng trường người gửi.
+
+**Outbound** (`sdk.OutboundMessage`): `kind` (`text` \| `typing` \| `reaction` \| `media`), `chat_id`, `reply_to_id`, `thread_id`, `reaction`, `action`, `typing`, `file_name`, `mime_type`, `file_data`.
+
+| Ý định host | Cách tới | Ánh xạ điển hình |
+|:---|:---|:---|
+| Typing | `kind=typing` hoặc `typing=true` hoặc content rỗng | Discord `POST /typing`, Telegram/Zalo `sendChatAction`… |
+| Ack / react | `kind=reaction` + `reaction` + `reply_to_id` | API reaction của nền tảng |
+| Quote | `reply_to_id` khi bật quote | Discord `message_reference`, Telegram `reply_to_message_id` |
+| Tệp | `file_name` + `file_data` (byte thô; JSON là base64) | Xem [Gửi tệp](#sending-files) |
+
+Helper: `sdk.NewInboundMessage`, `sdk.ApplyInboundEnvelope`, `msg.WantsTyping()`, `msg.IsTypingOnly()`, `msg.AttachedFile()`, `sdk.NewOutboundFile`.
+
+```go
+func (c *MyChannel) PollMessages(ctx sdk.Context) ([]sdk.InboundMessage, error) {
+    msg := sdk.NewInboundMessage("mychat", "bot_primary", "123456", "Alice", "@coder please fix this bug")
+    sdk.ApplyInboundEnvelope(&msg, "888", "42", "", "")
+    return []sdk.InboundMessage{msg}, nil
+}
+```
+
+---
+
+## Đường gửi
+
+```go
+func (c *MyChannel) SendMessage(ctx sdk.Context, msg sdk.OutboundMessage) error {
+    token, err := ctx.Vault().GetSecret("channel_token")
+    if err != nil {
+        return err
+    }
+
+    if msg.WantsTyping() {
+        if msg.IsTypingOnly() {
+            return nil
+        }
+    }
+
+    if name, _, data, ok := msg.AttachedFile(); ok {
+        contentType, body, err := sdk.EncodeMultipart(map[string]string{
+            "to": sdk.FirstNonEmpty(msg.ChatID, msg.Recipient),
+        }, "file", name, data)
+        if err != nil {
+            return err
+        }
+        _, err = ctx.HTTP().PostBinary("https://api.mychat.com/upload", contentType, body)
+        return err
+    }
+
+    _, err = ctx.HTTP().PostJSONWithBearer("https://api.mychat.com/send", token, map[string]any{
+        "to":   sdk.FirstNonEmpty(msg.ChatID, msg.Recipient),
+        "text": msg.Content,
+    })
+    return err
+}
+```
+
+Đọc config bằng `ctx.Config().Bind(&cfg)`. Khóa vault multi-account dạng `discord_bot_tokens.` + `acc.AccountID`.
+
+---
+
+## Gửi tệp {#sending-files}
+
+Khi user nói “gửi `report.pdf` sang Telegram”, **ActonOS không tự upload**. Host đọc từ Workspace rồi chuyển byte thô vào `acton_channel_send`. Plugin của bạn phải nói với app chat.
+
+Trường `sdk.OutboundMessage`:
+
+| Trường | Ý nghĩa |
+|:---|:---|
+| `FileName` | Tên gốc (`report.pdf`) |
+| `MIMEType` | Kiểu nội dung |
+| `FileData` | Byte thô (base64 trên JSON) |
+| `Content` | Caption tùy chọn |
+| `Kind` | `media` khi có tệp |
+
+Dùng `msg.AttachedFile()` → `(name, mime, data)`.
+
+:::danger Đừng nhét byte PDF vào chuỗi JSON
+`json.Marshal` trên UTF-8 không hợp lệ thay byte bằng `U+FFFD`. Người nhận thấy **font vỡ**. Dùng `sdk.EncodeMultipart` + `ctx.HTTP().PostBinary` (gửi `body_base64` cho host).
+:::
+
+| Nền tảng | Cách upload |
+|:---|:---|
+| Telegram, Discord, Slack, WhatsApp | Multipart + `PostBinary` |
+| Zalo Bot API | JSON qua HTTPS. Trường tệp là **URL HTTPS công khai** (hoặc `data:` nhỏ). Body multipart bị bỏ. HTTP 200 với `"ok": false` là **thất bại**. |
+
+Nếu plugin báo thành công mà user không thấy tệp, có thể bạn đang dùng sai API — hoặc nuốt `ok: false`.
+
+---
+
+## Kênh WebSocket
+
+Discord Gateway và API tương tự dùng `ctx.WS()`:
+
+```go
+conn, err := ctx.WS().Dial("wss://gateway.discord.gg/?v=10&encoding=json", nil)
+if err != nil {
+    return err
+}
+defer conn.Close()
+_ = conn.SendJSON(map[string]any{"op": 1})
+payload, ok, err := conn.Poll()
+```
+
+Whitelist cả REST và Gateway trong `net_outbound`.
+
+---
+
+## Trang liên quan
+
+- [Manifest](manifest) — `channels[]` và `config_schema`.
+- [Plugin chính thức](official-plugins) — adapter production để copy.
+- [Hướng dẫn: Kênh chat](../user-guide/channels) — PIN ghép cặp và gửi tệp phía người vận hành.

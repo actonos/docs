@@ -38,7 +38,24 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: '🧠 3. Advanced Architecture',
+      label: '🔌 3. Plugin SDK',
+      collapsed: true,
+      items: [
+        'plugin-sdk/overview',
+        'plugin-sdk/first-plugin',
+        'plugin-sdk/tools',
+        'plugin-sdk/channels',
+        'plugin-sdk/connectors',
+        'plugin-sdk/manifest',
+        'plugin-sdk/cli-reference',
+        'plugin-sdk/security',
+        'plugin-sdk/official-plugins',
+        'plugin-sdk/host-abi',
+      ],
+    },
+    {
+      type: 'category',
+      label: '🧠 4. Advanced Architecture',
       collapsed: true,
       items: [
         'advanced-architecture/dual-runtime-hal',
@@ -52,7 +69,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: '🛠️ 4. Developer & API Reference',
+      label: '🛠️ 5. Developer & API Reference',
       collapsed: true,
       items: [
         'developer-reference/rest-api-overview',
@@ -65,7 +82,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: '💡 5. Support & FAQ',
+      label: '💡 6. Support & FAQ',
       collapsed: true,
       items: [
         'support-and-faq/troubleshooting',

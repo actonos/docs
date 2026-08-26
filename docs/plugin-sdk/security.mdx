@@ -1,0 +1,71 @@
+---
+id: security
+title: Plugin security
+sidebar_label: Security
+sidebar_position: 8
+---
+
+# Plugin security
+
+Plugins run in isolated WebAssembly memory. That is not enough on its own: you still declare **what** they may touch. Treat the manifest as a security document.
+
+---
+
+## Least privilege
+
+1. **List real hosts.** Prefer `api.github.com` or `*.telegram.org`. Never ship `"net_outbound": ["*"]` in production — `validate` already warns.
+2. **Name the secrets.** Only request vault keys you read. Do not log tokens (`ctx.Log()` is visible on the Plugins **Logs** tab). Do not store plaintext tokens in `ctx.Storage()`.
+3. **Storage is per plugin id.** You cannot read another plugin’s KV partition. Still avoid putting secrets there.
+4. **Workspace is opt-in.** Set `"workspace": true` only if the plugin must read or write the user’s documents.
+
+Operators see the permission summary **before** they click Install. A greedy manifest gets rejected by careful users.
+
+---
+
+## Signing
+
+```bash
+acton-plugin sign --gen-key --key=plugin_ed25519.key
+acton-plugin sign --key=plugin_ed25519.key
+acton-plugin pack
+```
+
+- The signature covers **both** `manifest.json` and `plugin.wasm`.
+- Keep `.key` out of git, CI artifacts, and `.actonpkg`.
+- Publish `.key.pub` so an administrator can pin your publisher key.
+- Administrators can require a valid signature before a plugin is allowed to run.
+
+---
+
+## Secrets at runtime
+
+Fields with `x-secret: true` in `config_schema` are written to the hardware vault (AES-256-GCM, hardware-bound master key). Your code receives the decrypted value only inside the current call:
+
+```go
+token, err := ctx.Vault().GetSecret("discord_bot_tokens." + acc.AccountID)
+```
+
+The matching `permissions.secrets` entry must allow that key (or a `prefix.*`).
+
+How the vault is built: [Hardware Vault](../advanced-architecture/hardware-vault-security).
+
+---
+
+## What the host still enforces
+
+Even with a valid manifest:
+
+- HTTP and WebSocket targets are filtered again at the syscall.
+- Vault reads for unknown keys fail.
+- Event topics not listed in `bus_events` are dropped.
+- The plugin has no raw filesystem except Workspace APIs you enabled.
+
+Write tools as if the network can fail and the token can be missing. Return `sdk.NewResultError` instead of panicking.
+
+---
+
+## Related pages
+
+- [Manifest](manifest) — permission fields.
+- [CLI reference](cli-reference) — `validate` and `sign`.
+- [Host ABI](host-abi) — syscalls those permissions gate.

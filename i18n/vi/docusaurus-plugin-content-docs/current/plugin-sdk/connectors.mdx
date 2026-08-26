@@ -1,0 +1,115 @@
+---
+id: connectors
+title: Plugin connector
+sidebar_label: Plugin connector
+sidebar_position: 5
+---
+
+# Plugin connector
+
+**Connector** nói chuyện với API SaaS qua action đặt tên. Token nằm trong vault. Bạn có thể **bắc cầu** action đó để agent gọi như tool.
+
+```bash
+acton-plugin new my-saas --type=connector
+```
+
+---
+
+## Đăng ký action và bắc cầu tool
+
+```go
+package main
+
+import (
+	"github.com/actonos/plugin-sdk/sdk"
+)
+
+type ListReposInput struct {
+	PerPage int `json:"per_page" jsonschema:"description=Page size"`
+}
+
+func init() {
+	conn := sdk.NewBaseConnector("github", "GitHub", "oauth2").
+		WithSecretKey("github_access_token")
+
+	sdk.RegisterTypedAction(conn, "list_repos", "List GitHub repositories for the user", func(ctx sdk.Context, in ListReposInput) (any, error) {
+		token, err := conn.GetAuthToken(ctx)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := ctx.HTTP().GetWithBearer("https://api.github.com/user/repos", token)
+		if err != nil {
+			return nil, err
+		}
+		var repos []map[string]any
+		if err := resp.JSON(&repos); err != nil {
+			return nil, err
+		}
+		return repos, nil
+	})
+
+	sdk.RegisterConnector(conn)
+
+	for _, tool := range conn.AsTools() {
+		sdk.RegisterTool(tool)
+	}
+}
+
+func main() {
+	sdk.Serve()
+}
+```
+
+`AsTools()` đặt tên tool `connector_<name>_<action>` — ví dụ `connector_github_list_repos`. Host cũng nhận alias ngắn (`list_repos`, `github_list_repos`).
+
+---
+
+## Kiểu xác thực
+
+| `auth_type` | User đăng nhập thế nào | Khóa vault điển hình |
+|:---|:---|:---|
+| `oauth2` | OAuth 2.1 PKCE trên UI ActonOS | `github_access_token` |
+| `api_key` | Dán key trên form plugin (`x-secret: true`) | `linear_api_key` |
+| `bearer` | Dán bearer token | `notion_api_key` |
+
+`GetAuthToken(ctx)` đọc `SecretKeyName`. Đổi bằng `.WithSecretKey("...")`.
+
+Khai báo khóa trong `permissions.secrets` và host API trong `net_outbound`.
+
+---
+
+## Đoạn manifest
+
+```json
+{
+  "capabilities": ["connector"],
+  "permissions": {
+    "net_outbound": ["api.github.com"],
+    "secrets": ["github_access_token"]
+  },
+  "connectors": [
+    {
+      "name": "github",
+      "display_name": "GitHub",
+      "auth_type": "oauth2",
+      "actions": ["list_repos", "create_issue"]
+    }
+  ]
+}
+```
+
+Giữ `actions` khớp tên `RegisterTypedAction`.
+
+---
+
+## Luồng người vận hành
+
+User kết nối tài khoản ở [Connectors](../user-guide/connectors). Sau khi nhãn xanh, họ bật tool đã bắc cầu trên agent trong Agent Studio. Bạn không viết popup OAuth — ActonOS làm. Plugin chỉ lấy token vault lúc chạy.
+
+---
+
+## Trang liên quan
+
+- [Plugin công cụ](tools) — cùng kiểu `sdk.Tool` mà `AsTools()` tạo.
+- [Manifest](manifest) — `connectors[]` và schema UI.
+- [Plugin chính thức](official-plugins) — Google, GitHub, Notion, Jira, Linear, Figma, Slack.

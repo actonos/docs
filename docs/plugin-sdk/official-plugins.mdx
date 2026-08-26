@@ -1,0 +1,78 @@
+---
+id: official-plugins
+title: Official plugins
+sidebar_label: Official plugins
+sidebar_position: 9
+---
+
+# Official plugins
+
+These packages ship in the Plugin SDK repository (`plugins/`) and as `.actonpkg` files. Install them from **Extensions → Plugins**. After an ActonOS update, **re-install** channel packages so file sending stays compatible.
+
+Source layout:
+
+- `plugins/channels/` — chat adapters
+- `plugins/saas/` — SaaS connectors
+- `plugins/tools/` — extra tools (for example image generator)
+
+---
+
+## Chat channels
+
+| Plugin | Id | Vault secrets | Allowed hosts | Notes |
+|:---|:---|:---|:---|:---|
+| Telegram | `channel-telegram` | `telegram_bot_token` | `api.telegram.org` | `accounts[]`, Markdown, quote replies, typing, reactions, files via `sendDocument` / `sendPhoto`, `@agent` routing |
+| Discord | `channel-discord` | `discord_bot_tokens.*` | `discord.com`, `gateway.discord.gg` | Gateway + REST, embeds, typing, reactions, quote replies, files as `files[0]` |
+| WhatsApp | `channel-whatsapp` | `whatsapp_access_token`, `whatsapp_phone_number_id` | `graph.facebook.com` | Cloud API, typing, reactions, quotes, webhook buffer, files via `/media` |
+| Slack | `channel-slack` | `slack_bot_token` | `slack.com` | `chat.postMessage`, `thread_ts`, `reactions.add`, files via `files.upload` |
+| Zalo | `channel-zalo` | `zalo_bot_token` | `bot-api.zaloplatforms.com` | Markdown, typing, reactions, quotes. Files are JSON (public URL or small `data:`), not multipart |
+
+All channel plugins use the canonical `accounts[]` schema. Operator steps: [Channels](../user-guide/channels).
+
+---
+
+## SaaS connectors
+
+Actions are also registered as agent tools through `conn.AsTools()`.
+
+| Plugin | Id | Auth | Vault secrets | Allowed hosts | Bridged tools |
+|:---|:---|:---|:---|:---|:---|
+| Google Workspace | `connector-google-workspace` | `oauth2` | `google_workspace_access_token` | `gmail.googleapis.com`, `www.googleapis.com` | `send_email`, `create_calendar_event`, `list_drive_files`, `get_doc_content` |
+| GitHub | `connector-github` | `oauth2` | `github_access_token` | `api.github.com` | `list_repos`, `get_issue`, `create_issue`, `create_pull_request`, `search_code` |
+| Notion | `connector-notion` | `bearer` | `notion_api_key` | `api.notion.com` | `search_pages`, `create_page`, `query_database`, `append_block_children` |
+| Slack | `connector-slack` | `oauth2` | `slack_bot_token` | `slack.com` | `post_message`, `list_channels`, `get_history` |
+| Linear | `connector-linear` | `api_key` | `linear_api_key` | `api.linear.app` | `list_issues`, `create_issue`, `update_issue_status` |
+| Jira Cloud | `connector-jira` | `oauth2` | `jira_api_token`, `jira_cloud_id` | `api.atlassian.com` | `search_issues_jql`, `create_issue`, `transition_issue` |
+| Figma | `connector-figma` | `oauth2` | `figma_access_token` | `api.figma.com` | `get_file`, `get_comments`, `post_comment` |
+
+Full tool names are `connector_<id-without-prefix>_<action>`, for example `connector_github_list_repos`.
+
+---
+
+## Tools
+
+| Plugin | Id | Notes |
+|:---|:---|:---|
+| Image generator | `tool-image-generator` | Agent-callable image tool; see `plugins/tools/image-generator` |
+
+---
+
+## Rebuild an official package
+
+From the SDK repo:
+
+```bash
+acton-plugin build --src plugins/channels/telegram --out dist/channel-telegram.wasm
+acton-plugin validate --manifest plugins/channels/telegram/manifest.json
+acton-plugin pack --manifest plugins/channels/telegram/manifest.json --wasm dist/channel-telegram.wasm --out dist/channel-telegram.actonpkg
+```
+
+Or `acton-plugin build-all` to compile the whole `plugins/` tree.
+
+---
+
+## Related pages
+
+- [User guide: Plugins](../user-guide/plugins) — upload and logs.
+- [Channel plugins](channels) — implement a new chat app.
+- [Connector plugins](connectors) — implement a new SaaS.

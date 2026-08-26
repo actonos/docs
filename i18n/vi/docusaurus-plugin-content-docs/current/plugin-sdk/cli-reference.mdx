@@ -1,0 +1,135 @@
+---
+id: cli-reference
+title: CLI acton-plugin
+sidebar_label: Tra cứu CLI
+sidebar_position: 7
+---
+
+# CLI `acton-plugin`
+
+CLI bao phủ cả vòng đời plugin. Build từ repo SDK:
+
+```bash
+go build -o acton-plugin ./cmd/acton-plugin/
+acton-plugin version
+```
+
+Chạy `acton-plugin <command> --help` để xem mặc định cờ.
+
+---
+
+## `new` / `init`
+
+Tạo khung dự án.
+
+```bash
+acton-plugin new <name> [--type=tool|channel|connector] [--dir=target_directory]
+```
+
+| Cờ | Mặc định | Ý nghĩa |
+|:---|:---|:---|
+| `--type` | `tool` | `tool`, `channel`, hoặc `connector` |
+| `--dir` | tên plugin | Thư mục xuất |
+
+Ghi `manifest.json`, `main.go`, `main_test.go`, `README.md`, `.gitignore`.
+
+---
+
+## `build`
+
+Biên dịch WebAssembly.
+
+```bash
+acton-plugin build [--source=.] [--output=dist/plugin.wasm] [--tinygo]
+```
+
+| Cờ | Alias | Mặc định |
+|:---|:---|:---|
+| `--source` | `--src` | `.` |
+| `--output` | `--out` | `dist/plugin.wasm` |
+| `--tinygo` | | Go chuẩn (`GOOS=wasip1 GOARCH=wasm -buildmode=c-shared`) |
+
+TinyGo dùng `-target=wasi -opt=2`.
+
+---
+
+## `validate`
+
+```bash
+acton-plugin validate [--manifest=manifest.json]
+```
+
+Kiểm tra trường bắt buộc, id/semver, khớp capability, và quyền ồn ào (`net_outbound: ["*"]` là cảnh báo).
+
+---
+
+## `test`
+
+Chạy `.wasm` trong **mock host** Wazero (vault giả, KV, event bus, tường lửa domain).
+
+```bash
+acton-plugin test [--wasm=dist/plugin.wasm] [--manifest=manifest.json] [--tool=tool_name] [--input='{"param":"value"}']
+```
+
+| Cờ | Mặc định |
+|:---|:---|
+| `--wasm` | `dist/plugin.wasm` |
+| `--manifest` | `manifest.json` |
+| `--tool` | tool đầu trong manifest, nếu có |
+| `--input` | `{}` |
+
+Secret trong manifest được điền `mock_secret_value_for_<key>`.
+
+---
+
+## `sign`
+
+Chữ ký Ed25519 trên `SHA-256(manifest.json || plugin.wasm)`.
+
+```bash
+acton-plugin sign --gen-key [--key=plugin_ed25519.key]
+acton-plugin sign [--key=plugin_ed25519.key] [--manifest=manifest.json] [--wasm=dist/plugin.wasm] [--output=dist/signature.sig]
+```
+
+`--gen-key` cũng ghi `plugin_ed25519.key.pub`. Khóa riêng là hex `0600`.
+
+---
+
+## `pack` / `package`
+
+Zip `.actonpkg` để phân phối.
+
+```bash
+acton-plugin pack [--manifest=manifest.json] [--wasm=dist/plugin.wasm] [--sig=dist/signature.sig] [--output=dist/<id>-<version>.actonpkg]
+```
+
+Nội dung archive: `manifest.json`, `plugin.wasm`, `signature.sig` nếu có, `README.md` nếu có trong thư mục làm việc.
+
+---
+
+## `build-all` / `pack-all`
+
+Biên dịch hàng loạt mọi plugin dưới `plugins/` vào `dist/`. Dùng trong repo SDK chính thức; không bắt buộc với một plugin tùy chỉnh.
+
+---
+
+## `version`
+
+In phiên bản CLI / SDK (hiện **1.3.0**).
+
+---
+
+## Chuỗi lệnh điển hình
+
+```bash
+acton-plugin new weather-tool --type=tool
+cd weather-tool
+acton-plugin validate
+acton-plugin build
+acton-plugin test --input='{"city":"Tokyo"}'
+acton-plugin sign --gen-key
+acton-plugin sign
+acton-plugin pack
+```
+
+Tải `.actonpkg` lên [Plugins](../user-guide/plugins).

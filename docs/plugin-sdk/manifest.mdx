@@ -1,0 +1,208 @@
+---
+id: manifest
+title: Manifest and permissions
+sidebar_label: Manifest
+sidebar_position: 6
+---
+
+# Manifest and permissions
+
+Every plugin ships a `manifest.json`. The host uses it to know the plugin id, which capabilities to bind, which network hosts and secrets to allow, and how to render the settings form.
+
+`acton-plugin validate` checks this file. The formal schema is `spec/MANIFEST_SCHEMA.json` in the SDK repository.
+
+---
+
+## Required fields
+
+| Field | Rule |
+|:---|:---|
+| `id` | `^[a-z0-9_-]+$` — folder name and `/data/plugins/{id}` |
+| `name` | Human title |
+| `version` | SemVer, `MAJOR.MINOR.PATCH` (extra suffixes allowed after the third number) |
+| `capabilities` | Non-empty array of `tool`, `channel`, `connector` |
+
+Optional: `description`, `author`, `license` (default `MIT`).
+
+---
+
+## Permissions
+
+```json
+"permissions": {
+  "net_outbound": ["api.github.com", "*.telegram.org"],
+  "secrets": ["github_access_token", "discord_bot_tokens.*"],
+  "storage": true,
+  "workspace": false,
+  "bus_events": ["channel.discord.received"]
+}
+```
+
+| Key | Default | Meaning |
+|:---|:---|:---|
+| `net_outbound` | none | Hostname whitelist for `ctx.HTTP()` and `ctx.WS()`. `*` is allowed by validate only as a **warning**. |
+| `secrets` | none | Vault keys `ctx.Vault().GetSecret` may read. Trailing `.*` is a prefix (multi-account tokens). |
+| `storage` | `false` | Isolated SQLite key-value store for this plugin id. |
+| `workspace` | `false` | User Workspace file APIs (`ctx.Workspace()`). |
+| `bus_events` | none | Topics `ctx.EventBus().Emit` may publish. |
+
+The sandbox is fail-closed: a host not on the list is denied.
+
+---
+
+## Capability blocks
+
+### Tools
+
+```json
+"tools": [
+  {
+    "name": "convert_currency",
+    "description": "Convert currency amounts",
+    "category": "plugin",
+    "parameters": { "type": "object", "properties": {} }
+  }
+]
+```
+
+`parameters` / `schema` are optional if `NewTypedTool` generates the runtime schema.
+
+### Channels
+
+```json
+"channels": [
+  {
+    "name": "telegram",
+    "display_name": "Telegram",
+    "requires_pairing": true
+  }
+]
+```
+
+### Connectors
+
+```json
+"connectors": [
+  {
+    "name": "github",
+    "display_name": "GitHub",
+    "auth_type": "oauth2",
+    "actions": ["list_repos", "create_issue"]
+  }
+]
+```
+
+`auth_type`: `oauth2`, `api_key`, or `bearer`.
+
+---
+
+## `config_schema` (settings form)
+
+ActonOS renders a form from JSON Schema plus UI hints. You do not write React.
+
+```json
+"config_schema": {
+  "type": "object",
+  "properties": {
+    "poll_interval_seconds": {
+      "type": "integer",
+      "title": "Polling Interval (seconds)",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 60,
+      "x-ui-group": "General Settings"
+    },
+    "accounts": {
+      "type": "array",
+      "title": "Bot Accounts",
+      "x-ui-group": "Bot Accounts",
+      "items": {
+        "type": "object",
+        "required": ["account_id", "bot_token", "default_agent"],
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "title": "Account ID",
+            "pattern": "^[a-z0-9_-]+$",
+            "x-ui-placeholder": "bot_support"
+          },
+          "bot_token": {
+            "type": "string",
+            "title": "Bot Token",
+            "x-secret": true,
+            "x-ui-widget": "password"
+          },
+          "default_agent": {
+            "type": "string",
+            "title": "Default Agent",
+            "x-ui-widget": "agent-selector"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+| Hint | Effect |
+|:---|:---|
+| `x-secret: true` | Stored in the hardware vault; the plugin reads it with `ctx.Vault()` |
+| `x-ui-widget` | `password`, `agent-selector`, `textarea`, `code`, `slider` |
+| `x-ui-group` | Collapsible section title |
+| `x-ui-placeholder` | Input placeholder |
+| `x-order` | Field order |
+
+In Go:
+
+```go
+type MyPluginConfig struct {
+    PollIntervalSeconds int             `json:"poll_interval_seconds"`
+    Accounts            []AccountConfig `json:"accounts"`
+}
+
+type AccountConfig struct {
+    sdk.ChannelAccount
+}
+
+var cfg MyPluginConfig
+if err := ctx.Config().Bind(&cfg); err != nil {
+    return err
+}
+```
+
+---
+
+## Full example
+
+```json
+{
+  "id": "channel-discord",
+  "name": "Discord Bot Channel",
+  "version": "2.0.0",
+  "description": "Discord bot for ActonOS agents",
+  "author": "ActonOS Core Team",
+  "license": "MIT",
+  "capabilities": ["channel"],
+  "permissions": {
+    "net_outbound": ["discord.com", "gateway.discord.gg"],
+    "secrets": ["discord_bot_tokens.*"],
+    "storage": true,
+    "bus_events": ["channel.discord.received", "channel.discord.sent"]
+  },
+  "channels": [
+    {
+      "name": "discord",
+      "display_name": "Discord",
+      "requires_pairing": true
+    }
+  ]
+}
+```
+
+---
+
+## Related pages
+
+- [Security](security) — least privilege and signing.
+- [CLI reference](cli-reference) — `validate`.
+- [Channel plugins](channels) — account schema details.

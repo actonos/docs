@@ -1,83 +1,74 @@
 ---
 id: workspace
-title: Workspace & Semantic Memory
-sidebar_label: Workspace & Semantic Memory
-sidebar_position: 11
+title: Workspace
+sidebar_label: Workspace
+sidebar_position: 12
 ---
 
-# Workspace & Semantic Memory
+# Workspace
 
-The **Workspace** provides a full-featured, sandboxed file management environment and integrated IDE combined with an automated **Semantic Memory (RAG)** indexing engine.
-
----
-
-## 1. Integrated IDE & Viewers
-
-ActonOS includes specialized viewers tailored for different file formats:
-
-- **Code Editor (CodeMirror)**: Syntax highlighting, auto-indentation, line numbers, and error linting for 50+ programming languages.
-- **Markdown Live Preview**: Split-pane or full-width rendering with GitHub-flavored tables, task lists, and LaTeX equations.
-- **Interactive JSON Viewer**: Collapsible tree navigation with key search and type annotations.
-- **Data Table Viewer**: Spreadsheet-like tabular viewer for `.csv` and `.tsv` files with sorting and filtering.
-- **Media & Document Viewer**: Inline previewing of images (`.png`, `.jpg`, `.svg`), audio, video, and PDF documents.
+**Workspace** is your document folder inside ActonOS. Upload a file, ask the agent to write one, open it in the built-in editor, or send it to Telegram. Names stay as you gave them: `report.pdf` is still `report.pdf`.
 
 ---
 
-## 2. File Operations & Batch Management
+## Open and edit files
 
-- **Upload & Download**: Upload single files or entire folders. Download individual items or export multi-file selections as a compressed `.zip` archive.
-- **Context Menus**: Right-click any file to Rename, Duplicate (`_copy`), Move, or Delete.
-- **Storage Statistics**: The Workspace stats bar displays total storage used, file counts, and storage breakdown by category (Code, Documents, Data, Media).
+Workspace includes viewers for common types:
+
+- Code editor (syntax highlighting for many languages)
+- Markdown preview
+- JSON tree
+- CSV / TSV table
+- Images, audio, video, and PDF
+
+Upload or download files, export a selection as `.zip`, and right-click to rename, duplicate, move, or delete. The stats bar shows how much space you are using.
 
 ---
 
-## 3. Your files keep their original names
+## Names you can say out loud
 
-When you upload `report.pdf` or ask the agent to save `weekly-notes.md`, those are the names you see on the Workspace page — and the same names the agent uses.
-
-You can say things like:
+When you upload `report.pdf` or ask the agent to save `weekly-notes.md`, those are the names on the page — and the names the agent uses:
 
 - “Summarize `report.pdf` in the workspace.”
 - “Save this as `weekly-notes.md`.”
 - “Open the PDF I uploaded yesterday and extract the table.”
 
-The agent looks up the file by name, then reads or processes it. You do not need internal IDs.
+You never pass internal storage IDs.
 
-:::tip Workspace vs the agent’s scratchpad
-**Workspace** is your folder. Files here appear in the UI and stay until you delete them.
+:::tip Workspace vs scratchpad
+**Workspace** is yours. Files stay until you delete them.
 
-The agent also has a **private scratchpad** for temporary scripts and unfinished work. Those files do **not** show up on the Workspace page unless the agent **publishes** them (for example: “save this PDF to my workspace”).
+The agent also has a **private scratchpad** for temporary scripts. Those files do **not** appear here until the agent **publishes** them (for example: “save this PDF to my workspace”).
 :::
 
-### Opening PDFs and other documents in scripts
+### Open a PDF from a script
 
-If you ask the agent to run Python (or another script) on an uploaded file, it uses the **original filename**. Typical flow:
+1. Upload `report.pdf`, or ask the agent to save it.
+2. Ask: “Extract the first page of `report.pdf`.”
+3. The agent opens that name (PDF, image, ZIP, Word, Excel, and similar). The file is not flattened into chat first, so fonts stay intact.
 
-1. You upload `report.pdf`, or the agent saves it to the workspace.
-2. You ask: “Extract the first page of `report.pdf`.”
-3. The agent finds the file, then opens it by that name.
-
-This works for PDF, images, ZIP, Word, Excel, and similar files. The file is not converted to chat text first, so fonts and layout stay intact.
-
-### Saving generated files back to Workspace
-
-Ask the agent to write results **to the workspace** so you can open or download them:
+### Save results back
 
 - “Write a summary to `go_126_summary.md` in the workspace.”
 - “Create `invoice.pdf` and save it to my workspace.”
 
-For PDFs and other binary files, ActonOS copies the finished file as-is. Open **Workspace**, click the file, and download it.
-
-You can also ask the agent to [send a workspace file to Telegram, Discord, Slack, WhatsApp, or Zalo](channels#sending-files-to-chat).
+Then download from Workspace, or [send the file to a chat app](channels#sending-files-to-chat).
 
 ---
 
-## 4. Automated Semantic Memory (Local Vector RAG)
+## Search across your files
 
-Every text document, markdown file, or source code file placed in `/data/workspace/` is automatically processed into the **Hybrid Semantic Memory** index:
+Text, Markdown, and source files are indexed automatically so agents can search them later.
 
-1. **Debounce Queue (1-Minute)**: Edits are enqueued in a durable SQLite debounce table to avoid thrashing during rapid file modifications.
-2. **Chunking**: Text is split into semantic paragraphs with sliding window overlaps.
-3. **Local ONNX Embeddings**: Chunks are vectorized using the local `multilingual-e5-small` model running in the loopback `embeddingd` daemon.
-4. **Hybrid Retrieval**: Agents search workspace text through semantic memory (SQLite FTS5 + vector). The UI can also load chunks for a file via `GET /api/workspace/chunks?id=`.
-5. **Manual Reindex**: Click the **Reindex Semantic Memory** button anytime to force a complete re-embedding of the workspace.
+- Edits wait about a minute before re-indexing, so rapid saves are not wasted.
+- Click **Reindex Semantic Memory** if a new file is not found yet.
+
+How the index works: [Hybrid Memory](../advanced-architecture/hybrid-memory-rag).
+
+---
+
+## Related pages
+
+- [Chat](ai-chat) — attach a file or ask to save one.
+- [Channels](channels) — send a Workspace file to Telegram or Zalo.
+- [Tools and skills](tools-and-skills) — `native_workspace_*` tools.

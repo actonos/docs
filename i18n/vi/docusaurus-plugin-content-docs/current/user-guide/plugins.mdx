@@ -1,102 +1,99 @@
 ---
 id: plugins
-title: Plugins & Tiện ích Mở rộng WASM
-sidebar_label: Plugins (WASM)
-sidebar_position: 6
+title: Plugins
+sidebar_label: Plugins
+sidebar_position: 7
 ---
 
-# Plugins & Tiện ích Mở rộng WASM
+# Plugins
 
-ActonOS tích hợp **Hệ thống Plugin WebAssembly (WASM)** thống nhất chạy trên môi trường **Wazero JIT runtime** thuần Go 100%. Thông qua trang quản trị **Plugins** (`/plugins`), người vận hành có thể khám phá, cài đặt, cấu hình và giám sát các tiện ích mở rộng cách ly (sandboxed) nhằm bổ sung **Công cụ Agent (Tools)**, **Kênh giao tiếp (Channels)**, và **Kết nối SaaS (Connectors)** mà không cần khởi động lại hệ điều hành.
+Plugin thêm năng lực cho ActonOS mà không cần khởi động lại. Một plugin có thể là:
 
----
+- **công cụ** agent gọi được (thời tiết, tạo ảnh, API nội bộ)
+- **kênh** nối Telegram, Discord, Slack, WhatsApp hoặc Zalo
+- **connector** nói chuyện với GitHub, Notion, Google Workspace…
 
-## 1. Các Năng lực Khả dụng của Plugin
-
-Mỗi gói plugin có thể định nghĩa một hoặc nhiều khả năng vận hành:
-
-| Khả năng | Mục đích | Cầu nối Thực thi trên Host | Ví dụ Tích hợp |
-|:---|:---|:---|:---|
-| 🔧 **Tool** | Cung cấp các công cụ hàm định kiểu cho ReAct Agent Swarm. | `WasmToolBridge` $\rightarrow$ `ToolRegistry` | API thời tiết, Web Scraper, truy vấn SQL, định dạng mã nguồn |
-| 💬 **Channel** | Kết nối giao thức chat bên ngoài với cơ chế đa tài khoản và định tuyến tin nhắn. | `WasmChannelBridge` $\rightarrow$ `ChannelManager` | Telegram Bot, Discord Bot, Slack App, WhatsApp, Zalo |
-| 🔗 **Connector** | Kết nối nền tảng SaaS, quản lý OAuth 2.1 và tự động chuyển action thành Tool. | `WasmConnectorBridge` $\rightarrow$ `ToolRegistry` | GitHub, Notion, Linear, Google Workspace |
+Bạn cài ở **Extensions → Plugins**. Nếu muốn **tự viết**, vào [Plugin SDK](../plugin-sdk/overview).
 
 ---
 
-## 2. Cài đặt Plugin
+## Cài plugin
 
-ActonOS hỗ trợ hai định dạng phân phối plugin:
-- **`.actonpkg`**: Định dạng gói chuẩn chứa `manifest.json`, tệp nhị phân `plugin.wasm`, biểu tượng và schema.
-- **`.wasm`**: Tệp nhị phân WebAssembly biên dịch trực tiếp cho mục tiêu WASI (`wasip1`).
+ActonOS nhận:
 
-### Các bước cài đặt:
-1. Mở menu **Extensions** → chọn **Plugins** trên thanh điều hướng.
-2. Bấm nút màu vàng **+ Upload Plugin** ở góc phải phía trên.
-3. Kéo và thả tệp `.actonpkg` hoặc `.wasm` vào khung tải lên (hoặc bấm để chọn tệp).
-4. Xem lại bản tóm tắt quyền hạn yêu cầu của plugin:
-   - **Tên miền ra ngoài (Outbound Domains)**: Danh sách whitelist các domain plugin được phép gửi HTTP request (`permissions.net_outbound`).
-   - **Khóa bí mật Vault (Vault Secrets)**: Các khóa bí mật plugin được phép đọc (`permissions.secrets`).
-   - **Lưu trữ Cục bộ (Persistent Storage)**: Quyền ghi vào phân vùng SQLite key-value cách ly.
-5. Bấm **Install & Activate**. Hệ thống sẽ lập tức khởi tạo sandbox trong Wazero.
+- **`.actonpkg`** — gói chuẩn (`manifest.json` + `plugin.wasm` + chữ ký và README tùy chọn)
+- **`.wasm`** — file WebAssembly thô
 
-:::tip Hot-Reload Tức thì
-ActonOS nạp và khởi chạy instance WebAssembly ngay lập tức. Không cần khởi động lại daemon hay gây gián đoạn dịch vụ.
+Các bước:
+
+1. Mở **Extensions → Plugins**.
+2. Bấm **+ Upload Plugin**.
+3. Thả tệp, hoặc chọn từ máy.
+4. Đọc tóm tắt quyền:
+   - website nào được gọi
+   - bí mật vault nào được đọc
+   - có được kho lưu trữ riêng nhỏ không
+5. Bấm **Install & Activate**.
+
+Plugin chạy ngay. Không reboot ActonOS.
+
+:::tip Gói chính thức
+Kênh chat và connector đi kèm ActonOS. Sau khi cập nhật OS, tải lại `.actonpkg` mới nhất để gửi tệp và API còn khớp. Xem [plugin chính thức](../plugin-sdk/official-plugins).
 :::
 
 ---
 
-## 3. Cấu hình Động & Bảo mật Hardware Vault
+## Cấu hình
 
-Khi plugin khai báo `config_schema` trong `manifest.json`, ActonOS tự động sinh biểu mẫu cấu hình tương tác:
+Nếu plugin khai báo settings, **Configure** mở form tự sinh:
 
-```mermaid
-flowchart LR
-    Manifest["manifest.json\n(config_schema)"] --> Form["Biểu mẫu Động\n(x-ui-widget, x-ui-group)"]
-    Form --> UserInput["Người dùng Nhập Cấu hình\n& Token API"]
-    UserInput --> Save["Lưu Cấu hình"]
-    Save --> Secret{"x-secret: true?"}
-    Secret -- "Đúng" --> Vault["🔒 Hardware Vault\n(AES-256-GCM + Argon2id)"]
-    Secret -- "Sai" --> SQLite["💾 App Config Store"]
-```
+- Trường được nhóm (General, Bot Accounts…).
+- Token đánh dấu secret vào **vault mã hóa**, không phải file cấu hình nhìn thấy được.
+- Plugin chat cho phép **nhiều tài khoản bot**, mỗi cái gắn một agent.
 
-### Điểm nổi bật trên Giao diện:
-- **Nhóm Gập/Mở (`x-ui-group`)**: Các trường được gom nhóm mạch lạc (ví dụ: *Cài đặt Chung*, *Tài khoản Bot*).
-- **Mã hóa Khóa Bí mật (`x-secret: true`)**: Các giá trị nhạy cảm (như Bot token Discord, API key) được lưu trữ trực tiếp vào **Hardware Vault** (`vault.db`). Plugin chỉ nhận token giải mã tạm thời trong bộ nhớ sandbox.
-- **Thêm Nhiều Tài khoản Bot**: Với các kênh chat, bạn có thể thêm nhiều tài khoản bot khác nhau, cấu hình token riêng và chỉ định Agent đích cho từng bot.
+Lưu form. Plugin nạp lại settings; agent khác vẫn chạy.
 
 ---
 
-## 4. Nhật ký Thực thi Sandbox Thời gian thực (Logs)
+## Nhật ký
 
-Mỗi plugin WASM đang chạy đều có thể xuất log có cấu trúc thông qua lệnh gọi hệ thống `acton_sys: log`.
+Trên thẻ plugin, mở **View Logs** (hoặc tab **Logs**):
 
-### Cách xem Nhật ký:
-1. Trong danh sách **Plugins**, tìm thẻ của plugin bạn muốn kiểm tra.
-2. Bấm nút **View Logs** (hoặc bấm vào thẻ và chuyển sang tab **Logs**).
-3. Màn hình console trực tiếp sẽ hiển thị:
-   - **Thời gian & Cấp độ**: `[INFO]`, `[WARN]`, `[DEBUG]`, `[ERROR]`.
-   - **Bộ nhớ Tuyến tính**: Theo dõi trực tiếp dung lượng RAM heap được cấp phát trong WebAssembly.
-   - **Lượt gọi Mạng HTTP**: Kiểm toán chi tiết các yêu cầu mạng gửi ra ngoài.
+- dòng `[INFO]`, `[WARN]`, `[DEBUG]`, `[ERROR]` kèm timestamp
+- bộ nhớ plugin đang dùng
+- HTTP ra ngoài nó đã thử
+
+Nếu Telegram “gửi thành công” mà chat không thấy gì, hãy xem log trước.
 
 ---
 
-## 5. Quản lý Vòng đời: Bật, Tắt & Gỡ cài đặt
+## Bật, tắt, gỡ
 
-- **Nút Bật / Tắt (Enable / Disable)**: Tạm dừng vòng lặp sự kiện và hủy đăng ký công cụ của plugin mà không làm mất cấu hình đã lưu hay khóa bí mật trong Vault. Bật lại để kích hoạt tức thì.
-- **Cập nhật Cấu hình Nóng (Hot Updates)**: Việc chỉnh sửa tham số trong modal cấu hình sẽ báo hiệu sandbox Wazero làm mới ngữ cảnh ngay lập tức mà không ảnh hưởng các agent khác.
-- **Gỡ cài đặt Sạch sẽ (Clean Uninstall)**: Bấm **Uninstall Plugin** để đóng kết nối an toàn, hủy các công cụ và kênh đã đăng ký, xóa thư mục trong `/data/plugins/{id}` và dọn dẹp phân vùng KV SQLite.
+| Thao tác | Hiệu lực |
+|:---|:---|
+| Disable | Tạm dừng plugin, ẩn công cụ. Config và bí mật còn. |
+| Enable | Chạy lại ngay. |
+| Uninstall | Dừng, hủy đăng ký, xóa `/data/plugins/{id}` và kho riêng. |
 
 ---
 
-## 6. Plugin kênh mới là nơi gửi tệp
+## Plugin kênh và tệp
 
-Khi agent gửi tài liệu sang Telegram, Discord, Slack, WhatsApp hoặc Zalo, ActonOS **chỉ chuyển tệp** cho plugin kênh đã cài. Plugin tự tải tệp lên ứng dụng chat đó.
+Khi bạn nhờ agent gửi `report.pdf` sang Telegram (hoặc app khác), ActonOS **chỉ chuyển tệp** cho plugin kênh đã cài. Plugin tự upload lên app đó.
 
-Hai điều cần nhớ:
+Nghĩa là:
 
-1. **Ứng dụng chat là một plugin.** Hệ điều hành không viết cứng bộ tải tệp cho Telegram hay Zalo.
-2. **Sau khi cập nhật ActonOS, hãy cài lại plugin kênh** để khớp định dạng gửi tệp hiện tại. Plugin cũ có thể báo thành công trong khi chat không hiện tệp (hay gặp trên Zalo), hoặc PDF tải về bị lỗi font.
+1. App chat phải được cài như plugin. OS không có uploader Telegram ẩn.
+2. Sau khi cập nhật ActonOS, cài lại plugin kênh cho khớp định dạng tệp hiện tại. Plugin cũ có thể báo thành công trong khi tệp không bao giờ hiện (đặc biệt Zalo), hoặc PDF mở ra font vỡ.
 
-Cách làm mới plugin: **Uninstall**, rồi **Upload** gói `.actonpkg` mới nhất.
+Để làm mới: **Uninstall**, rồi **Upload** `.actonpkg` chính thức mới nhất.
 
-Cách gửi tệp phía người dùng: [Gửi tệp sang chat](channels#sending-files-to-chat). Người viết plugin: [Phát triển plugin WASM — gửi tệp](../developer-reference/wasm-plugin-development#sending-files).
+Phía người dùng: [Gửi tệp sang chat](channels#sending-files-to-chat). Tác giả plugin: [Plugin kênh](../plugin-sdk/channels#sending-files).
+
+---
+
+## Trang liên quan
+
+- [Plugin SDK](../plugin-sdk/overview) — tự viết plugin.
+- [Kênh chat](channels) — ghép bot và gửi tệp.
+- [Connectors](connectors) — app OAuth dạng plugin.

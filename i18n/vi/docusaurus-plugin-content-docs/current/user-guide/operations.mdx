@@ -1,44 +1,64 @@
 ---
 id: operations
-title: Trung tâm Vận hành & Giám sát Thời gian thực
-sidebar_label: Vận hành Trực tiếp
+title: Vận hành trực tiếp
+sidebar_label: Vận hành trực tiếp
 sidebar_position: 5
 ---
 
-# Trung tâm Vận hành & Giám sát Thời gian thực
+# Vận hành trực tiếp
 
-Trang **Theo dõi trực tiếp (Operations)** cung cấp cái nhìn toàn diện về hoạt động của các nhóm Agent, luồng log trực tiếp qua terminal tích hợp, xem trước giao diện Live Canvas và biểu đồ chi phí token chi tiết.
+**Operations** là màn hình live: sức khỏe máy, các lần chạy agent, dòng nhật ký, token đã dùng, và (khi agent dựng trang) bản xem trước trong sandbox.
 
----
-
-## 1. Luồng Dữ liệu Thời gian thực (`/api/realtime`)
-
-Trang Vận hành kết nối qua WebSocket đến `/api/realtime`, cập nhật dữ liệu mỗi 2 giây:
-- **Chỉ số Phần cứng**: CPU, RAM, ổ cứng và nhiệt độ chip.
-- **Tiến trình Agent**: Trạng thái, số lượt lặp (iteration) và tổng token đã tiêu thụ.
-- **Hàng đợi Phê duyệt**: Danh sách các hành động đang chờ xác nhận từ người quản trị.
-- **Thống kê Token**: Tổng token hôm nay, trong tháng và ước tính chi phí USD.
+Mở **Operations** trên thanh bên.
 
 ---
 
-## 2. Luồng Terminal Trực tiếp (xterm.js)
+## Bạn thấy gì
 
-Cửa sổ terminal nhúng hiển thị toàn bộ log thực thi có phân màu:
-- `[INFO]` (Xanh lá): Chuyển giao trạng thái bình thường và hoàn thành bước DAG.
-- `[TOOL]` (Xanh lơ): Chi tiết gọi công cụ, tham số và thời gian chạy.
-- `[WARN]` (Vàng): Thử lại kết nối, chạm rate limit hoặc kích hoạt mô hình dự phòng.
-- `[ERROR]` (Đỏ): Lỗi thực thi hoặc vi phạm quy tắc sandbox.
+Trang làm mới từ luồng live khoảng hai giây một lần:
 
----
+- CPU, RAM, đĩa, cảm biến máy chủ.
+- Các lần chạy: trạng thái, số bước, ai khởi tạo.
+- Hành động đang chờ bạn duyệt.
+- Token trong ngày và tháng, theo mô hình.
 
-## 3. Xem trước Giao diện Live Canvas
-
-Khi Agent tạo ra mã HTML, ứng dụng web hoặc biểu đồ tương tác, Agent có thể xuất bản qua biến môi trường `ACTONOS_CANVAS_URL`:
-- **Iframe Cách ly An toàn**: Chạy trong sandbox (`sandbox="allow-scripts allow-same-origin"`), không gửi thông tin referrer và chỉ chấp nhận đường dẫn cục bộ hoặc HTTPS.
+Nhiều tab trình duyệt dùng chung một snapshot. Mở thêm tab không nhân tải lên máy.
 
 ---
 
-## 4. Quản lý Chi phí & Thống kê Token
+## Dòng nhật ký
 
-- **Biểu đồ Tiêu thụ**: Theo dõi mức tiêu thụ token theo ngày, theo tháng và theo từng mô hình (OpenAI, Claude, Gemini, Ollama).
-- **Phân bổ theo Agent**: Xác định rõ Agent hoặc nhiệm vụ nào đang tiêu tốn nhiều ngân sách nhất để tối ưu hóa kịp thời.
+Terminal nhúng là **chỉ đọc**. Nó hiện agent đang làm gì; không phải shell.
+
+| Nhãn | Màu | Ý nghĩa |
+|:---|:---|:---|
+| `[INFO]` | Xanh | Tiến độ bình thường. |
+| `[TOOL]` | Cyan | Lời gọi công cụ, tham số, thời gian. |
+| `[WARN]` | Vàng | Thử lại, rate limit, hoặc fallback mô hình. |
+| `[ERROR]` | Đỏ | Bước lỗi hoặc sandbox chặn. |
+
+Để tự gõ lệnh, dùng [Web Terminal](terminal).
+
+---
+
+## Xem trước live
+
+Khi agent tạo trang web hoặc biểu đồ, Operations có thể hiện trong iframe sandbox. Chỉ nhận đường dẫn tương đối hoặc HTTPS/loopback, không gửi referrer.
+
+---
+
+## Chi phí token
+
+Bảng chi phí cho thấy:
+
+- Tổng token ngày/tháng (và ước tính USD).
+- Tỷ lệ theo nhà cung cấp (OpenAI, Anthropic, Google, Ollama local).
+- Agent hoặc nhiệm vụ nào tốn nhiều ngân sách nhất.
+
+---
+
+## Trang liên quan
+
+- [Dashboard](dashboard) — phê duyệt và trạng thái agent.
+- [Nhiệm vụ](missions) — công việc mà nhật ký thuộc về.
+- [Thông báo](notifications) — lỗi và cảnh báo kết nối lại.

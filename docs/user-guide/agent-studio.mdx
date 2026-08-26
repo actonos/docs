@@ -1,94 +1,104 @@
 ---
 id: agent-studio
-title: Agent Studio & Swarm Configuration
+title: Agent Studio
 sidebar_label: Agent Studio
 sidebar_position: 3
 ---
 
-# Agent Studio & Swarm Configuration
+# Agent Studio
 
-**Agent Studio** is the visual workbench for authoring, configuring, and governing autonomous AI agents and multi-agent swarms in ActonOS.
+**Agent Studio** is where you create agents: name, personality, models, tools, and (optionally) a swarm of child agents.
 
-```mermaid
-graph LR
-    A["Agent Identity<br/>Name · Avatar · Description"] --> B["System Prompt<br/>Persona & Behavioral Directives"]
-    B --> C["Model Cascade Router<br/>Primary · Fallback · Temperature"]
-    C --> D["Governance & Scopes<br/>Iteration Limits · Allowed Paths · Approvals"]
-    D --> E["Tool Authorization<br/>Native · MCP · WASM · Skills"]
-    E --> F["Channels & Delegation<br/>Inbound Triggers · Swarm Child Agents"]
-    F --> G["Saved Agent Manifest<br/>(SQLite)"]
-```
+Open **Agents** in the sidebar, or press **`Ctrl + K`** and type `Create Agent`.
 
 ---
 
-## 1. Agent Identity & Persona
+## Create an agent
 
-- **Name & Slug**: The unique identifier for the agent (e.g., `devops-architect`, `financial-analyst`).
-- **Avatar / Icon**: Visual representation displayed in Chat, Operations, and Channel feeds.
-- **Description**: A short summary explaining the agent's role to human users and peer agents in a Swarm.
+1. Click **+ New Agent**.
+2. Fill in identity:
+   - **Name** — what you see in Chat (for example `Research Assistant`).
+   - **Slug** — stable id (for example `research-bot`).
+   - **Description** — a short role, useful for you and for other agents in a swarm.
+3. Write a **system prompt** that states the job and the limits.
+4. Choose models, tools, and approval level.
+5. Click **Save Agent Manifest**.
 
----
-
-## 2. System Prompt Engineering
-
-The system prompt defines the core behavioral directives and reasoning style:
+A practical prompt looks like this:
 
 ```markdown
-# Role & Purpose
-You are an expert DevOps engineer tasked with monitoring ActonOS services, diagnosing container health, and drafting deployment scripts.
+# Role
+You are a research assistant on ActonOS.
+Find sources, check facts, and write clear Markdown summaries.
 
-# Operating Constraints
-1. Always test commands in a dry-run mode before modifying configuration.
-2. Keep temporary scripts in your private scratchpad. Publish finished documents to the user Workspace with their original names (for example `diagnostics.md`).
-3. If an action requires restarting a daemon, ask for human approval.
+# Limits
+1. Prefer Workspace files the user named (for example go_126_summary.md).
+2. Ask for approval before restarting services or deleting files.
+3. If a search fails, say so instead of guessing.
 ```
 
-:::tip Dynamic Variables
-You can inject dynamic system variables into your prompts:
-- `{{system.time}}` - Current system time and timezone.
-- `{{system.runtime_mode}}` - Current runtime (`baremetal` or `docker`).
-- `{{workspace.root}}` - Path to the persistent workspace directory.
+:::tip Prompt variables
+You can insert:
+
+- `{{system.time}}` — current time and timezone
+- `{{system.runtime_mode}}` — `baremetal` or `docker`
+- `{{workspace.root}}` — Workspace path
 :::
 
 ---
 
-## 3. LLM Cascade Router
+## Models
 
-ActonOS features an intelligent model cascade router designed to maximize reliability and minimize latency/cost:
+ActonOS tries the **primary** model first. If that model is rate-limited or errors, it falls through the fallbacks.
 
-| Setting | Description | Example |
+| Setting | What it does | Typical value |
 |:---|:---|:---|
-| **Primary Model** | First-line model invoked for standard reasoning | `anthropic:claude-3-7-sonnet` |
-| **Fallback Model 1** | Automatically invoked if the primary model encounters rate limits or errors | `openai:gpt-4o` |
-| **Fallback Model 2** | Low-cost/local fallback for resilient headless execution | `google:gemini-2.0-flash` or `ollama:qwen2.5-coder` |
-| **Temperature** | Controls generation randomness (0.0 = deterministic, 1.0 = creative) | `0.2` (for coding/analysis) |
-| **Max Tokens** | Maximum output tokens per completion step | `4096` |
+| Primary model | Everyday reasoning | `anthropic:claude-3-7-sonnet` |
+| Fallback 1 | Used when the primary fails | `openai:gpt-4o` |
+| Fallback 2 | Cheap or local last resort | `ollama:qwen2.5-coder` |
+| Temperature | `0` is strict, `1` is more creative | `0.2` for code and analysis |
+| Max tokens | Cap per reply step | `4096` |
 
 ---
 
-## 4. Governance & Tool Scopes
+## Tools and safety
 
-Define strict security boundaries for each agent:
+Give each agent only the tools it needs:
 
-- **Authorized Tools**: Select individual tools or use wildcard syntax:
-  - `*` - Grants access to all installed tools.
-  - `native_*` - Restricts access only to built-in system tools.
-  - `mcp_github_*` - Restricts access to GitHub MCP tools.
-- **Approval Level**:
-  - `Low`: Run authorized tools without asking.
-  - `Medium`: Workspace writes can run; shell, delete, cron, and extension changes still need approval.
-  - `High`: Confirm every sensitive action before it runs.
-- **Allowed Workspace Paths**: Restrict file read/write operations to specific subdirectories (e.g., `["docs/*", "reports/*"]`).
-- **Iteration Budget**: Set the maximum number of ReAct loop steps allowed per single task (default: `25`).
+- `*` — every installed tool
+- `native_*` — built-in system tools only
+- `mcp_github_*` — GitHub MCP tools only
+
+**Approval level:**
+
+| Level | Behavior |
+|:---|:---|
+| Low | Authorized tools run without asking. |
+| Medium | Workspace writes can run. Shell, delete, cron, and extension changes still need you. |
+| High | Confirm every sensitive action. |
+
+Also set:
+
+- **Allowed Workspace paths** — for example `docs/*` and `reports/*`.
+- **Iteration budget** — maximum reasoning steps per task (default `25`).
 
 ---
 
-## 5. Multi-Agent Swarm Delegation
+## Swarms (optional)
 
-Agents can be configured to delegate tasks to specialized child agents:
+A parent agent can hand work to specialists:
 
-1. In the **Swarm & Delegation** section, check **Enable Agent Delegation**.
-2. Select the list of allowable **Child Agents** (e.g., allow `Project Manager` to delegate to `Researcher` and `Code Writer`).
-3. Set the **Delegation Budget** (maximum depth of nested agent calls, e.g., `3`).
+1. Open **Swarm & Delegation**.
+2. Enable **Agent Delegation**.
+3. Pick allowed child agents (for example `Researcher` and `Code Writer`).
+4. Set a **delegation budget** (how deep nested calls may go, for example `3`).
 
-When the orchestrator agent calls `delegate_task(target_agent, prompt)`, ActonOS spawns a concurrent Goroutine, executes the child agent within its own sandboxed context, and streams results back to the parent.
+The parent stays in charge of the goal; children run their own sandboxed steps and return results.
+
+---
+
+## Related pages
+
+- [Chat](ai-chat) — talk to the agent you just saved.
+- [Missions](missions) — long jobs with checkpoints.
+- [Tools & Skills](tools-and-skills) — what tools you can grant.

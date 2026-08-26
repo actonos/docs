@@ -1,0 +1,101 @@
+---
+id: host-abi
+title: Host ABI
+sidebar_label: Host ABI
+sidebar_position: 10
+---
+
+# Host ABI
+
+This page is the low-level contract between the ActonOS host (Wazero) and a guest plugin compiled to `wasip1` / `wasm32-wasi`. **Most authors never call these functions** — the Go SDK (`sdk.Serve`, `RegisterTool`, `ctx.HTTP()`, …) wraps them.
+
+Use this page if you are compiling from Rust, TinyGo internals, or another language.
+
+The canonical spec in the SDK repo is `spec/WASM_ABI.md`.
+
+---
+
+## Memory protocol
+
+WebAssembly has a single 32-bit linear memory. Host and guest pass bytes with a **non-reentrant buffer**:
+
+**Host → guest** (tools, channels, actions)
+
+1. Host calls `acton_alloc(size)`, writes the payload, then calls `acton_tool_execute` (or another export).
+2. Guest returns a packed 64-bit value: `(outPtr << 32) | outLen`.
+3. Host reads that slice and calls `acton_free(outPtr, outLen)`.
+
+**Guest → host** (HTTP, vault, storage)
+
+1. Guest calls a syscall such as `acton_net.http_request(req_ptr, req_len)` and gets `res_len`.
+2. Guest allocates `res_len` bytes and copies with `acton_sys.read_response(dest_ptr, res_len)`.
+
+The pending-response buffer is **not** re-entrant: the guest must read it before the next syscall. That keeps the Go garbage collector stable.
+
+---
+
+## Guest exports
+
+| Export | Signature | Role |
+|:---|:---|:---|
+| `acton_alloc` | `(size: u32) -> u32` | Allocate guest memory |
+| `acton_free` | `(ptr: u32, size: u32)` | Free guest memory |
+| `acton_plugin_init` | `() -> i32` | `0` = success |
+| `acton_tool_execute` | `(namePtr, nameLen, argsPtr, argsLen: u32) -> u64` | Packed result JSON |
+| `acton_channel_send` | `(ptr: u32, len: u32) -> i32` | `0` or error code |
+| `acton_channel_poll` | `() -> u64` | Packed inbound JSON |
+| `acton_connector_action` | `(ptr: u32, len: u32) -> u64` | Packed action JSON |
+
+---
+
+## Host imports
+
+### `acton_sys`
+
+| Function | Signature | Notes |
+|:---|:---|:---|
+| `log` | `(level, ptr, len: i32)` | `1=Debug`, `2=Info`, `3=Warn`, `4=Error` |
+| `read_response` | `(destPtr, destLen: i32) -> i32` | Copy last syscall body |
+
+### `acton_net`
+
+| Function | Signature | Notes |
+|:---|:---|:---|
+| `http_request` | `(reqPtr, reqLen: i32) -> i32` | Subject to `net_outbound`; returns body length |
+
+### `acton_ws`
+
+| Function | Signature | Notes |
+|:---|:---|:---|
+| `ws_connect` | `(urlPtr, urlLen: i32) -> i32` | Handle id `> 0`, or negative error |
+| `ws_send` | `(handle, msgType, dataPtr: i32) -> i32` | `1=Text`, `2=Binary` |
+| `ws_poll` | `(handle: i32) -> i32` | Byte length, `0` empty, `-1` closed |
+| `ws_close` | `(handle: i32) -> i32` | |
+
+### `acton_vault`
+
+| Function | Signature | Notes |
+|:---|:---|:---|
+| `get_secret` | `(keyPtr, keyLen: i32) -> i32` | Must match `permissions.secrets` |
+
+### `acton_storage`
+
+| Function | Signature | Notes |
+|:---|:---|:---|
+| `kv_get` | `(keyPtr, keyLen: i32) -> i32` | |
+| `kv_set` | `(kPtr, kLen, vPtr, vLen: i32) -> i32` | `0` = success |
+| `kv_delete` | `(keyPtr, keyLen: i32) -> i32` | |
+
+### `acton_bus`
+
+| Function | Signature | Notes |
+|:---|:---|:---|
+| `emit_event` | `(tPtr, tLen, pPtr, pLen: i32) -> i32` | Must match `permissions.bus_events` |
+
+---
+
+## Related pages
+
+- [Overview](overview) — stay on the Go SDK unless you need this.
+- [Security](security) — what those syscalls refuse.
+- [Tool plugins](tools) / [Channel plugins](channels) / [Connector plugins](connectors)

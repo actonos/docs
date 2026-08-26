@@ -1,35 +1,49 @@
 ---
 id: terminal
-title: Web Terminal & Sandboxed CLI
+title: Web Terminal
 sidebar_label: Web Terminal
-sidebar_position: 12
+sidebar_position: 13
 ---
 
-# Web Terminal & Sandboxed CLI
+# Web Terminal
 
-The **Web Terminal** gives operators and agents an interactive, sandboxed command-line shell directly within the browser interface.
+The **Web Terminal** is a command-line shell in the browser. Use it for `git`, `htop`, editors, and quick checks. Agent logs belong on [Live Operations](operations); this page is for **you** typing commands.
 
----
-
-## 1. Sandbox Isolation Architecture
-
-To ensure safety, commands executed in the terminal do not run with root privileges directly on the host OS:
-
-### Bare-Metal MiniPC Mode
-- Powered by **Bubblewrap (`bwrap`)** and Linux **Cgroups v2**.
-- Operates inside an unprivileged user namespace with a private mount table.
-- System root directories (`/usr`, `/lib`, `/bin`) are mounted **Read-Only**.
-- Writable areas are the agent scratchpad and your **Workspace** documents, available by original name (for example `report.pdf` via `user-workspace/`).
-- Strictly capped at **512 MB RAM**, **50% CPU quota**, and a maximum of **30 concurrent PIDs**.
-
-### Docker Container Mode
-- Operates as a non-root unprivileged user (`acton`, UID 1000).
-- Encapsulated within a restricted subshell execution jail.
+Open **Terminal** in the sidebar.
 
 ---
 
-## 2. Interactive Features
+## What you can do
 
-- **Full ANSI Color & xterm Emulation**: Supports `vim`, `nano`, `htop`, `tmux`, `git`, and standard terminal utilities.
-- **Copy & Paste**: Native clipboard integration with right-click context menu.
-- **History & Session Persistence**: Command history persists across page reloads.
+- Full color xterm (vim, nano, htop, tmux, git).
+- Copy and paste from the right-click menu.
+- Command history kept across reloads.
+
+Workspace files are available by original name (for example `report.pdf` via `user-workspace/`).
+
+---
+
+## Limits (this is not root on the host)
+
+Commands do not run as root on the machine:
+
+**Bare-metal**
+
+- Isolated with Bubblewrap and cgroups.
+- `/usr`, `/lib`, `/bin` are read-only.
+- Writable areas are the agent scratchpad and your Workspace.
+- Caps: **512 MB RAM**, **50% CPU**, **30 processes**.
+
+**Docker**
+
+- Non-root user `acton` (UID 1000) inside a restricted subshell.
+
+If a command is blocked, that is the sandbox, not a broken terminal. Ask an agent to work in Workspace instead, or adjust the task.
+
+---
+
+## Related pages
+
+- [Live Operations](operations) — read-only agent logs.
+- [Workspace](workspace) — files you can open from the shell.
+- [Sandbox isolation](../advanced-architecture/sandbox-isolation) — the rules in detail.

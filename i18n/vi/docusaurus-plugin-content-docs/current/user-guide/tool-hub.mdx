@@ -1,32 +1,44 @@
 ---
 id: tool-hub
-title: Chợ Công cụ Cộng đồng (Tool Hub)
-sidebar_label: Chợ Công cụ Tool Hub
-sidebar_position: 10
+title: Tool Hub
+sidebar_label: Tool Hub
+sidebar_position: 11
 ---
 
-# Chợ Công cụ Cộng đồng (Tool Hub)
+# Tool Hub
 
-**Tool Hub** là danh mục trực tuyến tích hợp sẵn, nơi người dùng có thể khám phá, cài đặt và gỡ bỏ các kỹ năng cộng đồng, máy chủ MCP và plugin tự động hóa chỉ bằng một cú nhấp chuột.
-
----
-
-## 1. Duyệt Danh mục Công cụ
-
-1. Bấm vào mục **Công cụ (Tools)** → **Tool Hub** trên menu bên trái.
-2. Lọc công cụ theo các danh mục:
-   - 🌐 **Web & Tìm kiếm** (Tavily, Brave Search, Puppeteer)
-   - 📁 **Tệp & Phân tích Dữ liệu** (Pandas Runner, PDF Parser, CSV Analyzer)
-   - 💻 **DevOps & Hạ tầng** (Kubernetes, AWS CLI, Docker Manager, Git Automation)
-   - 💬 **Tin nhắn & Mạng xã hội** (Twitter/X Poster, Reddit Scraper, Telegram Notify)
-   - 🔒 **Bảo mật & Mã hóa** (Quét lỗ hổng, kiểm tra chứng chỉ SSL)
+**Tool Hub** là catalog trong ứng dụng. Duyệt skill cộng đồng và công cụ kiểu MCP, cài một cú bấm.
 
 ---
 
-## 2. Cài đặt 1-Click
+## Duyệt
 
-1. Bấm vào công cụ bạn muốn cài (ví dụ: **Tavily AI Search**).
-2. Xem mô tả, quyền hạn yêu cầu và các tham số.
-3. Bấm nút màu vàng **Cài đặt Kỹ năng**.
-4. Nhập API Key nếu được yêu cầu (hệ thống sẽ tự động lưu vào Két bảo mật).
-5. ActonOS tải gói công cụ về `/data/skills/<slug>/` và kích hoạt ngay lập tức.
+1. Mở **Tools → Tool Hub**.
+2. Lọc theo nhóm (Web & Search, Files & Data, DevOps, Messaging, Security) hoặc tìm theo tên, tác giả, tag.
+3. Mở một mục để đọc mô tả, khóa cần thiết, và quyền.
+
+---
+
+## Cài
+
+1. Bấm **Install Skill**.
+2. Nếu cần khóa (ví dụ `TAVILY_API_KEY`), dán khi được hỏi. Lưu vào vault.
+3. ActonOS tải gói vào `/data/skills/<slug>/` và đăng ký ngay.
+
+Rồi bật skill đó trên agent sẽ dùng, trong [Agent Studio](agent-studio).
+
+---
+
+## Tắt hoặc gỡ
+
+- **Disable** — giữ tệp và khóa, ẩn công cụ.
+- **Uninstall** — xóa thư mục skill và khóa vault liên quan.
+
+Với plugin WASM (kênh, connector, công cụ tùy chỉnh), dùng [Plugins](plugins) thay vì Tool Hub.
+
+---
+
+## Trang liên quan
+
+- [Công cụ và skill](tools-and-skills) — ba loại mở rộng.
+- [Skill tùy chỉnh](../developer-reference/custom-skills-guide) — tự viết skill thư mục.

@@ -100,6 +100,11 @@ const config: Config = {
           position: 'left',
         },
         {
+          to: '/plugin-sdk/overview',
+          label: 'Plugin SDK',
+          position: 'left',
+        },
+        {
           to: '/developer-reference/api-endpoints',
           label: 'API Reference',
           position: 'left',
@@ -133,6 +138,10 @@ const config: Config = {
             {
               label: 'User Guides',
               to: '/user-guide/dashboard',
+            },
+            {
+              label: 'Plugin SDK',
+              to: '/plugin-sdk/overview',
             },
             {
               label: 'Advanced Architecture',

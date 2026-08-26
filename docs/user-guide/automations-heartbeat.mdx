@@ -1,53 +1,61 @@
 ---
 id: automations-heartbeat
-title: Automations & OpenClaw Heartbeat
-sidebar_label: Automations & Heartbeat
+title: Automations
+sidebar_label: Automations
 sidebar_position: 6
 ---
 
-# Automations & OpenClaw Heartbeat
+# Automations
 
-ActonOS features a robust automation framework combining **cron schedules** with an **Autonomous Heartbeat Daemon** built in strict alignment with the [OpenClaw Heartbeat Contract](https://docs.openclaw.ai/vi/gateway/heartbeat).
+**Automations** run standing jobs on a schedule. Between those jobs, a **heartbeat** checks whether anything actually needs an agent — so idle time does not spend tokens.
+
+---
+
+## Create a routine
+
+1. Open **Automations** in the sidebar.
+2. Click **+ New Automation**.
+3. Enter a 5-field cron expression (for example `0 9 * * 1-5` = 09:00 on weekdays).
+4. Choose an agent and write the standing instruction, such as:
+
+   ```
+   Check open GitHub pull requests, summarize reviews, and post to Slack.
+   ```
+
+5. Optionally pick a chat channel for the finished report.
+6. Click **Save Automation**.
+
+Click **Pulse Now** on the dashboard anytime you want an immediate check.
+
+---
+
+## How the heartbeat saves tokens
 
 ```mermaid
 flowchart TD
-    A["Heartbeat Timer / Cron Event"] --> B{"Within Active Hours Window?<br/>(e.g., 08:00 - 20:00)"}
-    B -->|No| C["Skip Pulse / Sleep"]
-    B -->|Yes| D{"Actionable Items in Backlog or HEARTBEAT.md?"}
-    D -->|No (Idle)| E["Emit HEARTBEAT_OK<br/>(Zero Model Invocations / Zero Cost)"]
-    D -->|Yes| F["Execute Task via Assigned Agent"]
-    F --> G{"Model Output"}
-    G -->|HEARTBEAT_OK token| H["Acknowledge & Sleep"]
-    G -->|Actionable Output| I["Dispatch Alert to Target Channel"]
+    A["Timer or cron"] --> B{"Inside active hours?"}
+    B -->|No| C["Sleep"]
+    B -->|Yes| D{"Is there real work?"}
+    D -->|No| E["HEARTBEAT_OK · no model call"]
+    D -->|Yes| F["Assigned agent runs the job"]
+    F --> G{"Useful output?"}
+    G -->|No / idle chatter| H["Ignore and sleep"]
+    G -->|Yes| I["Send the report to the channel"]
 ```
 
----
+In practice:
 
-## 1. OpenClaw-Aligned Heartbeat Contract
+- **Idle is free.** If the backlog is empty and `HEARTBEAT.md` has no instruction, ActonOS does **not** call a model.
+- **No small talk.** Headless runs drop greetings such as “How can I help you today?”
+- **Active hours.** Set a window (for example `08:00`–`22:00` in `Asia/Ho_Chi_Minh`) so overnight pulses stay quiet.
+- **Cooldown.** Triggers within 15 seconds are batched into one pulse.
 
-The ActonOS Heartbeat daemon runs periodic system checkups to maintain proactive agent vigilance without burning unnecessary token budgets:
-
-### Idle Heartbeat Token Optimization
-- When there are **no active backlog tasks** and no actionable directives in `HEARTBEAT.md`, the heartbeat does **not** invoke the LLM at all.
-- It returns an immediate internal `HEARTBEAT_OK` acknowledgement, ensuring zero token waste during quiescent periods.
-
-### Headless Autonomous Execution Mode
-- When an actionable directive is present, the routine cycle injects an explicit rule block informing the model that execution is unattended and no human is present to greet.
-- A built-in `looksLikeIdleChatter` safety filter automatically discards accidental conversational greetings (e.g., "Hello, how can I help you today?") and only forwards genuine alerts.
-
-### Active Hours & Trigger Cooldowns
-- **Active Hours Window**: Configure daily operating hours (e.g., `08:00` to `22:00` in timezone `Asia/Ho_Chi_Minh`) so non-critical background routines sleep overnight.
-- **Trigger Cooldown (15s)**: Coalesces rapid successive triggers (e.g., multiple file changes or task updates) into a single batch cycle.
-- **Manual Pulse**: Operators can trigger an immediate checkup anytime via the **Pulse Now** button.
+The design follows the [OpenClaw Heartbeat contract](https://docs.openclaw.ai/vi/gateway/heartbeat). The engineering notes are in [Hybrid Memory](../advanced-architecture/hybrid-memory-rag) only where memory is involved; heartbeat itself is this page.
 
 ---
 
-## 2. Setting Up Automated Routines
+## Related pages
 
-1. Navigate to **Automations** in the left sidebar.
-2. Click **+ New Automation**.
-3. Enter a **Cron Expression** (standard 5-field cron, e.g. `0 9 * * 1-5` for 9:00 AM every weekday).
-4. Define the **Action**:
-   - Assign an agent and provide the standing instruction (e.g., `Check open GitHub pull requests, summarize reviews, and post to Slack`).
-   - Select the target output channel for completed reports.
-5. Click **Save Automation**.
+- [Dashboard](dashboard) — **Pulse Now** and agent state.
+- [Missions](missions) — one-off long jobs instead of cron.
+- [Channels](channels) — where reports can be posted.

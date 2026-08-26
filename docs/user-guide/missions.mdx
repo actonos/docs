@@ -1,74 +1,67 @@
 ---
 id: missions
-title: Autonomous Missions & Goal Execution
-sidebar_label: Autonomous Missions
+title: Missions
+sidebar_label: Missions
 sidebar_position: 4
 ---
 
-# Autonomous Missions & Goal Execution
+# Missions
 
-The **Missions** engine enables ActonOS agents to execute complex, multi-stage objectives autonomously over extended durations while maintaining durable state, dependency tracking, and human-in-the-loop oversight.
+A **Mission** is a longer job with a written goal, a plan of steps, and checkpoints. Use it when a chat message is not enough — for example “audit this project, write `security_audit.md`, and open a GitHub issue.”
+
+---
+
+## Launch a mission
+
+1. Open **Missions** in the sidebar.
+2. Click **+ Launch Mission**.
+3. Fill in:
+   - **Goal** — the outcome you want, including file names.
+   - **Agent** — the orchestrator (for example `Security Engineer`).
+   - **Priority** — Low, Standard, High, or Critical.
+   - **Notify** — optional chat channel when it finishes.
+4. Start the mission.
+
+ActonOS breaks the goal into a step graph: independent steps can run together; dependent steps wait. The UI shows each step as Pending, Running, Completed, Blocked, or Failed.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PlanGeneration: User submits High-Level Goal
-    PlanGeneration --> DAGValidation: Decompose into DAG nodes
-    DAGValidation --> StepExecution: Validate no cycles & dependencies
-    
-    state StepExecution {
-        [*] --> CallTool: Agent ReAct Step
-        CallTool --> CheckApproval: Requires Clearance?
-        CheckApproval --> PausedState: Yes (Approval Required)
-        PausedState --> ResumeCheckpoint: Human Approves
-        CheckApproval --> ExecuteDirect: No (Autonomous)
-        ExecuteDirect --> EvaluateOutcome
-        ResumeCheckpoint --> EvaluateOutcome
-    }
-    
-    StepExecution --> NextStep: Node Succeeded
-    NextStep --> StepExecution: More Nodes Remaining
-    StepExecution --> StallCheck: No Progress after 3 cycles
-    StallCheck --> EscalateWarning: Trigger [STALL WARNING]
-    StepExecution --> GoalCompleted: All Nodes Done
-    GoalCompleted --> [*]
+    [*] --> Plan: You submit a goal
+    Plan --> Run: Plan is valid
+    Run --> Pause: A step needs approval
+    Pause --> Run: You approve
+    Run --> Next: Step succeeded
+    Next --> Run: More steps left
+    Run --> Stall: No progress after 3 cycles
+    Stall --> Warn: Stall warning
+    Run --> Done: All steps finished
+    Done --> [*]
 ```
 
 ---
 
-## 1. Defining a Mission Goal
+## If the machine restarts
 
-To create a new mission:
-1. Navigate to **Missions** in the left sidebar.
-2. Click **+ Launch Mission**.
-3. Fill in the mission parameters:
-   - **Goal Directive**: The primary high-level objective (e.g., `Audit the project in the workspace for security vulnerabilities, save a report as security_audit.md, and open a GitHub issue with the summary`).
-   - **Assigned Agent**: Select the primary orchestrator agent (e.g., `Security Engineer`).
-   - **Priority**: `Low`, `Standard`, `High`, or `Critical`.
-   - **Target Channel Notification**: Optional channel (e.g., `Telegram - Dev Channel`) to notify upon completion.
+Every completed step is saved. After a power cut or container restart, the mission continues from the last checkpoint instead of starting over.
+
+If a tool needs approval, the mission freezes (messages, counters, and the pending action). Approve from the [Dashboard](dashboard) or [Notifications](notifications) and that exact step continues.
 
 ---
 
-## 2. Dependency-Aware DAG Execution
+## Stall warnings
 
-When a mission begins, the `Planner` decomposes the goal into a Directed Acyclic Graph (DAG):
-- **Node Validation**: Rejects duplicate nodes, unknown dependencies, and circular loops.
-- **Ordered Sequencing**: Independent subtasks run concurrently; dependent subtasks await prerequisite outputs.
-- **Live Progress Matrix**: The UI visualizes task states: `Pending`, `Running`, `Completed`, `Blocked`, or `Failed`.
+If the agent repeats the same progress or the same tools for **three cycles** without moving the plan forward, ActonOS raises a stall warning.
 
----
+You can then:
 
-## 3. Durable Checkpointing & Resumption
-
-Every state transition and intermediate output is persisted in `agent_runs.checkpoint_json`:
-
-- **Fault Tolerance**: If the host experiences a power outage or container restart, ActonOS automatically resumes active missions from their last committed checkpoint without re-running completed steps.
-- **Paused Approvals**: When a tool requires clearance, the entire execution state (messages, token counters, pending tool payload) is frozen. Once approved via the dashboard or API, the exact step executes immediately.
+- Send a steering message in Chat.
+- Pause the mission.
+- Adjust tools or the goal and resume.
 
 ---
 
-## 4. Stall Detection & Auto-Escalation
+## Related pages
 
-To prevent infinite loops and wasted token budgets, ActonOS includes built-in **Stall Tracking**:
-- If an agent generates identical progress metrics (`[PROGRESS: X%]`) or repeats repetitive tool calls for 3 consecutive cycles without advancing the DAG, the engine emits a **`[STALL WARNING]`**.
-- The warning is logged to the mission feed and surfaced as a high-priority notification to the operator.
-- The operator can provide steering instructions via chat or pause the mission safely.
+- [Agent Studio](agent-studio) — pick the orchestrator and its tools.
+- [Dashboard](dashboard) — approve paused steps.
+- [Live Operations](operations) — watch logs while it runs.

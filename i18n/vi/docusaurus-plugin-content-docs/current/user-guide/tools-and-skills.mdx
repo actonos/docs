@@ -1,67 +1,69 @@
 ---
 id: tools-and-skills
-title: Công cụ, MCP & Môi trường Chạy Kỹ năng
-sidebar_label: Công cụ & Kỹ năng
-sidebar_position: 9
+title: Công cụ và skill
+sidebar_label: Công cụ & Skills
+sidebar_position: 10
 ---
 
-# Công cụ, MCP & Môi trường Chạy Kỹ năng
+# Công cụ và skill
 
-ActonOS cung cấp công cụ thực thi đa giao thức mở rộng được tổ chức thành 3 tầng mở rộng rõ rệt: **Tầng 1 (Công cụ Native & Máy chủ MCP)**, **Tầng 2 (Plugin WASM Thống nhất)**, và **Tầng 3 (Kỹ năng Thư mục Skill-as-a-Folder)**.
+Agent chỉ làm thêm việc khi bạn cấp **công cụ**. ActonOS có vài cách thêm. Không cần dùng hết.
 
-```mermaid
-graph LR
-    subgraph "Các Tầng Mở rộng"
-        direction TB
-        T1["Tầng 1: Công cụ Native & MCP\nstdio / SSE\nRanh giới Thực thi Duy nhất"]
-        T2["Tầng 2: Plugin WASM (wazero)\n/data/plugins/\nTools · Channels · Connectors"]
-        T3["Tầng 3: Skill-as-a-Folder\n/data/skills/<name>/\nskill.json + run.sh/run.py\nfsnotify hot-reload"]
-    end
-
-    LLM["Vòng lặp ReAct LLM"] --> T1
-    LLM --> T2
-    LLM --> T3
-```
+| Loại | Khi nào dùng | Ở đâu |
+|:---|:---|:---|
+| Công cụ dựng sẵn | Tìm web, duyệt, tệp, shell, thông báo | Luôn có |
+| Plugin | Công cụ tùy chỉnh, app chat, SaaS | [Plugins](plugins) |
+| Máy chủ MCP | MCP bạn đã chạy sẵn | Cài đặt Tool / MCP |
+| Skill | Thư mục `skill.json` + script | `/data/skills/<name>/` |
 
 ---
 
-## 1. Tầng 1: Công cụ Native & Máy chủ MCP
+## Công cụ dựng sẵn
 
-### Công cụ Native Tích hợp Sẵn
-Biên dịch trực tiếp vào tệp nhị phân tĩnh `actond` nhằm đạt tốc độ thực thi tối đa:
-- `native_web_search`: Tìm kiếm thông tin web qua DuckDuckGo, Brave Search hoặc Tavily.
-- `native_browser_navigate` & `native_browser_screenshot`: Mở trang trong Chromium ẩn, trích văn bản đã render, hoặc chụp ảnh màn hình.
-- `native_workspace_search`, `native_workspace_read`, `native_workspace_write`, `native_workspace_delete`: Làm việc với **tài liệu của bạn** trên trang Workspace. Tệp giữ nguyên tên gốc (`report.pdf`). Với PDF và tệp nhị phân, agent mở theo tên thay vì nhét cả tệp vào khung chat.
-- `native_file_read` / `native_file_write`: **Thư mục tạm riêng** của agent (script, bản nháp). Những tệp này không hiện trên trang Workspace cho đến khi được xuất bằng `native_workspace_write`.
-- `native_exec`: Thực thi lệnh shell trong môi trường Bubblewrap/Subshell. Tài liệu của bạn mở được theo tên gốc trong `user-workspace/` (biến môi trường `ACTONOS_USER_WORKSPACE`).
-- `native_channel_notify`: Gửi tin nhắn chữ **hoặc tệp workspace** qua plugin chat đã cài (Telegram, Discord, Slack, WhatsApp, Zalo). ActonOS chỉ chuyển tệp; plugin tự tải lên. Khi gửi tệp hãy chọn đúng một kênh.
+Đi kèm ActonOS:
 
-### Tích hợp Giao thức Ngữ cảnh Mô hình (MCP)
-ActonOS hoạt động như một máy chủ MCP Host triển khai theo chuẩn mở của Anthropic:
-- **`stdio`**: Khởi chạy tiến trình CLI cục bộ giao tiếp qua stdin/stdout JSON-RPC.
-- **`http` / `sse`**: Kết nối đến máy chủ MCP từ xa qua luồng Server-Sent Events.
-- Biến môi trường nhạy cảm được mã hóa an toàn trong Hardware Vault dưới khóa `mcp.env.<id>`.
+- **Web** — `native_web_search`, `native_browser_navigate`, `native_browser_screenshot`
+- **Tài liệu của bạn** — `native_workspace_search`, `native_workspace_read`, `native_workspace_write`, `native_workspace_delete`. Tệp giữ tên như `report.pdf`.
+- **Scratchpad agent** — `native_file_read` / `native_file_write` cho script tạm. Những tệp này **không** hiện trên trang Workspace cho đến khi agent xuất bản.
+- **Shell** — `native_exec` trong sandbox. Tệp Workspace có theo tên gốc dưới `user-workspace/` (`ACTONOS_USER_WORKSPACE`).
+- **Thông báo chat** — `native_channel_notify` gửi text **hoặc tệp Workspace** qua plugin kênh đã cài. Chọn đúng một kênh khi đính tệp.
+
+Bật công cụ theo từng agent trong [Agent Studio](agent-studio).
 
 ---
 
-## 2. Tầng 2: Plugin WASM Thống nhất (WASMLoader)
+## Máy chủ MCP
 
-Các tiện ích mở rộng đa ngôn ngữ hiệu năng cao được biên dịch thành WebAssembly (`wasip1` / `wasm32-wasi`) chạy trên engine **Wazero JIT runtime** thuần Go:
-- **Thực thi Cách ly (Sandbox)**: Không gian bộ nhớ tuyến tính độc lập, không thể truy cập trực tiếp file hệ thống host trừ khi qua syscall.
-- **Tường lửa Egress**: Mọi truy cập HTTP ra ngoài bị giới hạn chặt chẽ theo whitelist `manifest.permissions.net_outbound`.
-- **Hợp nhất Năng lực**: Gom chung **Agent Tools**, **Chat Channels**, và **SaaS Connectors** vào các gói phân phối chuẩn `.actonpkg`.
+Nếu bạn đã chạy MCP (stdio, HTTP hoặc SSE), thêm trong cài đặt MCP. ActonOS nói cùng giao thức. Biến môi trường bí mật lưu vault dưới `mcp.env.<id>`.
+
+Chi tiết: [Tích hợp MCP](../developer-reference/mcp-integration).
 
 ---
 
-## 3. Tầng 3: Kiến trúc Kỹ năng Thư mục (Skill-as-a-Folder)
+## Plugin
 
-Người dùng và lập trình viên có thể tạo kỹ năng tùy chỉnh nhanh chóng bằng cách tạo một thư mục trong `/data/skills/`:
+Một `.actonpkg` có thể mang công cụ, kênh chat, connector SaaS, hoặc kết hợp. Cài từ [Plugins](plugins). Để viết, dùng [Plugin SDK](../plugin-sdk/overview).
+
+---
+
+## Skill dạng thư mục
+
+Với công cụ script nhỏ, tạo:
 
 ```
 /data/skills/my_custom_skill/
-├── skill.json      # Định nghĩa schema và tham số công cụ
-└── run.sh          # Tệp thực thi (hoặc run.py)
+├── skill.json
+└── run.sh          # hoặc run.py
 ```
 
-### Hot-Reload với `fsnotify`
-Bộ theo dõi kỹ năng của ActonOS tự động quét thư mục `/data/skills/`. Việc tạo mới, sửa hoặc xóa kỹ năng sẽ lập tức cập nhật danh mục công cụ mà không cần khởi động lại daemon.
+ActonOS theo dõi thư mục đó. Thêm, sửa, xóa skill thì đăng ký lại không cần restart. Bạn cũng cài skill catalog từ [Tool Hub](tool-hub).
+
+Định dạng: [Skill tùy chỉnh](../developer-reference/custom-skills-guide).
+
+---
+
+## Trang liên quan
+
+- [Tool Hub](tool-hub) — catalog một cú bấm.
+- [Plugins](plugins) — gói WASM.
+- [Workspace](workspace) — tệp công cụ native mở theo tên.

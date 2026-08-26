@@ -1,68 +1,60 @@
 ---
 id: connectors
-title: Kết nối SaaS & OAuth 2.1
-sidebar_label: Kết nối SaaS (OAuth 2.1)
-sidebar_position: 8
+title: Connectors
+sidebar_label: Connectors
+sidebar_position: 9
 ---
 
-# Kết nối SaaS & OAuth 2.1
+# Connectors
 
-Khung làm việc **Kết nối SaaS (Connectors)** cho phép các AI Agent của ActonOS truy cập an toàn vào các bộ công cụ làm việc đám mây thông qua **Plugin Kết nối WASM** (`WasmConnectorBridge`) sử dụng tiêu chuẩn **OAuth 2.1 PKCE (S256)** mà không cần lưu trữ mật khẩu tĩnh dạng văn bản thô.
+**Connectors** cho agent dùng app đám mây (GitHub, Google Workspace, Notion, Slack, Linear, Jira, Figma) mà bạn không dán mật khẩu dài vào chat. Mỗi connector là một [plugin](plugins). Đăng nhập dùng **OAuth 2.1** (hoặc API key / bearer, tùy app). Token nằm trong vault.
 
-```mermaid
-sequenceDiagram
-    participant User as Người vận hành
-    participant UI as Giao diện Web ActonOS
-    participant Auth as OAuth Daemon / Plugin
-    participant SaaS as Google / GitHub
-    participant Vault as Hardware Vault
+---
 
-    User->>UI: Bấm "Kết nối Dịch vụ" trong Cài đặt Plugin
-    UI->>Auth: Khởi tạo Luồng PKCE (S256)
-    Auth->>SaaS: Chuyển hướng đến Màn hình Cấp quyền
-    User->>SaaS: Duyệt các Quyền hạn (Gmail, Drive, Repos)
-    SaaS-->>Auth: Callback kèm Mã Ủy quyền (Auth Code)
-    Auth->>SaaS: Đổi Mã + Code Verifier lấy Tokens
-    SaaS-->>Auth: Access Token + Refresh Token
-    Auth->>Vault: Mã hóa & Lưu vào Hardware Vault
-    Auth-->>UI: Huy hiệu Trạng thái Đã Kết nối
-    
-    loop Mỗi 45 Phút (Tiến trình Chạy ngầm)
-        Auth->>Vault: Lấy Refresh Token
-        Auth->>SaaS: Làm mới Access Token
-        Auth->>Vault: Cập nhật Access Token Mới
-    end
+## Sau khi kết nối bạn được gì
+
+Khi connector xanh **Connected**, các action trở thành công cụ agent gọi được — nếu bạn cấp chúng trong [Agent Studio](agent-studio).
+
+| Plugin | Agent có thể… |
+|:---|:---|
+| Google Workspace | Tìm Gmail, tạo sự kiện lịch, liệt kê Drive, đọc Docs. |
+| GitHub | Liệt kê repo, đọc/tạo issue, mở pull request, tìm code. |
+| Notion | Tìm trang, tạo trang, truy vấn database. |
+| Slack | Đăng tin, liệt kê kênh, đọc lịch sử. |
+| Linear | Liệt kê, tạo, cập nhật issue. |
+| Jira Cloud | Tìm bằng JQL, tạo issue, chuyển trạng thái. |
+| Figma | Đọc file và comment, đăng comment. |
+
+Tên công cụ đầy đủ nằm ở [Plugin chính thức](../plugin-sdk/official-plugins).
+
+---
+
+## Kết nối tài khoản
+
+1. Mở **Extensions → Plugins**.
+2. Mở connector (ví dụ **GitHub**) rồi bấm **Configure**.
+3. Nhập **Client ID** và **Client Secret** nếu plugin hỏi. Giá trị vào vault.
+4. Bấm **Connect Account** và duyệt quyền trên trang nhà cung cấp.
+5. Khi popup đóng, nhãn chuyển **Connected**.
+
+ActonOS làm mới access token ở nền. Nếu bạn thu hồi quyền trên GitHub/Google, connector đỏ **Re-authentication required** và bạn nhận [thông báo](notifications).
+
+---
+
+## Dùng từ Chat
+
+Cấp công cụ connector cho agent, rồi nói:
+
+```
+Liệt kê repo GitHub của tôi và mở issue "Docs review" trong actonos/docs.
 ```
 
----
-
-## 1. Các Plugin Kết nối SaaS Được Hỗ trợ
-
-Mỗi plugin kết nối định nghĩa các hành động định kiểu và tự động chuyển đổi thành Công cụ ReAct Agent (`conn.AsTools()`):
-
-| Plugin Dịch vụ | Khả năng Hỗ trợ | Công cụ Chuyển giao |
-|:---|:---|:---|
-| **Google Workspace** | Đọc/tìm Gmail, tạo sự kiện lịch, đọc/ghi tệp Google Drive. | `google_mail_search`, `google_calendar_create`, `google_drive_read` |
-| **GitHub** | Tìm kiếm mã, liệt kê/tạo issues, mở pull request, xem commit. | `github_list_repos`, `github_create_issue`, `github_open_pr` |
-| **Notion** | Truy vấn cơ sở dữ liệu, tạo trang mới, cập nhật bảng task. | `notion_query_database`, `notion_create_page` |
-| **Slack** | Đọc lịch sử kênh, đăng thẻ tin nhắn đa phương tiện, tải tệp lên. | `slack_post_message`, `slack_read_history` |
-| **Linear** | Quản lý vấn đề, tìm kiếm dự án, cập nhật chu kỳ sprint. | `linear_search_issues`, `linear_create_issue` |
+Agent gọi công cụ connector; bạn vẫn có thể thấy hộp duyệt nếu mức phê duyệt là Medium hoặc High.
 
 ---
 
-## 2. Thiết lập Plugin Kết nối SaaS
+## Trang liên quan
 
-1. Điều hướng đến **Extensions** → chọn **Plugins** trên thanh điều hướng.
-2. Tìm plugin SaaS mong muốn (ví dụ: **GitHub Connector**) và bấm **Configure** (Cấu hình).
-3. Nhập `Client ID` và `Client Secret` OAuth 2.1 (được bảo vệ trong Hardware Vault).
-4. Bấm **Kết nối Tài khoản**. Cửa sổ xác thực sẽ xuất hiện để bạn đăng nhập và phê duyệt các quyền truy cập.
-5. Sau khi cấp quyền, ActonOS nhận mã token và mã hóa lưu vào `/data/config/vault.db`.
-6. Trạng thái chuyển sang 🟢 **Connected**, và các công cụ liên quan sẽ sẵn sàng cho các Agent sử dụng ngay.
-
----
-
-## 3. Tiến trình Tự động Làm mới Token Ngầm
-
-- ActonOS duy trì tiến trình nền kiểm tra thời hạn của toàn bộ token mỗi 5 phút một lần.
-- Các access token sắp hết hạn được tự động làm mới ngầm trước thời điểm hết hiệu lực.
-- Nếu việc làm mới thất bại (ví dụ do người dùng thu hồi quyền trên tài khoản Google/GitHub), hệ thống sẽ chuyển trạng thái sang 🔴 **Yêu cầu Xác thực lại** và gửi thông báo cảnh báo.
+- [Plugins](plugins) — cài và log.
+- [Agent Studio](agent-studio) — cấp công cụ connector.
+- [Plugin SDK: Connectors](../plugin-sdk/connectors) — tự viết.

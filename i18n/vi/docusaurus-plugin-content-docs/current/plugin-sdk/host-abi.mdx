@@ -1,0 +1,65 @@
+---
+id: host-abi
+title: Host ABI
+sidebar_label: Host ABI
+sidebar_position: 10
+---
+
+# Host ABI
+
+Trang này là hợp đồng cấp thấp giữa host ActonOS (Wazero) và guest plugin biên dịch `wasip1` / `wasm32-wasi`. **Hầu hết tác giả không gọi các hàm này** — SDK Go (`sdk.Serve`, `RegisterTool`, `ctx.HTTP()`, …) đã bọc.
+
+Dùng trang này nếu bạn biên dịch từ Rust, TinyGo nội bộ, hoặc ngôn ngữ khác.
+
+Spec gốc trong repo SDK: `spec/WASM_ABI.md`.
+
+---
+
+## Giao thức bộ nhớ
+
+WebAssembly có một linear memory 32-bit. Host và guest trao byte bằng **buffer không re-entrant**:
+
+**Host → guest** (tool, kênh, action)
+
+1. Host gọi `acton_alloc(size)`, ghi payload, rồi gọi `acton_tool_execute` (hoặc export khác).
+2. Guest trả giá trị 64-bit đóng gói: `(outPtr << 32) | outLen`.
+3. Host đọc slice đó và gọi `acton_free(outPtr, outLen)`.
+
+**Guest → host** (HTTP, vault, storage)
+
+1. Guest gọi syscall như `acton_net.http_request(req_ptr, req_len)` và nhận `res_len`.
+2. Guest cấp phát `res_len` byte rồi copy bằng `acton_sys.read_response(dest_ptr, res_len)`.
+
+Buffer phản hồi đang chờ **không** re-entrant: guest phải đọc trước syscall tiếp. Nhờ đó garbage collector Go ổn định.
+
+---
+
+## Export của guest
+
+| Export | Chữ ký | Vai trò |
+|:---|:---|:---|
+| `acton_alloc` | `(size: u32) -> u32` | Cấp phát bộ nhớ guest |
+| `acton_free` | `(ptr: u32, size: u32)` | Giải phóng |
+| `acton_plugin_init` | `() -> i32` | `0` = thành công |
+| `acton_tool_execute` | `(namePtr, nameLen, argsPtr, argsLen: u32) -> u64` | JSON kết quả đóng gói |
+| `acton_channel_send` | `(ptr: u32, len: u32) -> i32` | `0` hoặc mã lỗi |
+| `acton_channel_poll` | `() -> u64` | JSON inbound đóng gói |
+| `acton_connector_action` | `(ptr: u32, len: u32) -> u64` | JSON action đóng gói |
+
+---
+
+## Import của host
+
+Module: `acton_sys` (`log`, `read_response`), `acton_net` (`http_request`), `acton_ws` (`ws_connect`, `ws_send`, `ws_poll`, `ws_close`), `acton_vault` (`get_secret`), `acton_storage` (`kv_get`, `kv_set`, `kv_delete`), `acton_bus` (`emit_event`).
+
+Bảng chữ ký đầy đủ nằm ở bản tiếng Anh cùng id — giữ nguyên khi implement.
+
+Mức log: `1=Debug`, `2=Info`, `3=Warn`, `4=Error`.
+
+---
+
+## Trang liên quan
+
+- [Tổng quan](overview) — ở lại SDK Go trừ khi bạn cần trang này.
+- [Bảo mật](security) — syscall nào bị từ chối.
+- [Plugin công cụ](tools) / [Plugin kênh](channels) / [Plugin connector](connectors)

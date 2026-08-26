@@ -5,23 +5,29 @@ sidebar_label: Glossary
 sidebar_position: 3
 ---
 
-# Technical Glossary
+# Glossary
 
-Standardized definitions for core concepts and architectural terms used across ActonOS.
+Short definitions. User-facing guides avoid most of these names; they still appear in architecture pages and plugin manifests.
 
 ---
 
+### Plugin SDK
+Go module `github.com/actonos/plugin-sdk` plus the `acton-plugin` CLI. You use it to scaffold, build, test, sign, and pack WebAssembly plugins. Start at [Plugin SDK overview](../plugin-sdk/overview).
+
+### `acton-plugin`
+Developer CLI (`new`, `validate`, `build`, `test`, `sign`, `pack`). Current SDK version: **1.3.0**.
+
 ### WASMLoader
-The unified plugin management subsystem in ActonOS (`internal/plugin/`) that handles discovery, validation, lifecycle orchestration, and hot-reloading of WebAssembly extensions for tools, chat channels, and SaaS connectors.
+ActonOS subsystem that discovers, validates, starts, and hot-reloads WebAssembly plugins (tools, channels, connectors).
 
 ### Wazero
-The zero-dependency, 100% pure-Go WebAssembly JIT runtime embedded within `actond` to execute sandboxed WASI modules with memory safety and near-native performance without requiring CGO or external runtimes.
+Pure-Go WebAssembly engine inside `actond`. Plugins run here, not as native host processes.
 
 ### `.actonpkg`
-The official distributable package format for ActonOS plugins—a ZIP archive bundling `manifest.json`, compiled `plugin.wasm` binary, icons, and configuration schemas.
+Zip package: `manifest.json`, `plugin.wasm`, optional `signature.sig` and `README.md`. Upload it on [Plugins](../user-guide/plugins).
 
-### Plugin Bridges (`WasmToolBridge`, `WasmChannelBridge`, `WasmConnectorBridge`)
-Internal host adapter bridges that bind guest WebAssembly exports to the ActonOS `ToolRegistry`, `ChannelManager`, and Event Bus subsystems.
+### Tool / Channel / Connector
+The three plugin capabilities. **Tool** = a function an agent calls. **Channel** = a chat app adapter. **Connector** = a SaaS integration whose actions can also become tools.
 
 ### Hardware Abstraction Layer (HAL)
 The system layer in ActonOS that detects whether the host is running directly on physical Bare-Metal hardware (x86_64 MiniPC) or inside a Docker container, transparently adapting network drivers, telemetry sensors, and sandbox executors.

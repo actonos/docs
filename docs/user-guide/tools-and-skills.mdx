@@ -1,67 +1,69 @@
 ---
 id: tools-and-skills
-title: Tools, MCP & Skill Runtimes
+title: Tools and skills
 sidebar_label: Tools & Skills
-sidebar_position: 9
+sidebar_position: 10
 ---
 
-# Tools, MCP & Skill Runtimes
+# Tools and skills
 
-ActonOS provides an extensible, multi-protocol execution engine organized into 3 distinct extension tiers: **Tier 1 (Native Tools & MCP Servers)**, **Tier 2 (Unified WASM Plugins)**, and **Tier 3 (Skill-as-a-Folder Scripts)**.
+Agents only do extra work when you give them **tools**. ActonOS has three ways to add them. You do not need all three.
 
-```mermaid
-graph LR
-    subgraph "Extension Tiers"
-        direction TB
-        T1["Tier 1: Native Tools & MCP\nstdio / SSE\nSingle Execution Boundary"]
-        T2["Tier 2: WASM Plugins (wazero)\n/data/plugins/\nTools · Channels · Connectors"]
-        T3["Tier 3: Skill-as-a-Folder\n/data/skills/<name>/\nskill.json + run.sh/run.py\nfsnotify hot-reload"]
-    end
-
-    LLM["LLM ReAct Loop"] --> T1
-    LLM --> T2
-    LLM --> T3
-```
+| Kind | When to use it | Where it lives |
+|:---|:---|:---|
+| Built-in tools | Search, browse, files, shell, notify | Always available |
+| Plugins | Custom tools, chat apps, SaaS | [Plugins](plugins) |
+| MCP servers | An existing MCP server you already run | Tool / MCP settings |
+| Skills | A small `skill.json` + script | `/data/skills/<name>/` |
 
 ---
 
-## 1. Tier 1: Native Built-in Tools & MCP Servers
+## Built-in tools
 
-### Native Tools
-Pre-compiled directly into the `actond` static binary for maximum speed:
-- `native_web_search`: Query DuckDuckGo, Brave Search, or Tavily for current web information.
-- `native_browser_navigate` & `native_browser_screenshot`: Open a page in headless Chromium, extract rendered text, or capture a screenshot.
-- `native_workspace_search`, `native_workspace_read`, `native_workspace_write`, `native_workspace_delete`: Work with **your** documents on the Workspace page. Files keep their original names (`report.pdf`). For PDFs and other binaries, the agent opens them by name instead of dumping the whole file into chat.
-- `native_file_read` / `native_file_write`: The agent’s **private scratchpad** (temporary scripts and in-progress work). These files are not listed on the Workspace page until they are published with `native_workspace_write`.
-- `native_exec`: Execute shell commands inside the isolated Bubblewrap/Subshell sandbox. User documents are available by original name under `user-workspace/` (environment variable `ACTONOS_USER_WORKSPACE`).
-- `native_channel_notify`: Send a text message **or a workspace file** through an installed chat plugin (Telegram, Discord, Slack, WhatsApp, Zalo). ActonOS only forwards the file; the plugin uploads it. Pick a specific channel when attaching a file.
+These ship with ActonOS:
 
-### Model Context Protocol (MCP) Integration
-ActonOS acts as a native MCP Host implementing the open standard by Anthropic:
-- **`stdio`**: Spawns local CLI binaries or containerized processes communicating over stdin/stdout JSON-RPC.
-- **`http` / `sse`**: Connects to remote or network-accessible MCP endpoints over Server-Sent Events.
-- Sensitive environment variables are stored in the Hardware Vault under `mcp.env.<id>`.
+- **Web** — `native_web_search`, `native_browser_navigate`, `native_browser_screenshot`
+- **Your documents** — `native_workspace_search`, `native_workspace_read`, `native_workspace_write`, `native_workspace_delete`. Files keep names such as `report.pdf`.
+- **Agent scratchpad** — `native_file_read` / `native_file_write` for temporary scripts. Those files do **not** show on the Workspace page until the agent publishes them.
+- **Shell** — `native_exec` in a sandbox. Workspace files are available by original name under `user-workspace/` (`ACTONOS_USER_WORKSPACE`).
+- **Chat notify** — `native_channel_notify` sends text **or a Workspace file** through an installed channel plugin. Pick one specific channel when attaching a file.
+
+Turn tools on per agent in [Agent Studio](agent-studio).
 
 ---
 
-## 2. Tier 2: Unified WASM Plugins (WASMLoader)
+## MCP servers
 
-High-performance, polyglot extensions compiled to WebAssembly (`wasip1` / `wasm32-wasi`) running on the pure-Go **Wazero JIT runtime**:
-- **Sandboxed Execution**: Isolated linear memory instances with zero host file system access except through host syscalls.
-- **Egress Firewall**: Network requests are strictly constrained to hostnames whitelisted in `manifest.permissions.net_outbound`.
-- **Capabilities**: Unifies **Agent Tools**, **Chat Channels**, and **SaaS Connectors** into standardized `.actonpkg` packages.
+If you already run an MCP server (stdio, HTTP, or SSE), add it in the MCP settings. ActonOS speaks the same protocol. Environment secrets are stored in the vault as `mcp.env.<id>`.
+
+Details: [MCP integration](../developer-reference/mcp-integration).
 
 ---
 
-## 3. Tier 3: Skill-as-a-Folder Architecture
+## Plugins
 
-Users and developers can author custom lightweight skills simply by creating a directory inside `/data/skills/`:
+A `.actonpkg` can expose tools, a chat channel, a SaaS connector, or a mix. Install from [Plugins](plugins). To write one, use the [Plugin SDK](../plugin-sdk/overview).
+
+---
+
+## Folder skills
+
+For a small script-based tool, create:
 
 ```
 /data/skills/my_custom_skill/
-├── skill.json      # Tool schema & parameter definitions
-└── run.sh          # Executable script (or run.py)
+├── skill.json
+└── run.sh          # or run.py
 ```
 
-### Hot-Reloading with `fsnotify`
-The ActonOS skill watcher monitors `/data/skills/`. Creating, editing, or deleting a skill directory triggers an automatic registration update without requiring a daemon restart.
+ActonOS watches that folder. Add, edit, or delete a skill and it registers without a restart. You can also install catalog skills from [Tool Hub](tool-hub).
+
+Authoring format: [Custom skills](../developer-reference/custom-skills-guide).
+
+---
+
+## Related pages
+
+- [Tool Hub](tool-hub) — one-click catalog.
+- [Plugins](plugins) — WASM packages.
+- [Workspace](workspace) — files the native tools open by name.

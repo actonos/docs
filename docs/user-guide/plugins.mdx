@@ -1,102 +1,99 @@
 ---
 id: plugins
-title: Plugins & WASM Extensions
-sidebar_label: Plugins (WASM)
-sidebar_position: 6
+title: Plugins
+sidebar_label: Plugins
+sidebar_position: 7
 ---
 
-# Plugins & WASM Extensions
+# Plugins
 
-ActonOS features a unified **WebAssembly (WASM) Plugin System** running on the pure-Go **Wazero JIT runtime**. Through the dedicated **Plugins** page (`/plugins`), operators can discover, install, configure, and monitor sandboxed extensions that add new **Agent Tools**, **Chat Channels**, and **SaaS Connectors** to the operating system without restarting the daemon.
+Plugins add extra abilities to ActonOS without restarting it. A plugin can be:
 
----
+- a **tool** the agent can call (weather, image generation, a private API)
+- a **channel** that connects Telegram, Discord, Slack, WhatsApp, or Zalo
+- a **connector** that talks to GitHub, Notion, Google Workspace, and similar apps
 
-## 1. Unified Plugin Capabilities
-
-Every plugin package defines one or more operational capabilities:
-
-| Capability | Purpose | Host Execution Bridge | Example Integrations |
-|:---|:---|:---|:---|
-| 🔧 **Tool** | Exposes callable function tools to ReAct Agent swarms. | `WasmToolBridge` $\rightarrow$ `ToolRegistry` | Weather API, Web Scraper, SQL runner, Code Formatter |
-| 💬 **Channel** | Connects external chat protocols with multi-bot accounts and message routing. | `WasmChannelBridge` $\rightarrow$ `ChannelManager` | Telegram Bot, Discord Bot, Slack App, WhatsApp, Zalo |
-| 🔗 **Connector** | Connects SaaS platforms, manages OAuth 2.1 credentials, and bridges actions as tools. | `WasmConnectorBridge` $\rightarrow$ `ToolRegistry` | GitHub, Notion, Linear, Google Workspace |
+You install them on **Extensions → Plugins**. If you want to **build** one, go to the [Plugin SDK](../plugin-sdk/overview).
 
 ---
 
-## 2. Installing a Plugin
+## Install a plugin
 
-ActonOS supports two distribution formats:
-- **`.actonpkg`**: The standard bundle containing `manifest.json`, compiled `plugin.wasm`, icons, and schemas.
-- **`.wasm`**: Raw compiled WebAssembly binaries targeting WASI (`wasip1`).
+ActonOS accepts:
 
-### Installation Steps:
-1. Navigate to **Extensions** → **Plugins** in the sidebar.
-2. Click the yellow **+ Upload Plugin** button in the top right.
-3. Drag and drop your `.actonpkg` or `.wasm` file into the upload zone (or click to browse).
-4. Review the requested permissions summary:
-   - **Outbound Domains**: Whitelist of hostnames the plugin is allowed to contact via HTTP (`permissions.net_outbound`).
-   - **Vault Secrets**: Keys the plugin is authorized to retrieve (`permissions.secrets`).
-   - **Persistent Storage**: Whether the plugin has access to an isolated SQLite key-value partition.
-5. Click **Install & Activate**. The plugin immediately initializes within the Wazero sandbox runtime.
+- **`.actonpkg`** — the usual bundle (`manifest.json` + `plugin.wasm` + optional signature and README)
+- **`.wasm`** — a raw WebAssembly file
 
-:::tip Automatic Hot-Reload
-ActonOS loads and starts the WebAssembly instance instantaneously. No daemon reboot or service downtime is required.
+Steps:
+
+1. Open **Extensions → Plugins**.
+2. Click **+ Upload Plugin**.
+3. Drop the file, or browse for it.
+4. Read the permission summary:
+   - which websites it may call
+   - which vault secrets it may read
+   - whether it gets its own small storage
+5. Click **Install & Activate**.
+
+The plugin starts immediately. You do not reboot ActonOS.
+
+:::tip Official packages
+Channel and connector packages ship with ActonOS. After an OS update, re-upload the latest `.actonpkg` so file sending and APIs stay in sync. See [official plugins](../plugin-sdk/official-plugins).
 :::
 
 ---
 
-## 3. Dynamic Configuration & Hardware Vault Security
+## Configure it
 
-When a plugin declares a `config_schema` in its `manifest.json`, ActonOS renders an interactive configuration form dynamically:
+If the plugin declares settings, **Configure** opens a generated form:
 
-```mermaid
-flowchart LR
-    Manifest["manifest.json\n(config_schema)"] --> Form["Dynamic Form Renderer\n(x-ui-widget, x-ui-group)"]
-    Form --> UserInput["User Enters Settings\n& API Tokens"]
-    UserInput --> Save["Save Configuration"]
-    Save --> Secret{"x-secret: true?"}
-    Secret -- "Yes" --> Vault["🔒 Hardware Vault\n(AES-256-GCM + Argon2id)"]
-    Secret -- "No" --> SQLite["💾 App Config Store"]
-```
+- Fields are grouped (General, Bot Accounts, and so on).
+- Tokens marked as secrets go into the **encrypted vault**, not a visible config file.
+- Chat plugins let you add **several bot accounts** and bind each one to an agent.
 
-### Key UI Features:
-- **Collapsible Groups (`x-ui-group`)**: Fields are organized into logical sections (e.g., *General Settings*, *Bot Accounts*).
-- **Hardware-Encrypted Secrets (`x-secret: true`)**: Sensitive tokens (like Discord bot tokens or API keys) are stored directly in the **Hardware Vault** (`vault.db`). The sandboxed plugin only receives decrypted tokens dynamically at runtime.
-- **Multi-Account Repeaters**: For chat channels, you can add multiple bot accounts, assign independent token credentials, and bind each bot to a specific target Agent.
+Save the form. The plugin reloads with the new settings; other agents keep running.
 
 ---
 
-## 4. Real-time Sandboxed Logs & Diagnostics
+## Logs
 
-Each running WASM plugin outputs structured logs via the `acton_sys: log` host syscall.
+On the plugin card, open **View Logs** (or the **Logs** tab):
 
-### Viewing Logs:
-1. In the **Plugins** list, find your target plugin card.
-2. Click the **View Logs** button (or click the card and switch to the **Logs** tab).
-3. A live streaming log console displays:
-   - **Timestamp & Level**: `[INFO]`, `[WARN]`, `[DEBUG]`, `[ERROR]`.
-   - **Linear Memory Consumption**: Live tracking of allocated WebAssembly heap memory.
-   - **Outbound HTTP Calls**: Audited egress network requests.
+- `[INFO]`, `[WARN]`, `[DEBUG]`, `[ERROR]` lines with timestamps
+- how much memory the plugin is using
+- outbound HTTP calls it attempted
+
+If a Telegram send “succeeds” but nothing appears in the chat, the log is the first place to look.
 
 ---
 
-## 5. Lifecycle Management: Enable, Disable & Delete
+## Enable, disable, uninstall
 
-- **Enable / Disable Toggle**: Toggle a plugin off to pause its event loops and unregister its tools without losing saved configurations or Vault secrets. Toggle back on to resume instantly.
-- **Hot Configuration Updates**: Editing parameters in the configuration modal immediately signals the Wazero sandbox to refresh runtime context without interrupting other active agents.
-- **Clean Uninstall**: Clicking **Uninstall Plugin** gracefully stops active connections, unbinds registered tools and channels, removes the plugin directory from `/data/plugins/{id}`, and purges isolated KV storage.
+| Action | Effect |
+|:---|:---|
+| Disable | Pauses the plugin and hides its tools. Config and secrets stay. |
+| Enable | Starts it again immediately. |
+| Uninstall | Stops it, unregisters tools/channels, deletes `/data/plugins/{id}` and its private storage. |
 
 ---
 
-## 6. Channel plugins send the files
+## Channel plugins and files
 
-When an agent sends a document to Telegram, Discord, Slack, WhatsApp, or Zalo, ActonOS **only forwards the file** to the installed channel plugin. The plugin is responsible for uploading it to that chat app.
+When you ask an agent to send `report.pdf` to Telegram (or another chat), ActonOS **only forwards the file** to the installed channel plugin. The plugin uploads it to that app.
 
-That split matters in two ways:
+That means:
 
-1. **You install the chat app as a plugin.** There is no hardcoded Telegram or Zalo uploader inside the core OS.
-2. **You should re-install channel plugins after an ActonOS update** so they match the current file-delivery format. Older plugins may report success while the file never appears (especially on Zalo), or a downloaded PDF may open with broken fonts.
+1. The chat app must be installed as a plugin. There is no hidden Telegram uploader inside the OS.
+2. After an ActonOS update, re-install channel plugins so they match the current file format. Older plugins may report success while the file never appears (especially on Zalo), or a PDF may open with broken fonts.
 
-To refresh a plugin: **Uninstall**, then **Upload** the latest `.actonpkg` from the official channel packages.
+To refresh: **Uninstall**, then **Upload** the latest official `.actonpkg`.
 
-For how sending looks from the user’s side, see [Sending files to chat](channels#sending-files-to-chat). Plugin authors: see [WASM plugin development — sending files](../developer-reference/wasm-plugin-development#sending-files).
+From the user’s side, see [Sending files to chat](channels#sending-files-to-chat). Plugin authors, see [Channel plugins](../plugin-sdk/channels#sending-files).
+
+---
+
+## Related pages
+
+- [Plugin SDK](../plugin-sdk/overview) — write your own plugin.
+- [Channels](channels) — pair bots and send files.
+- [Connectors](connectors) — OAuth apps as plugins.

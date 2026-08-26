@@ -1,67 +1,72 @@
 ---
 id: dashboard
-title: Bảng điều khiển & Quan sát Hệ thống
-sidebar_label: Bảng điều khiển
+title: Dashboard
+sidebar_label: Dashboard
 sidebar_position: 1
 ---
 
-# Bảng điều khiển & Quan sát Hệ thống
+# Dashboard
 
-**Bảng điều khiển ActonOS (Dashboard)** đóng vai trò là buồng lái trung tâm để theo dõi hoạt động của các Agent, thông số đo kiểm hệ thống, mức tiêu thụ tài nguyên và các quy trình tự động ngầm theo thời gian thực.
+**Dashboard** là màn hình chính. Dùng để xem ActonOS có khỏe không, agent nào đang bận, và có việc nào chờ bạn phê duyệt.
 
-```mermaid
-graph TD
-    A["Đo kiểm Cốt lõi ActonOS"] --> B["Chỉ số Phần cứng: CPU · RAM · Đĩa · Nhiệt độ"]
-    A --> C["Mạng lưới Agent Hoạt động & Nhiệm vụ Trực tiếp"]
-    A --> D["Luồng Sự kiện Thời gian thực qua WebSocket"]
-    A --> E["Hàng đợi Phê duyệt từ Con người"]
-    B --> F["Giao diện Dashboard (React 19 + Tailwind v4)"]
-    C --> F
-    D --> F
-    E --> F
-```
+Mở từ **Dashboard** trên thanh bên, hoặc nhấn **`Ctrl + K`** (`Cmd + K` trên macOS) rồi gõ `Dashboard`.
 
 ---
 
-## 1. Thanh Đo kiểm Hệ thống (Top Telemetry Bar)
+## Thanh trạng thái
 
-Thanh tiêu đề phía trên cung cấp nhịp đập liên tục của máy chủ vật lý hoặc container:
+Thanh trên cùng cập nhật khoảng hai giây một lần:
 
-- **Đồng hồ Đo Tải CPU**: Mức tải đa nhân theo thời gian thực, cập nhật mỗi 2 giây qua ảnh chụp WebSocket snapshot.
-- **Phân bổ Bộ nhớ RAM**: Dung lượng RAM đang sử dụng so với tổng dung lượng vật lý (ví dụ: `1.8 GB / 16 GB`).
-- **Lưu trữ Ổ đĩa**: Dung lượng đã dùng và còn trống trên phân vùng `/data`.
-- **Huy hiệu Chế độ HAL**: Hiển thị hệ thống đang chạy ở chế độ `Bare-metal (bwrap)` hay `Docker Container`.
-- **Nhiệt độ Chip (Bare-metal)**: Đọc trực tiếp cảm biến nhiệt từ giao diện D-Bus của bo mạch chủ.
+- **CPU** — tải bộ xử lý.
+- **RAM** — bộ nhớ đang dùng / tổng (ví dụ `1.8 GB / 16 GB`).
+- **Đĩa** — dung lượng trên volume `/data`.
+- **Nhãn runtime** — `Bare-metal` hoặc `Docker`, tùy cách bạn cài.
+- **Nhiệt độ** — chỉ trên máy bare-metal.
 
----
-
-## 2. Tổng quan Danh sách Agent Đang Hoạt động
-
-Các thẻ trung tâm hiển thị toàn bộ Agent đã được đăng ký:
-- **Ảnh đại diện & Tên Agent**: Nhận diện nhanh chóng.
-- **Chỉ báo Trạng thái**:
-  - 🟢 `Idle` - Agent đang chờ lệnh hoặc chờ đến chu kỳ kiểm tra.
-  - 🟡 `Executing Tool` - Agent đang gọi công cụ MCP, WASM, hoặc Native.
-  - 🟣 `Delegated` - Agent đang điều phối các tác vụ con trong mạng lưới swarm.
-  - 🔴 `Approval Required` - Agent tạm dừng để chờ con người phê duyệt.
-- **Thao tác Nhanh**: Bấm vào bất kỳ thẻ Agent nào để mở cửa sổ Chat trực tiếp hoặc mở cấu hình trong **Agent Studio**.
+Nếu CPU hoặc đĩa cao lâu, xem [Vận hành trực tiếp](operations) và [Xử lý sự cố](../support-and-faq/troubleshooting).
 
 ---
 
-## 3. Bảng Lệnh Toàn cục (Global Command Palette `Ctrl + K`)
+## Thẻ agent
 
-Nhấn **`Ctrl + K`** (hoặc **`Cmd + K`** trên macOS) tại bất kỳ đâu trong ActonOS để mở thanh tìm kiếm thông minh:
+Mỗi agent đã đăng ký hiện một thẻ:
 
-- **Điều hướng Nhanh**: Di chuyển tức thì đến các trang (`Chat`, `Missions`, `Plugins`, `Skills`, `Settings`, `Terminal`).
-- **Tìm kiếm Agent Trực tiếp**: Nhập tên Agent để bắt đầu trò chuyện ngay.
-- **Định vị Tệp**: Tìm và mở tệp trong Workspace mà không cần duyệt cây thư mục.
-- **Hành động Nhanh**: Kích hoạt **Sao lưu Hệ thống**, phát nhịp **Heartbeat Pulse**, hoặc **Khóa Phiên làm việc**.
+| Màu | Trạng thái | Ý nghĩa |
+|:---|:---|:---|
+| Xanh | Idle | Đang chờ chat, nhiệm vụ, hoặc nhịp heartbeat. |
+| Vàng | Executing | Đang gọi một công cụ. |
+| Tím | Delegated | Đang phối hợp với agent con. |
+| Đỏ | Cần phê duyệt | Dừng cho đến khi bạn duyệt hoặc từ chối. |
+
+Bấm thẻ để mở Chat với agent đó, hoặc nhảy sang cấu hình trong [Agent Studio](agent-studio).
 
 ---
 
-## 4. Thanh Thông báo Yêu cầu Phê duyệt
+## Bảng lệnh (`Ctrl + K`)
 
-Khi một Agent tự trị cố gắng thực hiện hành vi đột biến rủi ro cao (như sửa đổi tệp hệ thống, chạy lệnh shell chưa biết, hoặc phát email hàng loạt), một dải thông báo màu hổ phách sẽ xuất hiện trên Dashboard:
+Từ bất kỳ trang nào, nhấn **`Ctrl + K`** (`Cmd + K` trên macOS) để:
 
-- **Xem trước Hành động**: Hiển thị tên công cụ, đường dẫn đích và tham số truyền vào.
-- **Phê duyệt / Từ chối**: Bấm **Approve** (kèm lý do kiểm toán) để tiếp tục thực thi, hoặc **Reject** để hủy bỏ hành động an toàn.
+- Nhảy tới Chat, Nhiệm vụ, Plugins, Skills, Cài đặt, hoặc Terminal.
+- Bắt đầu chat bằng cách gõ tên agent.
+- Mở tệp Workspace mà không phải duyệt thư mục.
+- Kích hoạt **Sao lưu hệ thống**, **Pulse heartbeat**, hoặc **Khóa phiên**.
+
+---
+
+## Phê duyệt
+
+Khi agent thử việc nhạy cảm (sửa file hệ thống, chạy lệnh lạ, gửi email hàng loạt), banner màu hổ phách hiện trên dashboard:
+
+1. Đọc tên công cụ, đích, và tham số.
+2. Bấm **Approve** để chạy tiếp đúng điểm dừng (có thể ghi lý do vào nhật ký).
+3. Bấm **Reject** để hủy hành động đó.
+
+Bạn cũng xem phê duyệt ở [Thông báo](notifications) và [Vận hành trực tiếp](operations).
+
+---
+
+## Trang liên quan
+
+- [Vận hành trực tiếp](operations) — nhật ký, token, bản xem trước.
+- [Agent Studio](agent-studio) — tạo và quản trị agent.
+- [Thông báo](notifications) — duyệt và cảnh báo hệ thống.

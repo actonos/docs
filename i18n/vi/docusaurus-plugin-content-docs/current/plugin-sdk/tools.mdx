@@ -1,0 +1,157 @@
+---
+id: tools
+title: Plugin công cụ
+sidebar_label: Plugin công cụ
+sidebar_position: 3
+---
+
+# Plugin công cụ
+
+**Tool** là hàm agent gọi được. SDK phản xạ struct input Go thành JSON Schema, bạn không viết schema tay.
+
+Tạo dự án:
+
+```bash
+acton-plugin new my-weather-tool --type=tool
+```
+
+---
+
+## Đăng ký tool có kiểu
+
+```go
+package main
+
+import (
+	"github.com/actonos/plugin-sdk/sdk"
+)
+
+type QueryInput struct {
+	SearchTerm string `json:"search_term" jsonschema:"description=Keywords to search,required"`
+	MaxResults int    `json:"max_results" jsonschema:"description=Maximum results to return"`
+}
+
+func init() {
+	tool := sdk.NewTypedTool("search_docs", "Search documentation", func(ctx sdk.Context, in QueryInput) (*sdk.ToolResult, error) {
+		ctx.Log().Info("search", "term", in.SearchTerm, "limit", in.MaxResults)
+		return sdk.NewResultData("Found 2 documents", map[string]any{"count": 2}), nil
+	})
+	sdk.RegisterTool(tool)
+}
+
+func main() {
+	sdk.Serve()
+}
+```
+
+Tag `jsonschema` dùng được:
+
+| Tag | Hiệu lực |
+|:---|:---|
+| `description=...` | Hiện cho mô hình |
+| `required` | Tham số bắt buộc |
+| `enum=a\|b` | Giá trị cho phép |
+| `default=...` | Mặc định |
+| `title=...` | Nhãn ngắn |
+
+---
+
+## Kết quả
+
+| Helper | Khi nào |
+|:---|:---|
+| `sdk.NewResult(text)` | Thành công, chỉ text |
+| `sdk.NewResultData(text, map[string]any{...})` | Thành công kèm data có cấu trúc |
+| `sdk.NewResultError(message)` | Lỗi agent nên giải thích cho user |
+
+---
+
+## API host trong tool
+
+Mỗi handler nhận `sdk.Context`:
+
+```go
+func(ctx sdk.Context, in QueryInput) (*sdk.ToolResult, error) {
+    ctx.Log().Info("start")
+
+    resp, err := ctx.HTTP().Get("https://api.example.com/search?q=" + in.SearchTerm)
+    if err != nil {
+        return sdk.NewResultError(err.Error()), nil
+    }
+
+    token, err := ctx.Vault().GetSecret("example_api_key")
+    if err != nil {
+        return sdk.NewResultError("missing API key"), nil
+    }
+    _ = token
+
+    _ = ctx.Storage().Set("last_query", in.SearchTerm)
+
+    return sdk.NewResult(resp.Body), nil
+}
+```
+
+HTTP hữu ích: `Get`, `GetWithBearer`, `PostJSON`, `PostJSONWithBearer`, `PostBinary`, `Do`.
+
+Khai báo quyền khớp:
+
+```json
+"permissions": {
+  "net_outbound": ["api.example.com"],
+  "secrets": ["example_api_key"],
+  "storage": true
+}
+```
+
+---
+
+## Tệp Workspace
+
+Nếu tool cần đọc/ghi tài liệu **của user**:
+
+```go
+meta, err := ctx.Workspace().SaveText("reports/summary.md", "# Summary\n")
+if err != nil {
+    return sdk.NewResultError(err.Error()), nil
+}
+data, _, err := ctx.Workspace().ReadBinary("report.pdf")
+```
+
+Bật `"workspace": true` trong `permissions` (xem [Manifest](manifest)).
+
+---
+
+## Mảng `tools` trên manifest
+
+Liệt kê mỗi tool bạn đăng ký. Host dùng để khám phá trước khi module chạy:
+
+```json
+"tools": [
+  {
+    "name": "search_docs",
+    "description": "Search documentation",
+    "category": "plugin"
+  }
+]
+```
+
+Schema runtime vẫn đến từ `NewTypedTool`. Giữ tên giống nhau.
+
+---
+
+## Test local
+
+```bash
+acton-plugin build
+acton-plugin test --tool=search_docs --input='{"search_term":"heartbeat","max_results":5}'
+```
+
+Nếu bỏ `--tool` và manifest có tools, CLI lấy tên đầu tiên.
+
+---
+
+## Trang liên quan
+
+- [Plugin đầu tiên](first-plugin) — upload trọn vòng.
+- [Connectors](connectors) — `conn.AsTools()` biến action SaaS thành tool.
+- [Tra cứu CLI](cli-reference)

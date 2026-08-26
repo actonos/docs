@@ -1,80 +1,67 @@
 ---
 id: channels
-title: Channels & Omnichannel Messaging
-sidebar_label: Channels (Telegram/Discord)
-sidebar_position: 7
+title: Channels
+sidebar_label: Channels
+sidebar_position: 8
 ---
 
-# Channels & Omnichannel Messaging
+# Channels
 
-ActonOS connects AI agents to external messaging platforms (Telegram, Discord, Slack, WhatsApp, Zalo) using **WASM Channel Plugins** (`WasmChannelBridge`). This architecture decouples chat protocol implementations from the core daemon while enforcing strict sandboxing, hardware-encrypted bot tokens, and zero-trust pairing security.
-
----
-
-## 1. How Channel Plugins Work
-
-Instead of hardcoded protocol daemons, chat channels execute as sandboxed WebAssembly plugins inside the Wazero runtime:
-
-```mermaid
-flowchart LR
-    User["Operator / Chat User\n(Telegram / Discord)"] <--> ExtAPI["External Chat API\n(api.telegram.org)"]
-    ExtAPI <--> Bridge["WASM Channel Plugin\n(WasmChannelBridge)"]
-    Bridge <--> CM["ActonOS ChannelManager"]
-    CM <--> Swarm["Universal Agent Swarm\n(ReAct Execution)"]
-```
-
-### Key Capabilities:
-- **Zero-Trust PIN Pairing**: Protects bots from unauthorized users by requiring a 6-digit numeric handshake before granting agent access.
-- **Multi-Bot Accounts**: Connect multiple bots on the same platform (e.g., `@dev_support_bot` and `@ops_monitor_bot`).
-- **Flexible Message Routing**: Route group chat messages by `@agent_name` mention or fallback to a default orchestrator.
-- **Real-time WebSocket Streaming (`acton_ws`)**: Low-latency bidirectional streaming for Discord Gateways and Slack Socket Mode.
+**Channels** connect your agents to Telegram, Discord, Slack, WhatsApp, and Zalo. Each chat app is an installed [plugin](plugins). People message the bot; the assigned agent replies. You can also ask an agent to send a Workspace file into that chat.
 
 ---
 
-## 2. Setting Up a Channel Plugin
+## Set up a channel
 
-### Step 1: Install the Channel Plugin
-1. Navigate to **Extensions** → **Plugins** in the sidebar.
-2. If not already installed, upload the channel package (e.g., `channel-telegram.actonpkg` or `channel-discord.actonpkg`).
+### 1. Install the plugin
 
-### Step 2: Configure Bot Accounts & Tokens
+1. Open **Extensions → Plugins**.
+2. Upload the package if it is not already there (`channel-telegram.actonpkg`, `channel-discord.actonpkg`, and so on).
+
+### 2. Add a bot account
+
 1. On the plugin card, click **Configure**.
 2. Under **Bot Accounts**, click **+ Add Account**.
-3. Fill in the required parameters:
-   - **Account ID**: Unique identifier (e.g., `tg_dev_bot`).
-   - **Bot Token**: Obtained from [@BotFather](https://t.me/botfather) or Discord Developer Portal.
-   - **Default Agent**: Select the target agent that responds to incoming messages.
-   - **Routing Mode**:
-     - `exclusive`: Only assigned agents receive messages.
-     - `mention`: Group messages are routed to agents tagged with `@agent_name`.
-     - `fallback`: Routes unassigned messages to the system core agent.
-4. Click **Save Changes**. The token is encrypted inside the **Hardware Vault** (`vault.db`) and the plugin hot-reloads instantly.
+3. Fill in:
+   - **Account ID** — a short id such as `tg_dev_bot` (lowercase, digits, `_` or `-`).
+   - **Bot token** — from [@BotFather](https://t.me/botfather) or the Discord Developer Portal.
+   - **Default agent** — who answers incoming messages.
+   - **Listen target** — optional: only this group or channel.
+   - Typing, ack reaction, and quote-reply toggles (on by default).
+4. Click **Save Changes**. The token is stored in the encrypted vault. The plugin reloads at once.
+
+You can run several bots on the same app (for example a support bot and an ops bot).
 
 ---
 
-## 3. Operator Security & Pairing PIN Handshake
+## Pairing PIN (first message)
 
-When a new user sends a message to an ActonOS bot for the first time, the system initiates a zero-trust authorization handshake:
+The first time a new person messages the bot:
 
-1. The bot replies with a one-time **6-digit pairing code** (e.g., `842-195`).
-2. The user/administrator navigates to **System** → **Settings** (or the Pairing modal) in the ActonOS Web UI.
-3. Enter the 6-digit PIN to authorize the user ID.
-4. Once verified, the sender's identity is permanently recorded in the authorization ledger, and subsequent messages are processed directly by the assigned agent swarm.
+1. The bot replies with a one-time **6-digit PIN**.
+2. In ActonOS, open **Settings** (or the Pairing dialog).
+3. Enter the PIN to authorize that user.
+4. Later messages from that person go straight to the agent.
 
----
-
-## 4. Channel Health Monitoring & Auto-Recovery
-
-ActonOS continuously monitors the runtime health of all active channel adapters:
-- **Long-Polling & WebSocket Watchdog**: If a polling loop stalls or a socket disconnects, the daemon automatically initiates reconnection with exponential backoff.
-- **Health Badges**: The Plugins and Operations dashboards display real-time statuses: 🟢 `Connected`, 🟡 `Reconnecting`, or 🔴 `Error`.
-- **Failure Escalation**: If a token is revoked or rate-limited by the upstream provider, ActonOS generates an immediate notification in the Notification Center with actionable diagnostic logs.
+Until pairing succeeds, the bot will not run agent tools for that sender.
 
 ---
 
-## 5. Sending files to chat {#sending-files-to-chat}
+## Health
 
-After a file is in your [Workspace](workspace), you can ask the agent to send it through a connected chat app.
+The plugin card and Operations show:
+
+- Green **Connected**
+- Yellow **Reconnecting**
+- Red **Error** (revoked token, rate limit, network)
+
+If a socket drops, ActonOS retries with backoff. Persistent failures also appear in [Notifications](notifications). Open **Logs** on the plugin card for the exact error.
+
+---
+
+## Sending files to chat {#sending-files-to-chat}
+
+Put the file in [Workspace](workspace) first, then ask.
 
 **In ActonOS Chat:**
 
@@ -82,19 +69,19 @@ After a file is in your [Workspace](workspace), you can ask the agent to send it
 Send report.pdf from the workspace to the Telegram group.
 ```
 
-**On Telegram, Discord, or Zalo (to the bot):**
+**In Telegram, Discord, or Zalo, to the bot:**
 
 ```
 Gửi file report.pdf sang đây.
 ```
 
-What happens behind the scenes:
+What happens:
 
-1. The agent finds the file in your workspace by its original name.
-2. ActonOS **hands the file bytes to the installed channel plugin** (Telegram, Discord, Zalo, and so on).
-3. That plugin uploads the file using the chat app’s own API.
+1. The agent finds the file by its original name.
+2. ActonOS hands the bytes to the **installed channel plugin**.
+3. That plugin uploads the file with the chat app’s own API.
 
-The core system does **not** talk to Telegram or Zalo itself. File delivery is the plugin’s job. If sending fails, open **Plugins** → the channel card → **Logs**.
+The core OS does not talk to Telegram or Zalo itself. If sending fails, open **Plugins → the channel card → Logs**.
 
 :::note One chat app at a time
 When attaching a file, pick a **specific** installed channel (for example Telegram). Sending a file to “all channels” is not supported.
@@ -104,14 +91,22 @@ When attaching a file, pick a **specific** installed channel (for example Telegr
 
 | App | What arrives |
 |:---|:---|
-| **Telegram, Discord, Slack, WhatsApp** | A normal file attachment with the original name (`report.pdf`). |
-| **Zalo** | A file the bot posts through Zalo’s JSON API (a public HTTPS URL, or a small file encoded in the request). Zalo does **not** use Telegram-style multipart uploads. |
+| Telegram, Discord, Slack, WhatsApp | A normal file with the original name (`report.pdf`). |
+| Zalo | A file the bot posts through Zalo’s JSON API (a public HTTPS URL, or a small file encoded in the request). Zalo does not use Telegram-style multipart uploads. |
 
-### Keep channel plugins up to date
+### Keep plugins up to date
 
-After you update ActonOS, re-install the latest channel plugin (`.actonpkg`) from **Plugins**. Older plugins may:
+After you update ActonOS, re-install the latest channel `.actonpkg`. Older plugins may:
 
-- Say the file was sent while nothing appears in the chat (common on Zalo).
-- Deliver a PDF that opens with **broken fonts** (the file bytes were corrupted in transit).
+- Say the file was sent while nothing appears (common on Zalo).
+- Deliver a PDF with **broken fonts** (bytes were corrupted in transit).
 
-Use the rebuilt official packages for Telegram, Discord, Slack, WhatsApp, and Zalo so binary files stay intact.
+Use the rebuilt official packages listed in [Official plugins](../plugin-sdk/official-plugins).
+
+---
+
+## Related pages
+
+- [Plugins](plugins) — install, logs, re-install.
+- [Workspace](workspace) — files you can send.
+- [Chat](ai-chat) — ask the agent from the web UI.

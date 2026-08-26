@@ -11,16 +11,20 @@
     "message": "📖 2. Hướng dẫn sử dụng",
     "description": "The label for category '📖 2. User Guide' in sidebar 'docsSidebar'"
   },
-  "sidebar.docsSidebar.category.🧠 3. Advanced Architecture": {
-    "message": "🧠 3. Kiến trúc nâng cao",
-    "description": "The label for category '🧠 3. Advanced Architecture' in sidebar 'docsSidebar'"
+  "sidebar.docsSidebar.category.🔌 3. Plugin SDK": {
+    "message": "🔌 3. Plugin SDK",
+    "description": "The label for category '🔌 3. Plugin SDK' in sidebar 'docsSidebar'"
   },
-  "sidebar.docsSidebar.category.🛠️ 4. Developer & API Reference": {
-    "message": "🛠️ 4. Lập trình & Tra cứu API",
-    "description": "The label for category '🛠️ 4. Developer & API Reference' in sidebar 'docsSidebar'"
+  "sidebar.docsSidebar.category.🧠 4. Advanced Architecture": {
+    "message": "🧠 4. Kiến trúc nâng cao",
+    "description": "The label for category '🧠 4. Advanced Architecture' in sidebar 'docsSidebar'"
   },
-  "sidebar.docsSidebar.category.💡 5. Support & FAQ": {
-    "message": "💡 5. Hỗ trợ & FAQ",
-    "description": "The label for category '💡 5. Support & FAQ' in sidebar 'docsSidebar'"
+  "sidebar.docsSidebar.category.🛠️ 5. Developer & API Reference": {
+    "message": "🛠️ 5. Lập trình & Tra cứu API",
+    "description": "The label for category '🛠️ 5. Developer & API Reference' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.💡 6. Support & FAQ": {
+    "message": "💡 6. Hỗ trợ & FAQ",
+    "description": "The label for category '💡 6. Support & FAQ' in sidebar 'docsSidebar'"
   }
 }

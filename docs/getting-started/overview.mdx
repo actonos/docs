@@ -1,108 +1,82 @@
 ---
 id: overview
-title: Overview & Core Philosophy
-sidebar_label: Overview & Philosophy
+title: What is ActonOS?
+sidebar_label: What is ActonOS?
 sidebar_position: 1
 ---
 
-# ActonOS: The AI-Native Autonomous Operating System
+# What is ActonOS?
 
-**ActonOS** is a purpose-built, secure operating system and orchestration engine engineered to run autonomous AI agents and multi-agent swarms 24/7 on dedicated hardware or within containerized environments.
+**ActonOS** is an AI-native operating system for running autonomous agents on a MiniPC, a home server, or Docker. You talk to agents in Chat, give them tools and files, connect them to Telegram or GitHub, and let them work in the background — with approvals, sandboxes, and encrypted secrets built in.
 
-Unlike conventional operating systems retrofitted with AI wrappers, ActonOS places the **Agent Engine**, **WASMLoader Plugin Sandbox**, **Hardware-Bound Security Vault**, and **Hybrid Memory System** directly into the core system layer.
+This documentation is for people who **use** ActonOS: install it, create agents, connect chat apps, and (if you want) write plugins. Deep internals live in [Advanced Architecture](../advanced-architecture/dual-runtime-hal).
+
+---
+
+## What you can do
+
+| You want to… | Start here |
+|:---|:---|
+| Install and open the dashboard | [System requirements](system-requirements) → [Docker](docker-deployment) or [Bare-metal](baremetal-installation) |
+| Create an agent and run a first task | [5-minute quickstart](quickstart-tutorial) |
+| Chat, attach files, and save work | [Chat](../user-guide/ai-chat) and [Workspace](../user-guide/workspace) |
+| Connect Telegram, Discord, Slack, WhatsApp, or Zalo | [Channels](../user-guide/channels) |
+| Connect GitHub, Notion, Google Workspace, and similar apps | [Connectors](../user-guide/connectors) |
+| Install or write a plugin | [Plugins](../user-guide/plugins) and [Plugin SDK](../plugin-sdk/overview) |
+
+---
+
+## How a typical day looks
+
+1. Open the dashboard and check that agents, CPU, and disk look healthy.
+2. Chat with an agent, attach a PDF, or ask it to write a file into **Workspace**.
+3. Launch a longer **Mission** if the job needs several steps and checkpoints.
+4. Let **Automations** (heartbeat / cron) handle recurring checks during work hours.
+5. Receive **Notifications** when something needs your approval.
+
+Nothing here requires you to know Go, WebAssembly, or the daemon internals.
+
+---
+
+## How ActonOS is put together
+
+ActonOS is a single daemon (`actond`) plus a web UI. Agents reason, call tools, and remember files. Plugins, MCP servers, and skills add extra capabilities without restarting the OS.
 
 ```mermaid
-graph TB
-    subgraph "Layer 1 - Connectivity & Ingress"
-        TSNET["Tailscale tsnet<br/>E2E Encrypted Mesh VPN"]
-        WEBUI["Web UI SPA<br/>React 19 + Tailwind v4 + Soft Meadow"]
-        CHANNELS["WASM Channel Plugins<br/>Telegram · Discord · Slack · WhatsApp · Zalo"]
-        PORTAL["Zero-Config Portal<br/>Captive DNS @ 192.168.4.1"]
+flowchart TB
+    subgraph You["You"]
+        UI["Web dashboard"]
+        ChatApps["Telegram · Discord · Slack · WhatsApp · Zalo"]
     end
 
-    subgraph "Layer 2 - Autonomous Agent Engine"
-        STUDIO["Agent Studio & Manifests"]
-        SWARM["Swarm Orchestrator<br/>Goroutine Delegation"]
-        DELEGATION["Zero-Trust Scope & Budget"]
-        HEARTBEAT["OpenClaw Heartbeat Daemon"]
+    subgraph Core["ActonOS"]
+        Agents["Agents and swarms"]
+        Tools["Tools · plugins · MCP · skills"]
+        Memory["Workspace and memory"]
+        Vault["Encrypted secrets vault"]
     end
 
-    subgraph "Layer 3 - Dynamic Tooling & Extensions"
-        MCP["MCP Host Engine<br/>stdio / SSE Transports"]
-        WASM["WASMLoader Runtime<br/>wazero Pure Go (Tools · Channels · Connectors)"]
-        SKILLS["Skill-as-a-Folder<br/>fsnotify Hot-Reload"]
-        NATIVE["Native Built-in Tools<br/>Chromium · Ripgrep · Shell"]
-    end
-
-    subgraph "Layer 4 - Core Daemon & Memory"
-        BUS["Unified Event Bus"]
-        REACT["ReAct Orchestrator & Planner"]
-        CASCADE["LLM Cascade Router"]
-        MEMORY["Hybrid Memory RAG<br/>SQLite FTS5 + ONNX Vector + Decay"]
-        VAULT["Hardware-Bound Vault<br/>AES-256-GCM + Argon2id"]
-    end
-
-    subgraph "Layer 5 - Hardware Abstraction Layer (HAL)"
-        BARE["Bare-Metal Mode<br/>NetworkManager · Bubblewrap · Cgroups v2"]
-        DOCKER["Docker Container Mode<br/>Batteries-Included Toolchain · Subshell Jail"]
-    end
-
-    WEBUI --> STUDIO
-    CHANNELS --> BUS
-    TSNET --> WEBUI
-    PORTAL --> WEBUI
-    STUDIO --> SWARM
-    SWARM --> DELEGATION
-    SWARM --> REACT
-    REACT --> MCP
-    REACT --> WASM
-    REACT --> SKILLS
-    REACT --> NATIVE
-    REACT --> CASCADE
-    REACT --> MEMORY
-    CASCADE --> VAULT
-    MEMORY --> VAULT
-    BUS --> BARE
-    BUS --> DOCKER
+    UI --> Agents
+    ChatApps --> Agents
+    Agents --> Tools
+    Agents --> Memory
+    Tools --> Vault
 ```
 
----
+The important guarantees, in plain language:
 
-## Core Pillars & Design Principles
+- **Two install modes**: a dedicated MiniPC image, or Docker on a machine you already have. ActonOS detects which one it is on.
+- **Agents stay in a sandbox**: tools cannot freely rewrite the operating system. Risky actions pause for your approval.
+- **Secrets stay encrypted**: bot tokens and API keys go into the hardware-bound vault, not a plaintext file.
+- **Plugins are sandboxed**: a plugin only reaches the websites and secrets you allow in its manifest.
 
-### 1. Dual-Runtime Hardware Abstraction Layer (HAL)
-ActonOS automatically detects its environment at startup:
-- **Bare-Metal MiniPC Mode**: Bootable immutable OS image on dedicated hardware (e.g., Intel N100 / AMD Ryzen). Integrates with Linux D-Bus, NetworkManager for Wi-Fi hotspot management, Bubblewrap for kernel namespace isolation, and Cgroups v2 for resource governance.
-- **Docker Container Mode**: Standard Linux container packaging with a pre-configured, batteries-included development toolchain (Python, Node.js, Chromium, Ripgrep, SQLite).
-
-### 2. Universal Agent Framework & Multi-Agent Swarm
-Create unlimited AI agents with custom personas, system directives, model cascade preferences, tool scopes, and delegation budgets. Agents can operate independently or form **Swarms** where parent orchestrators decompose complex goals into dependency-aware DAGs and delegate subtasks across specialized child agents via concurrent Goroutines.
-
-### 3. Unified WASMLoader & Dynamic Extension Engine
-ActonOS provides an extensible, sandboxed extension model running on the pure-Go **Wazero JIT runtime**:
-- **WASM Plugins (`.actonpkg`)**: Sandboxed WebAssembly packages for Tools, Chat Channels, and SaaS Connectors with dynamic schema configuration and Hardware Vault secret brokering.
-- **Model Context Protocol (MCP)**: Native stdio and HTTP/SSE JSON-RPC client for external tool servers.
-- **Skill-as-a-Folder**: Hot-reloading directory scripts containing `skill.json` and executable Bash/Python code monitored via `fsnotify`.
-
-### 4. Hybrid Semantic Memory (RAG)
-Long-term context and workspace files are indexed using a hybrid approach:
-- **Lexical Search**: SQLite FTS5 with BM25 ranking for exact keyword retrieval.
-- **Vector Search**: `chromem-go` local vector store paired with a dedicated loopback `embeddingd` daemon running the `multilingual-e5-small` ONNX model.
-- **Cognitive Decay**: Ebbinghaus forgetting curve modeling to balance recent interactions against enduring knowledge.
-
-### 5. Hardware-Bound Security & Immutable Filesystem
-- **AES-256-GCM Vault**: Credentials, API keys, and OAuth tokens are encrypted with keys derived from hardware identifiers (DMI UUID + CPU serial) via Argon2id.
-- **Sandboxed Execution**: Agent tool executions run with strict resource quotas (512 MB RAM, 50% CPU, 30 PIDs) and restricted filesystem namespaces.
-- **Cryptographic Audit Ledger**: Every tool execution, token spend, and security event is appended to an immutable, SHA-256 chained audit trail (`audit.jsonl`).
-
-### 6. Zero-Config Connectivity
-- **Captive Portal**: On first boot, bare-metal MiniPCs broadcast an `ActonOS-XXXX` Wi-Fi hotspot guiding you through a 1-minute setup wizard.
-- **Embedded Tailscale `tsnet`**: Secure, end-to-end encrypted remote mesh access without opening inbound firewall ports or configuring dynamic DNS.
+If you want the engineering detail, read [Dual-Runtime HAL](../advanced-architecture/dual-runtime-hal) and [Hardware Vault](../advanced-architecture/hardware-vault-security).
 
 ---
 
-## Next Steps
+## Choose an install path
 
-- Check the [System Requirements](system-requirements) to prepare your hardware or server.
-- Deploy with [Docker](docker-deployment) for quick evaluation on existing infrastructure.
-- Install on a [Bare-metal MiniPC](baremetal-installation) for a dedicated, appliance-grade experience.
+- **Try it quickly** on a laptop or existing server: [Docker deployment](docker-deployment).
+- **Run it as an appliance** on a MiniPC: [Bare-metal installation](baremetal-installation) and [zero-config onboarding](zero-config-onboarding).
+
+Then follow the [5-minute quickstart](quickstart-tutorial) to create your first agent.

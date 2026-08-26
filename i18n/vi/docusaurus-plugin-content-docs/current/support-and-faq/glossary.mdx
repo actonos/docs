@@ -5,23 +5,29 @@ sidebar_label: Thuật ngữ
 sidebar_position: 3
 ---
 
-# Thuật ngữ Kỹ thuật
+# Thuật ngữ
 
-Bảng định nghĩa chuẩn hóa các khái niệm cốt lõi và thuật ngữ kiến trúc được sử dụng trong ActonOS.
+Định nghĩa ngắn. Hướng dẫn người dùng tránh hầu hết các tên này; chúng vẫn xuất hiện ở trang kiến trúc và manifest plugin.
 
 ---
 
+### Plugin SDK
+Module Go `github.com/actonos/plugin-sdk` cộng CLI `acton-plugin`. Dùng để scaffold, build, test, ký và đóng gói plugin WebAssembly. Bắt đầu từ [Tổng quan Plugin SDK](../plugin-sdk/overview).
+
+### `acton-plugin`
+CLI cho nhà phát triển (`new`, `validate`, `build`, `test`, `sign`, `pack`). Phiên bản SDK hiện tại: **1.3.0**.
+
 ### WASMLoader
-Phân hệ quản lý plugin thống nhất trong ActonOS (`internal/plugin/`), phụ trách việc phát hiện, xác thực, điều phối vòng đời và hot-reload các tiện ích WebAssembly cho công cụ, kênh chat và kết nối SaaS.
+Phân hệ ActonOS phát hiện, xác thực, khởi động và hot-reload plugin WebAssembly (tool, channel, connector).
 
 ### Wazero
-Engine WebAssembly JIT runtime thuần Go 100% không phụ thuộc CGO, được tích hợp trực tiếp vào `actond` để thực thi các module WASI cách ly với hiệu năng tiệm cận native.
+Engine WebAssembly thuần Go trong `actond`. Plugin chạy ở đây, không phải process native trên host.
 
 ### `.actonpkg`
-Định dạng tệp phân phối chính thức của plugin ActonOS—tệp nén ZIP bao gồm `manifest.json`, tệp nhị phân `plugin.wasm`, biểu tượng và schema cấu hình giao diện.
+Gói zip: `manifest.json`, `plugin.wasm`, tùy chọn `signature.sig` và `README.md`. Tải lên [Plugins](../user-guide/plugins).
 
-### Cầu nối Plugin (`WasmToolBridge`, `WasmChannelBridge`, `WasmConnectorBridge`)
-Các bộ điều hợp trên host giúp liên kết hàm xuất khẩu của module WebAssembly với `ToolRegistry`, `ChannelManager` và Event Bus của hệ thống.
+### Tool / Channel / Connector
+Ba capability của plugin. **Tool** = hàm agent gọi. **Channel** = adapter app chat. **Connector** = tích hợp SaaS, action có thể thành tool.
 
 ### Lớp Trừu tượng Phần cứng (HAL)
 Phân tầng hệ thống trong ActonOS tự động nhận diện máy chủ đang chạy trực tiếp trên Bare-Metal (MiniPC x86_64) hay bên trong Container Docker để linh hoạt điều chỉnh driver mạng, cảm biến đo kiểm và môi trường sandbox.

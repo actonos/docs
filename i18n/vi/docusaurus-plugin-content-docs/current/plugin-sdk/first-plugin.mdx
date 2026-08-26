@@ -1,0 +1,174 @@
+---
+id: first-plugin
+title: Plugin đầu tiên
+sidebar_label: Plugin đầu tiên
+sidebar_position: 2
+---
+
+# Plugin đầu tiên
+
+Tutorial này dựng plugin **tool**, biên dịch WebAssembly, test local, đóng `.actonpkg`, rồi cài vào ActonOS.
+
+Bạn cần [Go 1.26+](https://go.dev/dl/) và CLI `acton-plugin` từ [Tổng quan](overview#prerequisites).
+
+---
+
+## 1. Tạo dự án
+
+```bash
+acton-plugin new currency-converter --type=tool
+cd currency-converter
+```
+
+Thư mục gồm:
+
+| Tệp | Vai trò |
+|:---|:---|
+| `manifest.json` | Id, version, capability, quyền |
+| `main.go` | Handler công cụ |
+| `main_test.go` | Test Go native |
+| `README.md` | Mô tả cho người |
+| `.gitignore` | Bỏ `dist/`, `.wasm`, `.sig`, `.actonpkg` |
+
+Cùng lệnh cho loại khác:
+
+```bash
+acton-plugin new slack-channel --type=channel
+acton-plugin new linear-connector --type=connector
+```
+
+---
+
+## 2. Viết công cụ
+
+Thay `main.go` bằng tool có kiểu. Tag struct thành JSON schema mà agent thấy.
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/actonos/plugin-sdk/sdk"
+)
+
+type ConvertInput struct {
+	From   string  `json:"from" jsonschema:"description=Source currency code (e.g. USD),required"`
+	To     string  `json:"to" jsonschema:"description=Target currency code (e.g. EUR, VND),required"`
+	Amount float64 `json:"amount" jsonschema:"description=Amount to convert,required"`
+}
+
+func init() {
+	tool := sdk.NewTypedTool(
+		"convert_currency",
+		"Convert currency amounts using a live rate API",
+		func(ctx sdk.Context, in ConvertInput) (*sdk.ToolResult, error) {
+			ctx.Log().Info("converting", "from", in.From, "to", in.To, "amount", in.Amount)
+
+			url := fmt.Sprintf("https://api.exchangerate-api.com/v4/latest/%s", in.From)
+			resp, err := ctx.HTTP().Get(url)
+			if err != nil {
+				return sdk.NewResultError(err.Error()), nil
+			}
+
+			return sdk.NewResultData(
+				fmt.Sprintf("Looked up %s -> %s for %.2f", in.From, in.To, in.Amount),
+				map[string]any{
+					"from":   in.From,
+					"to":     in.To,
+					"amount": in.Amount,
+					"http":   resp.Status,
+				},
+			), nil
+		},
+	)
+	sdk.RegisterTool(tool)
+}
+
+func main() {
+	sdk.Serve()
+}
+```
+
+:::note Trả lỗi
+Dùng `sdk.NewResultError(...)` cho lỗi agent cần đọc. Trả `error` Go từ handler sẽ abort lời gọi phía host.
+:::
+
+Cập nhật `manifest.json` để HTTP được phép:
+
+```json
+{
+  "id": "currency-converter",
+  "name": "Currency Converter",
+  "version": "1.0.0",
+  "description": "Convert amounts with a live rate API",
+  "author": "You",
+  "license": "MIT",
+  "capabilities": ["tool"],
+  "permissions": {
+    "net_outbound": ["api.exchangerate-api.com"]
+  },
+  "tools": [
+    {
+      "name": "convert_currency",
+      "description": "Convert currency amounts using a live rate API",
+      "category": "plugin"
+    }
+  ]
+}
+```
+
+---
+
+## 3. Validate, build, test
+
+```bash
+acton-plugin validate
+acton-plugin build
+acton-plugin test --tool=convert_currency --input='{"from":"USD","to":"EUR","amount":100}'
+```
+
+Kỳ vọng:
+
+- `validate` không có lỗi (cảnh báo vẫn được).
+- `build` ghi `dist/plugin.wasm`.
+- `test` nạp module trong **mock host**, bơm secret giả từ manifest, in kết quả tool.
+
+Bước này không cần daemon ActonOS.
+
+---
+
+## 4. Ký và đóng gói
+
+```bash
+acton-plugin sign --gen-key
+acton-plugin sign
+acton-plugin pack
+```
+
+Giữ `plugin_ed25519.key` **bí mật**. Chỉ chia sẻ `plugin_ed25519.key.pub`.
+
+`pack` ghi `dist/currency-converter-1.0.0.actonpkg` (zip `manifest.json`, `plugin.wasm`, `signature.sig` tùy chọn, `README.md` tùy chọn).
+
+---
+
+## 5. Cài vào ActonOS
+
+1. Mở **Extensions → Plugins**.
+2. Bấm **+ Upload Plugin** và chọn `.actonpkg`.
+3. Xác nhận domain `api.exchangerate-api.com`.
+4. Trong [Agent Studio](../user-guide/agent-studio), bật `convert_currency` cho một agent.
+5. Trong Chat: `Đổi 100 USD sang EUR.`
+
+Mở **View Logs** trên thẻ plugin nếu lời gọi thất bại.
+
+---
+
+## Bạn vừa học
+
+- Scaffold bằng `acton-plugin new --type=tool`.
+- `sdk.NewTypedTool` + `sdk.RegisterTool` + `sdk.Serve()`.
+- `net_outbound` tối thiểu trong manifest.
+- Test mock host local, rồi pack và upload.
+
+Tiếp: [Plugin công cụ](tools), hoặc đổi loại theo [Plugin kênh](channels) / [Plugin connector](connectors).

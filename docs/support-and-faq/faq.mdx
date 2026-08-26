@@ -5,24 +5,27 @@ sidebar_label: Frequently Asked Questions
 sidebar_position: 2
 ---
 
-# Frequently Asked Questions (FAQ)
+# Frequently Asked Questions
 
-Answers to common questions about ActonOS architecture, privacy, capabilities, and hardware.
+Short answers for operators. Deeper internals live in [Advanced Architecture](../advanced-architecture/dual-runtime-hal) and the [glossary](glossary).
 
 ---
 
-## General & Capabilities
+## General
 
-### What makes ActonOS different from standard AI agent frameworks?
-Unlike Python-based CLI frameworks that run unconstrained scripts, ActonOS is a **complete operating system and orchestration engine**. It provides:
-1. Kernel-level sandboxing (Bubblewrap & Cgroups v2) and pure-Go WebAssembly JIT (Wazero).
-2. Hardware-encrypted credential vaults with dynamic secret brokering.
-3. Unified WASMLoader plugin subsystem for Tools, Chat Channels, and SaaS Connectors.
-4. Durable checkpointing and self-healing OTA updates.
-5. Dual-runtime support (dedicated MiniPCs & Docker).
+### How is ActonOS different from a typical agent CLI?
+ActonOS is an operating system for agents, not a script you run in a terminal. You get:
 
-### Can I write and install custom plugins without restarting the OS?
-**Yes.** Plugins compile to `.wasm` / `.actonpkg` packages. When uploaded through the **Plugins** page (`/plugins`), the WASMLoader hot-loads the WebAssembly binary inside the Wazero JIT runtime instantaneously.
+1. Sandboxed tool execution (so agents cannot freely rewrite the host OS).
+2. An encrypted vault for API keys and bot tokens.
+3. Plugins for tools, chat channels, and SaaS apps — install without a reboot.
+4. Missions that resume after a power cut, and self-healing updates.
+5. Two install modes: a MiniPC image, or Docker.
+
+### How do I install a plugin? How do I write one?
+**Install:** **Extensions → Plugins → Upload** a `.actonpkg`. See [Plugins](../user-guide/plugins).
+
+**Write one:** use the [Plugin SDK](../plugin-sdk/overview). Scaffold with `acton-plugin new`, then build, test, pack, and upload. You do not restart ActonOS.
 
 ### Can ActonOS run 100% offline without internet access?
 **Yes.** When configured with local LLM runtimes (such as **Ollama**, **vLLM**, or local **ONNX** models), ActonOS operates entirely on your local area network with zero data leaving your machine.

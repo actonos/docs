@@ -1,32 +1,49 @@
 ---
 id: terminal
-title: Web Terminal & Dòng Lệnh Sandboxed
+title: Web Terminal
 sidebar_label: Web Terminal
-sidebar_position: 12
+sidebar_position: 13
 ---
 
-# Web Terminal & Dòng Lệnh Sandboxed
+# Web Terminal
 
-**Web Terminal** cung cấp một cửa sổ dòng lệnh tương tác an toàn trực tiếp trên trình duyệt web.
+**Web Terminal** là shell dòng lệnh trong trình duyệt. Dùng cho `git`, `htop`, editor, kiểm tra nhanh. Nhật ký agent nằm ở [Vận hành trực tiếp](operations); trang này để **bạn** gõ lệnh.
 
----
-
-## 1. Cơ chế Cách ly An toàn Sandbox
-
-Mọi câu lệnh chạy trong terminal đều được kiểm soát nghiêm ngặt:
-
-### Trên MiniPC Bare-Metal:
-- Chạy qua **Bubblewrap (`bwrap`)** và Linux **Cgroups v2**.
-- Các thư mục hệ thống (`/usr`, `/lib`, `/bin`) được gắn kết ở chế độ **Chỉ Đọc (Read-Only)**.
-- Vùng được phép ghi gồm thư mục tạm của agent và tài liệu **Workspace** của bạn, mở được theo tên gốc (ví dụ `report.pdf` trong `user-workspace/`).
-- Giới hạn cứng: **512 MB RAM**, **50% CPU** và tối đa **30 tiến trình đồng thời**.
-
-### Trên Docker Container:
-- Chạy dưới quyền user không có root `acton` (UID 1000) trong môi trường subshell jail.
+Mở **Terminal** trên thanh bên.
 
 ---
 
-## 2. Tính năng Hỗ trợ
+## Bạn làm được gì
 
-- Hỗ trợ màu sắc ANSI đầy đủ, tương thích các công cụ dòng lệnh như `htop`, `vim`, `nano`, `git`.
-- Tự động lưu lịch sử lệnh giữa các lần tải lại trang.
+- xterm đủ màu (vim, nano, htop, tmux, git).
+- Copy/paste từ menu chuột phải.
+- Lịch sử lệnh giữ qua lần tải lại trang.
+
+Tệp Workspace dùng được theo tên gốc (ví dụ `report.pdf` qua `user-workspace/`).
+
+---
+
+## Giới hạn (không phải root trên máy chủ)
+
+Lệnh không chạy root trên máy:
+
+**Bare-metal**
+
+- Cách ly bằng Bubblewrap và cgroups.
+- `/usr`, `/lib`, `/bin` chỉ đọc.
+- Vùng ghi được là scratchpad agent và Workspace của bạn.
+- Trần: **512 MB RAM**, **50% CPU**, **30 tiến trình**.
+
+**Docker**
+
+- User không root `acton` (UID 1000) trong subshell hạn chế.
+
+Nếu lệnh bị chặn, đó là sandbox, không phải terminal hỏng. Nhờ agent làm việc trong Workspace, hoặc đổi yêu cầu.
+
+---
+
+## Trang liên quan
+
+- [Vận hành trực tiếp](operations) — nhật ký agent chỉ đọc.
+- [Workspace](workspace) — tệp bạn mở từ shell.
+- [Cách ly sandbox](../advanced-architecture/sandbox-isolation) — quy tắc chi tiết.

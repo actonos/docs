@@ -1,67 +1,72 @@
 ---
 id: dashboard
-title: Dashboard & System Observability
+title: Dashboard
 sidebar_label: Dashboard
 sidebar_position: 1
 ---
 
-# Dashboard & System Observability
+# Dashboard
 
-The **ActonOS Dashboard** serves as the primary cockpit for monitoring agent activity, system telemetry, resource consumption, and background automations in real time.
+The **Dashboard** is the home screen. Use it to see whether ActonOS is healthy, which agents are busy, and whether anything is waiting for your approval.
 
-```mermaid
-graph TD
-    A["ActonOS Core Telemetry"] --> B["Hardware Metrics: CPU · RAM · Disk · Temp"]
-    A --> C["Active Agent Swarms & Live Missions"]
-    A --> D["Real-time Event Stream via WebSocket"]
-    A --> E["Pending Human Approvals Queue"]
-    B --> F["Dashboard UI (React 19 + Tailwind v4)"]
-    C --> F
-    D --> F
-    E --> F
-```
+Open it from **Dashboard** in the left sidebar, or press **`Ctrl + K`** (`Cmd + K` on macOS) and type `Dashboard`.
 
 ---
 
-## 1. Top Telemetry Bar
+## Status bar
 
-The top telemetry header provides a continuous pulse on the physical or containerized host:
+The top bar updates about every two seconds:
 
-- **CPU Usage Gauge**: Real-time multi-core processor load, updated every 2 seconds via WebSocket snapshot.
-- **RAM Allocation**: Active memory consumption vs. total physical capacity (e.g., `1.8 GB / 16 GB`).
-- **Disk Storage**: Used vs. available storage on the persistent `/data` volume.
-- **HAL Mode Badge**: Displays whether the system is running in `Bare-metal (bwrap)` or `Docker Container` mode.
-- **Chip Temperature (Bare-metal)**: Direct thermal sensor readout from the motherboard D-Bus interface.
+- **CPU** — processor load.
+- **RAM** — memory in use versus total (for example `1.8 GB / 16 GB`).
+- **Disk** — space used on the persistent `/data` volume.
+- **Runtime badge** — `Bare-metal` or `Docker`, depending on how you installed ActonOS.
+- **Temperature** — chip temperature, on bare-metal hardware only.
 
----
-
-## 2. Active Agents Overview
-
-The central cards display all currently registered agents:
-- **Agent Avatar & Name**: Quick-glance identification.
-- **State Indicator**:
-  - 🟢 `Idle` - Agent is awaiting input or scheduled pulse.
-  - 🟡 `Executing Tool` - Agent is actively calling an MCP, WASM, or Native tool.
-  - 🟣 `Delegated` - Agent is coordinating subtasks across a child swarm.
-  - 🔴 `Approval Required` - Agent execution is paused awaiting human clearance.
-- **Quick Action**: Click any agent card to jump directly into a dedicated Chat session or open its configuration in **Agent Studio**.
+If CPU or disk stays high for a long time, check [Live Operations](operations) and [Troubleshooting](../support-and-faq/troubleshooting).
 
 ---
 
-## 3. Global Command Palette (`Ctrl + K`)
+## Agent cards
 
-Press **`Ctrl + K`** (or **`Cmd + K`** on macOS) from anywhere within ActonOS to launch the Omnisearch Command Palette:
+Each registered agent appears as a card:
 
-- **Quick Navigation**: Jump instantly to any page (`Chat`, `Missions`, `Plugins`, `Skills`, `Settings`, `Terminal`).
-- **Agent Direct Search**: Type an agent name to initiate an immediate chat session.
-- **File Locator**: Locate and open files in the Workspace without navigating the folder tree.
-- **Quick Actions**: Trigger manual **System Backup**, **Heartbeat Pulse**, or **Session Lock**.
+| Color | State | Meaning |
+|:---|:---|:---|
+| Green | Idle | Waiting for a chat, mission, or scheduled pulse. |
+| Yellow | Executing | Calling a tool right now. |
+| Purple | Delegated | Coordinating work with child agents. |
+| Red | Approval required | Paused until you approve or reject an action. |
+
+Click a card to open Chat with that agent, or jump to its settings in [Agent Studio](agent-studio).
 
 ---
 
-## 4. Pending Approvals Banner
+## Command palette (`Ctrl + K`)
 
-When an autonomous agent attempts a high-risk mutation (such as modifying system files, executing unknown shell commands, or sending outbound email broadcasts), an amber alert banner appears across the dashboard:
+From any page, press **`Ctrl + K`** (`Cmd + K` on macOS) to:
 
-- **Action Preview**: Displays the exact tool name, target path/URL, and parameter payload.
-- **Approving / Rejecting**: Click **Approve** (with optional audit reason) to resume execution from its exact checkpoint, or **Reject** to abort the action safely.
+- Jump to Chat, Missions, Plugins, Skills, Settings, or Terminal.
+- Start a chat by typing an agent name.
+- Open a Workspace file without browsing the folder tree.
+- Trigger **System Backup**, a **Heartbeat Pulse**, or **Session Lock**.
+
+---
+
+## Approvals
+
+When an agent tries something sensitive (editing system files, running an unknown shell command, sending a broad email), an amber banner appears on the dashboard:
+
+1. Read the tool name, target, and arguments.
+2. Click **Approve** to resume from the exact pause point (you can add a short reason for the audit log).
+3. Click **Reject** to stop that action.
+
+You can also review approvals from [Notifications](notifications) and [Live Operations](operations).
+
+---
+
+## Related pages
+
+- [Live Operations](operations) — logs, token use, and live previews.
+- [Agent Studio](agent-studio) — create and govern agents.
+- [Notifications](notifications) — approvals and system alerts.

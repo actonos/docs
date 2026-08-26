@@ -5,24 +5,27 @@ sidebar_label: Câu hỏi Thường gặp
 sidebar_position: 2
 ---
 
-# Câu hỏi Thường gặp (FAQ)
+# Câu hỏi thường gặp
 
-Giải đáp các thắc mắc phổ biến về kiến trúc, tính riêng tư, tính năng và phần cứng của ActonOS.
+Trả lời ngắn cho người vận hành. Nội bộ sâu hơn nằm ở [Kiến trúc nâng cao](../advanced-architecture/dual-runtime-hal) và [thuật ngữ](glossary).
 
 ---
 
-## Tính năng Chung & Năng lực Hệ thống
+## Chung
 
-### Điểm khác biệt giữa ActonOS và các framework AI Agent thông thường?
-Không giống các thư viện Python chạy script không kiểm soát, ActonOS là **một hệ điều hành hoàn chỉnh và động cơ điều phối chuyên dụng**. Hệ thống tích hợp:
-1. Cách ly sandbox cấp nhân (Bubblewrap & Cgroups v2) và WebAssembly JIT thuần Go (Wazero).
-2. Két bí mật mã hóa phần cứng với cơ chế môi giới token động.
-3. Phân hệ Plugin WASMLoader hợp nhất cho Công cụ, Kênh chat và Kết nối SaaS.
-4. Lưu trạng thái bền vững và cập nhật OTA tự phục hồi.
-5. Hỗ trợ chạy song song Bare-Metal (MiniPC vật lý) và Container Docker.
+### ActonOS khác CLI agent thông thường thế nào?
+ActonOS là hệ điều hành cho agent, không phải script bạn chạy trong terminal. Bạn có:
 
-### Tôi có thể tự viết và cài đặt Plugin tùy chỉnh mà không cần khởi động lại OS không?
-**Hoàn toàn được.** Plugin được biên dịch thành các gói `.wasm` / `.actonpkg`. Khi tải lên qua trang **Plugins** (`/plugins`), WASMLoader sẽ hot-load nhị phân WebAssembly trong Wazero runtime ngay lập tức.
+1. Thực thi công cụ trong sandbox (agent không tùy ý sửa OS host).
+2. Vault mã hóa cho API key và token bot.
+3. Plugin cho công cụ, kênh chat, app SaaS — cài không cần reboot.
+4. Nhiệm vụ tiếp tục sau mất điện, cập nhật tự phục hồi.
+5. Hai cách cài: ảnh MiniPC, hoặc Docker.
+
+### Cài plugin thế nào? Tự viết thế nào?
+**Cài:** **Extensions → Plugins → Upload** tệp `.actonpkg`. Xem [Plugins](../user-guide/plugins).
+
+**Viết:** dùng [Plugin SDK](../plugin-sdk/overview). Scaffold bằng `acton-plugin new`, rồi build, test, pack, upload. Không cần khởi động lại ActonOS.
 
 ### ActonOS có thể chạy Offline 100% không cần Internet không?
 **Có.** Khi kết hợp với các LLM nội bộ (như **Ollama**, **vLLM**, hoặc các mô hình **ONNX** cục bộ), ActonOS vận hành trọn vẹn trong mạng LAN nội bộ mà không có bất kỳ dữ liệu nào gửi ra ngoài.

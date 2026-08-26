@@ -1,0 +1,71 @@
+---
+id: security
+title: Bảo mật plugin
+sidebar_label: Bảo mật
+sidebar_position: 8
+---
+
+# Bảo mật plugin
+
+Plugin chạy trong bộ nhớ WebAssembly cách ly. Vậy chưa đủ: bạn vẫn phải khai **chúng được đụng gì**. Coi manifest là tài liệu bảo mật.
+
+---
+
+## Ít quyền nhất
+
+1. **Liệt kê host thật.** Ưu tiên `api.github.com` hoặc `*.telegram.org`. Đừng ship `"net_outbound": ["*"]` lên production — `validate` đã cảnh báo.
+2. **Gọi đúng tên bí mật.** Chỉ xin khóa vault bạn đọc. Đừng log token (`ctx.Log()` hiện trên tab **Logs**). Đừng cất token plaintext trong `ctx.Storage()`.
+3. **Storage theo id plugin.** Bạn không đọc được kho KV của plugin khác. Vẫn tránh nhét bí mật vào đó.
+4. **Workspace là opt-in.** Chỉ bật `"workspace": true` nếu plugin phải đọc/ghi tài liệu của user.
+
+Người vận hành thấy tóm tắt quyền **trước** khi bấm Install. Manifest tham lam dễ bị từ chối.
+
+---
+
+## Ký
+
+```bash
+acton-plugin sign --gen-key --key=plugin_ed25519.key
+acton-plugin sign --key=plugin_ed25519.key
+acton-plugin pack
+```
+
+- Chữ ký phủ **cả** `manifest.json` và `plugin.wasm`.
+- Giữ `.key` ngoài git, artifact CI, và `.actonpkg`.
+- Công bố `.key.pub` để admin ghim khóa nhà phát hành.
+- Admin có thể yêu cầu chữ ký hợp lệ trước khi plugin được chạy.
+
+---
+
+## Bí mật lúc chạy
+
+Trường `x-secret: true` trong `config_schema` được ghi vault phần cứng. Code của bạn chỉ nhận giá trị giải mã trong lần gọi hiện tại:
+
+```go
+token, err := ctx.Vault().GetSecret("discord_bot_tokens." + acc.AccountID)
+```
+
+Mục `permissions.secrets` phải cho phép khóa đó (hoặc `prefix.*`).
+
+Cách vault được dựng: [Hardware Vault](../advanced-architecture/hardware-vault-security).
+
+---
+
+## Host vẫn siết
+
+Dù manifest hợp lệ:
+
+- HTTP và WebSocket bị lọc lại ở syscall.
+- Đọc vault khóa lạ thì thất bại.
+- Topic không nằm trong `bus_events` bị bỏ.
+- Plugin không có filesystem thô trừ API Workspace bạn bật.
+
+Viết tool như thể mạng có thể lỗi và token có thể thiếu. Trả `sdk.NewResultError` thay vì panic.
+
+---
+
+## Trang liên quan
+
+- [Manifest](manifest) — trường quyền.
+- [Tra cứu CLI](cli-reference) — `validate` và `sign`.
+- [Host ABI](host-abi) — syscall mà quyền đó chặn.

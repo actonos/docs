@@ -1,26 +1,52 @@
 ---
 id: notifications
-title: Trung tâm Thông báo & Báo động
-sidebar_label: Thông báo & Cảnh báo
-sidebar_position: 13
+title: Thông báo
+sidebar_label: Thông báo
+sidebar_position: 14
 ---
 
-# Trung tâm Thông báo & Báo động
+# Thông báo
 
-**Trung tâm Thông báo** gom toàn bộ cảnh báo hệ thống, yêu cầu phê duyệt từ Agent và kết quả hoàn thành nhiệm vụ về một nơi duy nhất.
+**Notification Center** liệt kê sự kiện cần bạn nhìn: phê duyệt, nhiệm vụ xong, tích hợp đứt, lỗi hệ thống.
 
----
-
-## 1. Các Loại Thông báo Hệ thống
-
-- 🔔 **Yêu cầu Phê duyệt**: Agent chờ bạn phê duyệt một hành động nhạy cảm.
-- ✅ **Hoàn thành Nhiệm vụ**: Tác nhân tự trị đã hoàn tất đồ thị DAG của nhiệm vụ.
-- ⚠️ **Cảnh báo Vận hành**: Chạm ngưỡng tài nguyên CPU/RAM hoặc cảnh báo nghẽn `[STALL WARNING]`.
-- 🔄 **Cập nhật Hệ thống OTA**: Có bản cập nhật hệ điều hành ActonOS mới.
+Mở **Notifications** trên thanh bên.
 
 ---
 
-## 2. Thông báo Đẩy Web Push (VAPID)
+## Các loại
 
-- Hỗ trợ đăng ký nhận thông báo trình duyệt trên máy tính và điện thoại.
-- Nhận cảnh báo ngay cả khi bạn đã đóng tab ActonOS.
+| Loại | Nhãn | Việc cần làm |
+|:---|:---|:---|
+| Cần phê duyệt | Cam | Mở ra, duyệt hoặc từ chối. |
+| Mốc nhiệm vụ | Xanh | Nhiệm vụ hoặc tự động hóa đã xong. |
+| Cảnh báo tích hợp | Vàng | Bot chat hoặc token OAuth rớt; kết nối lại nếu vẫn đỏ. |
+| Lỗi hệ thống | Đỏ | Đĩa, sandbox, hoặc daemon — xem [Xử lý sự cố](../support-and-faq/troubleshooting). |
+| Info | Xanh dương | Sao lưu xong, có bản OTA, tương tự. |
+
+---
+
+## Push trên trình duyệt
+
+Để nhận cảnh báo khi tab ActonOS đã đóng:
+
+1. Mở **Notifications**.
+2. Bấm **Enable Browser Push Notifications**.
+3. Bấm **Allow** trên hộp trình duyệt.
+
+Phê duyệt và cảnh báo ưu tiên cao sẽ hiện như thông báo hệ điều hành trên máy hoặc điện thoại.
+
+---
+
+## Dọn hộp thư
+
+- Lọc: Tất cả, Chưa đọc, Phê duyệt, Lỗi.
+- Đánh dấu một mục đã đọc, hoặc **Mark All as Read**.
+- **Clear History** xóa cảnh báo cũ.
+
+---
+
+## Trang liên quan
+
+- [Dashboard](dashboard) — cùng phê duyệt dạng banner.
+- [Kênh chat](channels) — kết nối lại bot sau cảnh báo.
+- [Connectors](connectors) — xác thực lại app SaaS.

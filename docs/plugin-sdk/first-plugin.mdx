@@ -1,0 +1,174 @@
+---
+id: first-plugin
+title: Your first plugin
+sidebar_label: Your first plugin
+sidebar_position: 2
+---
+
+# Your first plugin
+
+This tutorial builds a **tool** plugin, compiles it to WebAssembly, tests it locally, packs a `.actonpkg`, and installs it in ActonOS.
+
+You need [Go 1.26+](https://go.dev/dl/) and the `acton-plugin` CLI from [Overview](overview#prerequisites).
+
+---
+
+## 1. Scaffold the project
+
+```bash
+acton-plugin new currency-converter --type=tool
+cd currency-converter
+```
+
+The folder contains:
+
+| File | Role |
+|:---|:---|
+| `manifest.json` | Id, version, capabilities, permissions |
+| `main.go` | Tool handler |
+| `main_test.go` | Native Go tests |
+| `README.md` | Human description |
+| `.gitignore` | Ignores `dist/`, `.wasm`, `.sig`, `.actonpkg` |
+
+The same command works for the other types:
+
+```bash
+acton-plugin new slack-channel --type=channel
+acton-plugin new linear-connector --type=connector
+```
+
+---
+
+## 2. Implement the tool
+
+Replace `main.go` with a typed tool. Struct tags become the JSON schema the agent sees.
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/actonos/plugin-sdk/sdk"
+)
+
+type ConvertInput struct {
+	From   string  `json:"from" jsonschema:"description=Source currency code (e.g. USD),required"`
+	To     string  `json:"to" jsonschema:"description=Target currency code (e.g. EUR, VND),required"`
+	Amount float64 `json:"amount" jsonschema:"description=Amount to convert,required"`
+}
+
+func init() {
+	tool := sdk.NewTypedTool(
+		"convert_currency",
+		"Convert currency amounts using a live rate API",
+		func(ctx sdk.Context, in ConvertInput) (*sdk.ToolResult, error) {
+			ctx.Log().Info("converting", "from", in.From, "to", in.To, "amount", in.Amount)
+
+			url := fmt.Sprintf("https://api.exchangerate-api.com/v4/latest/%s", in.From)
+			resp, err := ctx.HTTP().Get(url)
+			if err != nil {
+				return sdk.NewResultError(err.Error()), nil
+			}
+
+			return sdk.NewResultData(
+				fmt.Sprintf("Looked up %s -> %s for %.2f", in.From, in.To, in.Amount),
+				map[string]any{
+					"from":   in.From,
+					"to":     in.To,
+					"amount": in.Amount,
+					"http":   resp.Status,
+				},
+			), nil
+		},
+	)
+	sdk.RegisterTool(tool)
+}
+
+func main() {
+	sdk.Serve()
+}
+```
+
+:::note Returning errors
+Return `sdk.NewResultError(...)` for failures the agent should read. Returning a Go `error` from the handler aborts the call at the host.
+:::
+
+Update `manifest.json` so the HTTP call is allowed:
+
+```json
+{
+  "id": "currency-converter",
+  "name": "Currency Converter",
+  "version": "1.0.0",
+  "description": "Convert amounts with a live rate API",
+  "author": "You",
+  "license": "MIT",
+  "capabilities": ["tool"],
+  "permissions": {
+    "net_outbound": ["api.exchangerate-api.com"]
+  },
+  "tools": [
+    {
+      "name": "convert_currency",
+      "description": "Convert currency amounts using a live rate API",
+      "category": "plugin"
+    }
+  ]
+}
+```
+
+---
+
+## 3. Validate, build, test
+
+```bash
+acton-plugin validate
+acton-plugin build
+acton-plugin test --tool=convert_currency --input='{"from":"USD","to":"EUR","amount":100}'
+```
+
+Expected:
+
+- `validate` reports no errors (warnings are allowed).
+- `build` writes `dist/plugin.wasm`.
+- `test` loads the module in a **mock host**, injects fake vault secrets from the manifest, and prints the tool result.
+
+You do not need a running ActonOS daemon for this step.
+
+---
+
+## 4. Sign and pack
+
+```bash
+acton-plugin sign --gen-key
+acton-plugin sign
+acton-plugin pack
+```
+
+Keep `plugin_ed25519.key` **private**. Share only `plugin_ed25519.key.pub`.
+
+`pack` writes `dist/currency-converter-1.0.0.actonpkg` (a zip of `manifest.json`, `plugin.wasm`, optional `signature.sig`, optional `README.md`).
+
+---
+
+## 5. Install in ActonOS
+
+1. Open **Extensions → Plugins**.
+2. Click **+ Upload Plugin** and choose the `.actonpkg`.
+3. Confirm the domain `api.exchangerate-api.com`.
+4. In [Agent Studio](../user-guide/agent-studio), enable `convert_currency` on an agent.
+5. In Chat: `Convert 100 USD to EUR.`
+
+Open **View Logs** on the plugin card if the call fails.
+
+---
+
+## What you just learned
+
+- Scaffold with `acton-plugin new --type=tool`.
+- `sdk.NewTypedTool` + `sdk.RegisterTool` + `sdk.Serve()`.
+- Least-privilege `net_outbound` in the manifest.
+- Local mock-host tests, then pack and upload.
+
+Next: [Tool plugins](tools), or switch type and follow [Channel plugins](channels) / [Connector plugins](connectors).

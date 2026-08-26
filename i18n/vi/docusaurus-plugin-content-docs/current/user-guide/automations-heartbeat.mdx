@@ -1,40 +1,61 @@
 ---
 id: automations-heartbeat
-title: Tự động hóa & Nhịp tim OpenClaw
-sidebar_label: Tự động hóa & Heartbeat
+title: Tự động hóa
+sidebar_label: Tự động hóa
 sidebar_position: 6
 ---
 
-# Tự động hóa & Nhịp tim OpenClaw
+# Tự động hóa
 
-ActonOS kết hợp **lịch cron** với **Daemon Nhịp tim Heartbeat** tuân thủ nghiêm ngặt theo [Chuẩn OpenClaw Heartbeat Contract](https://docs.openclaw.ai/vi/gateway/heartbeat).
+**Automations** chạy việc định kỳ. Giữa các việc đó, **heartbeat** kiểm tra xem có thật sự cần gọi agent không — thời gian rỗi không tốn token.
+
+---
+
+## Tạo lịch
+
+1. Mở **Automations** trên thanh bên.
+2. Bấm **+ New Automation**.
+3. Nhập cron 5 trường (ví dụ `0 9 * * 1-5` = 09:00 các ngày trong tuần).
+4. Chọn agent và viết chỉ thị thường trực, ví dụ:
+
+   ```
+   Kiểm tra pull request GitHub đang mở, tóm tắt review, đăng lên Slack.
+   ```
+
+5. Có thể chọn kênh chat để nhận báo cáo.
+6. Bấm **Save Automation**.
+
+Bấm **Pulse Now** trên dashboard bất cứ lúc nào bạn muốn kiểm tra ngay.
+
+---
+
+## Heartbeat tiết kiệm token thế nào
 
 ```mermaid
 flowchart TD
-    A["Bộ đếm Heartbeat / Sự kiện Cron"] --> B{"Trong Khung giờ Hoạt động?<br/>(ví dụ: 08:00 - 20:00)"}
-    B -->|Không| C["Tạm dừng / Đi ngủ"]
-    B -->|Có| D{"Có công việc tồn đọng hoặc trong HEARTBEAT.md?"}
-    D -->|Không (Rảnh rỗi)| E["Trả về HEARTBEAT_OK<br/>(Không gọi Model / 0 Token)"]
-    D -->|Có việc| F["Thực thi Tác vụ qua Agent"]
-    F --> G{"Kết quả Model"}
-    G -->|Mã HEARTBEAT_OK| H["Xác nhận & Đi ngủ"]
-    G -->|Có nội dung cần báo| I["Gửi Thông báo đến Kênh chat"]
+    A["Hẹn giờ hoặc cron"] --> B{"Trong giờ hoạt động?"}
+    B -->|Không| C["Ngủ"]
+    B -->|Có| D{"Có việc thật?"}
+    D -->|Không| E["HEARTBEAT_OK · không gọi mô hình"]
+    D -->|Có| F["Agent được gán chạy việc"]
+    F --> G{"Có kết quả hữu ích?"}
+    G -->|Không / chào hỏi| H["Bỏ qua và ngủ"]
+    G -->|Có| I["Gửi báo cáo ra kênh"]
 ```
 
+Thực tế:
+
+- **Rỗi thì miễn phí.** Hàng đợi trống và `HEARTBEAT.md` không có chỉ thị thì ActonOS **không** gọi mô hình.
+- **Không tán gẫu.** Chạy headless sẽ lọc câu chào kiểu “Mình có thể giúp gì?”.
+- **Giờ hoạt động.** Đặt khung (ví dụ `08:00`–`22:00` múi `Asia/Ho_Chi_Minh`) để ban đêm yên.
+- **Cooldown.** Kích hoạt trong 15 giây được gom thành một nhịp.
+
+Thiết kế theo [hợp đồng OpenClaw Heartbeat](https://docs.openclaw.ai/vi/gateway/heartbeat).
+
 ---
 
-## 1. Chuẩn Nhịp tim Không Tốn Token (Zero-Waste Heartbeat)
+## Trang liên quan
 
-- **Không Gọi Model Khi Rảnh Rỗi**: Nếu không có tác vụ nào đang chờ xử lý, Heartbeat **không** gọi mô hình AI, giúp tiết kiệm 100% chi phí token.
-- **Quy tắc Thực thi Không Người (Headless Mode)**: Khi có việc cần làm, hệ thống tự động chèn quy tắc nhắc mô hình không chào hỏi xã giao vô ích mà tập trung làm việc.
-- **Bộ lọc Chống Tán gẫu (`looksLikeIdleChatter`)**: Tự động lọc bỏ các câu chào hỏi xã giao ngoài ý muốn.
-- **Khung giờ Hoạt động (Active Hours)**: Giới hạn thời gian kích hoạt tác vụ nền trong ngày (ví dụ `08:00` đến `22:00`).
-
----
-
-## 2. Tạo Lịch trình Tự động Mới
-
-1. Bấm vào mục **Tự động (Automations)** trên menu.
-2. Bấm **+ Tạo Tự động hóa Mới**.
-3. Nhập **biểu thức Cron** (5 trường, ví dụ `0 9 * * 1-5` chạy lúc 9h sáng các ngày trong tuần).
-4. Chọn Agent xử lý và Kênh nhận thông báo báo cáo.
+- [Dashboard](dashboard) — **Pulse Now** và trạng thái agent.
+- [Nhiệm vụ](missions) — việc dài một lần, không phải cron.
+- [Kênh chat](channels) — nơi đăng báo cáo.

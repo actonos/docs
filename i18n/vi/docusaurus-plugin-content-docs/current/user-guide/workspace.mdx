@@ -1,79 +1,74 @@
 ---
 id: workspace
-title: Không gian Làm việc & Bộ nhớ Ngữ nghĩa
-sidebar_label: Workspace & Bộ nhớ RAG
-sidebar_position: 11
+title: Workspace
+sidebar_label: Workspace
+sidebar_position: 12
 ---
 
-# Không gian Làm việc & Bộ nhớ Ngữ nghĩa (Workspace)
+# Workspace
 
-Trang **Tệp (Workspace)** cung cấp một môi trường quản lý tệp tin tích hợp trình soạn thảo mã nguồn và động cơ lập chỉ mục **Bộ nhớ Ngữ nghĩa (Semantic Memory RAG)** tự động.
-
----
-
-## 1. Trình Soạn thảo & Xem trước Đa năng
-
-ActonOS tích hợp sẵn các trình xem chuyên dụng:
-- **Trình soạn thảo Code (CodeMirror)**: Đầy đủ tính năng đánh dấu cú pháp, thụt đầu dòng, số dòng cho hơn 50 ngôn ngữ lập trình.
-- **Xem trước Markdown Trực tiếp**: Hiển thị bảng biểu, danh sách tác vụ và công thức.
-- **Trình đọc JSON Tương tác**: Cây dữ liệu thu gọn/mở rộng trực quan.
-- **Trình xem Bảng Tính**: Xem bảng dữ liệu `.csv` và `.tsv` dạng lưới dễ theo dõi.
-- **Trình phát Đa phương tiện**: Xem trước hình ảnh, nghe audio, xem video và tài liệu PDF.
+**Workspace** là thư mục tài liệu của bạn trong ActonOS. Tải tệp lên, nhờ agent ghi, mở trong editor có sẵn, hoặc gửi sang Telegram. Tên giữ nguyên: `report.pdf` vẫn là `report.pdf`.
 
 ---
 
-## 2. Quản lý Tệp trong Môi trường Cách ly
+## Mở và sửa tệp
 
-- **Tải lên & Tải nén Zip**: Tải lên tệp đơn lẻ hoặc tải về toàn bộ thư mục dưới dạng file `.zip`.
-- **Thao tác nhanh**: Chuột phải để Đổi tên, Nhân bản (`_copy`), Di chuyển hoặc Xóa tệp.
+Workspace có viewer cho các loại phổ biến:
+
+- Editor mã (tô cú pháp nhiều ngôn ngữ)
+- Xem trước Markdown
+- Cây JSON
+- Bảng CSV / TSV
+- Ảnh, âm thanh, video, PDF
+
+Tải lên hoặc tải xuống, xuất chọn lọc thành `.zip`, chuột phải để đổi tên, nhân bản, di chuyển, xóa. Thanh thống kê hiện dung lượng đang dùng.
 
 ---
 
-## 3. Tệp giữ nguyên tên bạn đặt
+## Tên bạn nói ra được
 
-Khi bạn tải lên `report.pdf` hoặc nhờ agent lưu `weekly-notes.md`, đó chính là tên hiện trên trang Workspace — và cũng là tên agent dùng để tìm, mở, xử lý tệp.
-
-Bạn có thể nói:
+Khi bạn tải `report.pdf` hoặc nhờ agent lưu `weekly-notes.md`, đó là tên trên trang — và tên agent dùng:
 
 - “Tóm tắt `report.pdf` trong workspace.”
-- “Lưu thành `weekly-notes.md`.”
-- “Mở PDF tôi tải hôm qua rồi trích bảng số liệu.”
+- “Lưu cái này thành `weekly-notes.md`.”
+- “Mở PDF tôi tải hôm qua và trích bảng.”
 
-Agent tìm tệp theo tên rồi đọc hoặc xử lý. Bạn không cần nhớ mã ID bên trong hệ thống.
+Bạn không bao giờ truyền ID lưu trữ nội bộ.
 
-:::tip Workspace và thư mục tạm của agent
-**Workspace** là thư mục của bạn. Tệp ở đây hiện trên giao diện và giữ nguyên cho đến khi bạn xóa.
+:::tip Workspace và scratchpad
+**Workspace** là của bạn. Tệp ở đây đến khi bạn xóa.
 
-Agent còn có **thư mục tạm riêng** (scratchpad) để chạy script, soạn nháp. Những tệp đó **không** hiện trên trang Workspace trừ khi agent **xuất** chúng (ví dụ: “lưu PDF này vào workspace của tôi”).
+Agent còn **scratchpad riêng** cho script tạm. Những tệp đó **không** hiện ở đây cho đến khi agent **xuất bản** (ví dụ: “lưu PDF này vào workspace của tôi”).
 :::
 
-### Mở PDF và tài liệu khác bằng script
+### Mở PDF từ script
 
-Khi bạn nhờ agent chạy Python (hoặc lệnh khác) trên tệp đã tải lên, agent dùng **đúng tên gốc**. Quy trình thường gặp:
+1. Tải `report.pdf`, hoặc nhờ agent lưu.
+2. Nhờ: “Trích trang đầu của `report.pdf`.”
+3. Agent mở đúng tên đó (PDF, ảnh, ZIP, Word, Excel…). Tệp không bị dồn thành text chat trước, nên font còn nguyên.
 
-1. Bạn tải `report.pdf`, hoặc agent lưu tệp đó vào workspace.
-2. Bạn nói: “Trích trang đầu của `report.pdf`.”
-3. Agent tìm tệp rồi mở bằng đúng tên đó.
-
-Cách này dùng được với PDF, ảnh, ZIP, Word, Excel và các tệp nhị phân khác. Tệp không bị chuyển thành chữ trong khung chat trước, nên font và bố cục được giữ nguyên.
-
-### Lưu tệp agent tạo ra vào Workspace
-
-Hãy nhờ agent ghi kết quả **vào workspace** để bạn mở hoặc tải về:
+### Lưu kết quả lại
 
 - “Viết tóm tắt vào `go_126_summary.md` trong workspace.”
-- “Tạo `invoice.pdf` rồi lưu vào workspace của tôi.”
+- “Tạo `invoice.pdf` và lưu vào workspace của tôi.”
 
-Với PDF và tệp nhị phân khác, ActonOS sao chép nguyên tệp đã hoàn thiện. Mở trang **Workspace**, bấm vào tệp rồi tải về.
-
-Bạn cũng có thể nhờ agent [gửi tệp workspace sang Telegram, Discord, Slack, WhatsApp hoặc Zalo](channels#sending-files-to-chat).
+Rồi tải từ Workspace, hoặc [gửi tệp sang app chat](channels#sending-files-to-chat).
 
 ---
 
-## 4. Lập Chỉ mục Bộ nhớ Ngữ nghĩa Tự động (Vector RAG)
+## Tìm trong tệp của bạn
 
-Mọi tệp văn bản và mã nguồn trong `/data/workspace/` đều được tự động đưa vào bộ nhớ vector:
-1. **Hàng đợi Giảm tải Debounce (60s)**: Gom các lần sửa đổi liên tiếp để tránh tính toán thừa.
-2. **Phân đoạn Ngữ nghĩa (Chunking)**: Cắt văn bản thành các đoạn có ngữ cảnh phù hợp.
-3. **Mã hóa Vector Cục bộ**: Vector hóa qua mô hình ONNX `multilingual-e5-small` chạy nội bộ.
-4. **Tìm kiếm Lai**: Agent có thể truy vấn đồng thời cả từ khóa chính xác và ý nghĩa ngữ nghĩa.
+Văn bản, Markdown và mã nguồn được lập chỉ mục tự động để agent tìm sau.
+
+- Sửa liên tục chờ khoảng một phút mới index lại, tránh lãng phí.
+- Bấm **Reindex Semantic Memory** nếu tệp mới chưa tìm thấy.
+
+Cách index hoạt động: [Hybrid Memory](../advanced-architecture/hybrid-memory-rag).
+
+---
+
+## Trang liên quan
+
+- [Chat](ai-chat) — đính tệp hoặc nhờ lưu.
+- [Kênh chat](channels) — gửi tệp Workspace sang Telegram hoặc Zalo.
+- [Công cụ và skill](tools-and-skills) — công cụ `native_workspace_*`.

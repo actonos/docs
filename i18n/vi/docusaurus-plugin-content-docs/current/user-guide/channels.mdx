@@ -1,117 +1,112 @@
 ---
 id: channels
-title: Kênh Giao tiếp & Tin nhắn Đa kênh
-sidebar_label: Kênh Giao tiếp (Telegram/Discord)
-sidebar_position: 7
+title: Kênh chat
+sidebar_label: Kênh chat
+sidebar_position: 8
 ---
 
-# Kênh Giao tiếp & Tin nhắn Đa kênh
+# Kênh chat
 
-ActonOS kết nối AI Agent với các nền tảng chat phổ biến (Telegram, Discord, Slack, WhatsApp, Zalo) thông qua **Plugin Kênh WASM** (`WasmChannelBridge`). Kiến trúc này tách biệt việc triển khai giao thức nhắn tin khỏi nhân hệ điều hành, đồng thời áp dụng cơ chế sandbox nghiêm ngặt, mã hóa token bằng Hardware Vault và xác thực ghép đôi Zero-Trust.
-
----
-
-## 1. Cơ chế Hoạt động của Plugin Kênh
-
-Thay vì viết cứng giao thức trong mã nguồn Go của daemon, các kênh chat chạy dưới dạng module WebAssembly biệt lập trong Wazero runtime:
-
-```mermaid
-flowchart LR
-    User["Người vận hành / Chat User\n(Telegram / Discord)"] <--> ExtAPI["API Chat Bên ngoài\n(api.telegram.org)"]
-    ExtAPI <--> Bridge["Plugin Kênh WASM\n(WasmChannelBridge)"]
-    Bridge <--> CM["ActonOS ChannelManager"]
-    CM <--> Swarm["Universal Agent Swarm\n(ReAct Execution)"]
-```
-
-### Các Khả năng Cốt lõi:
-- **Ghép đôi Mã PIN Zero-Trust**: Ngăn chặn người lạ nhắn tin với bot bằng quy trình bắt tay mã PIN 6 chữ số trước khi cấp quyền điều khiển Agent.
-- **Đa Tài khoản Bot (Multi-Bot)**: Kết nối nhiều bot trên cùng một nền tảng (ví dụ: `@dev_support_bot` và `@ops_monitor_bot`).
-- **Định tuyến Tin nhắn Linh hoạt**: Định tuyến tin nhắn nhóm qua cú pháp nhắc tên `@agent_name` hoặc chuyển tiếp về Agent chính.
-- **Truyền phát Luồng WebSocket Thời gian thực (`acton_ws`)**: Độ trễ cực thấp cho Discord Gateway và Slack Socket Mode.
+**Channels** nối agent với Telegram, Discord, Slack, WhatsApp và Zalo. Mỗi app chat là một [plugin](plugins) đã cài. Người ta nhắn bot; agent được gán trả lời. Bạn cũng có thể nhờ agent gửi tệp Workspace vào chat đó.
 
 ---
 
-## 2. Thiết lập Plugin Kênh Chat
+## Thiết lập kênh
 
-### Bước 1: Cài đặt Plugin Kênh
-1. Mở menu **Extensions** → chọn **Plugins** trên thanh điều hướng.
-2. Nếu chưa cài đặt, tải lên gói plugin tương ứng (ví dụ: `channel-telegram.actonpkg` hoặc `channel-discord.actonpkg`).
+### 1. Cài plugin
 
-### Bước 2: Cấu hình Tài khoản Bot & Token
-1. Trên thẻ plugin, bấm **Configure** (Cấu hình).
-2. Tại mục **Tài khoản Bot (Bot Accounts)**, bấm **+ Thêm tài khoản**.
-3. Điền các tham số:
-   - **Account ID**: Mã định danh duy nhất (ví dụ: `tg_dev_bot`).
-   - **Bot Token**: Lấy từ [@BotFather](https://t.me/botfather) hoặc Discord Developer Portal.
-   - **Agent Mặc định**: Chọn Agent phụ trách phản hồi tin nhắn từ bot này.
-   - **Chế độ Định tuyến (Routing Mode)**:
-     - `exclusive`: Chỉ các Agent được chỉ định mới nhận tin nhắn.
-     - `mention`: Tin nhắn trong nhóm được chuyển cho Agent có tên `@agent_name`.
-     - `fallback`: Chuyển tin nhắn chưa gắn nhãn về Agent mặc định.
-4. Bấm **Lưu Thay đổi**. Token được mã hóa an toàn vào **Hardware Vault** (`vault.db`) và plugin hot-reload tức thì.
+1. Mở **Extensions → Plugins**.
+2. Tải gói nếu chưa có (`channel-telegram.actonpkg`, `channel-discord.actonpkg`…).
 
----
+### 2. Thêm tài khoản bot
 
-## 3. Bảo mật Người vận hành & Bắt tay Mã PIN Ghép đôi
+1. Trên thẻ plugin, bấm **Configure**.
+2. Trong **Bot Accounts**, bấm **+ Add Account**.
+3. Điền:
+   - **Account ID** — id ngắn như `tg_dev_bot` (chữ thường, số, `_` hoặc `-`).
+   - **Bot token** — từ [@BotFather](https://t.me/botfather) hoặc Discord Developer Portal.
+   - **Default agent** — ai trả lời tin đến.
+   - **Listen target** — tùy chọn: chỉ nhóm/kênh này.
+   - Công tắc typing, reaction xác nhận, quote-reply (mặc định bật).
+4. Bấm **Save Changes**. Token vào vault mã hóa. Plugin nạp lại ngay.
 
-Khi người dùng mới gửi tin nhắn cho bot lần đầu tiên, hệ thống sẽ thực hiện bắt tay xác thực:
-
-1. Bot sẽ phản hồi lại một **mã ghép đôi 6 chữ số** dùng một lần (ví dụ: `842-195`).
-2. Quản trị viên truy cập vào **System** → **Settings** (hoặc mở modal Ghép đôi) trên giao diện Web UI của ActonOS.
-3. Nhập mã PIN 6 chữ số để phê duyệt User ID đó.
-4. Sau khi xác thực thành công, danh tính người gửi được lưu trữ vĩnh viễn trong sổ cái ủy quyền và các tin nhắn tiếp theo sẽ được xử lý tự động bởi Agent swarm.
+Bạn có thể chạy nhiều bot trên cùng một app (ví dụ bot hỗ trợ và bot vận hành).
 
 ---
 
-## 4. Giám sát Sức khỏe Kênh & Tự phục hồi
+## PIN ghép cặp (tin đầu tiên)
 
-ActonOS liên tục kiểm tra trạng thái hoạt động của các bộ điều hợp kênh:
-- **Bộ giám sát Polling & WebSocket Watchdog**: Khi vòng lặp bị gián đoạn hoặc mất socket, daemon tự động thực hiện tái kết nối theo thuật toán exponential backoff.
-- **Huy hiệu Trạng thái**: Bảng điều khiển Plugins và Operations hiển thị trạng thái trực tiếp: 🟢 `Connected`, 🟡 `Reconnecting`, hoặc 🔴 `Error`.
-- **Cảnh báo Tự động**: Nếu token bị thu hồi hoặc bị chặn API, ActonOS sẽ gửi thông báo khẩn cấp đến Trung tâm Thông báo kèm log chẩn đoán chi tiết.
+Lần đầu một người lạ nhắn bot:
+
+1. Bot trả **PIN 6 số** dùng một lần.
+2. Trong ActonOS, mở **Settings** (hoặc hộp Pairing).
+3. Nhập PIN để ủy quyền người đó.
+4. Tin sau từ người đó đi thẳng tới agent.
+
+Chưa ghép cặp thì bot không chạy công cụ agent cho người gửi đó.
 
 ---
 
-## 5. Gửi tệp sang chat {#sending-files-to-chat}
+## Sức khỏe
 
-Khi tệp đã nằm trong [Workspace](workspace), bạn có thể nhờ agent gửi tệp đó qua ứng dụng chat đã kết nối.
+Thẻ plugin và Operations hiện:
+
+- Xanh **Connected**
+- Vàng **Reconnecting**
+- Đỏ **Error** (token thu hồi, rate limit, mạng)
+
+Socket rớt thì ActonOS thử lại với backoff. Lỗi kéo dài cũng vào [Thông báo](notifications). Mở **Logs** trên thẻ plugin để thấy lỗi cụ thể.
+
+---
+
+## Gửi tệp sang chat {#sending-files-to-chat}
+
+Đặt tệp vào [Workspace](workspace) trước, rồi nhờ.
 
 **Trong Chat ActonOS:**
 
 ```
-Gửi report.pdf trong workspace sang nhóm Telegram.
+Gửi report.pdf từ workspace sang nhóm Telegram.
 ```
 
-**Trên Telegram, Discord hoặc Zalo (nhắn với bot):**
+**Trên Telegram, Discord hoặc Zalo, nhắn bot:**
 
 ```
 Gửi file report.pdf sang đây.
 ```
 
-Điều xảy ra phía sau:
+Điều gì xảy ra:
 
-1. Agent tìm tệp trong workspace theo **tên gốc**.
-2. ActonOS **chuyển nguyên nội dung tệp cho plugin kênh** đã cài (Telegram, Discord, Zalo, …).
-3. Plugin đó tự tải tệp lên theo API của ứng dụng chat.
+1. Agent tìm tệp theo tên gốc.
+2. ActonOS giao byte cho **plugin kênh đã cài**.
+3. Plugin upload bằng API của app chat.
 
-Hệ điều hành **không** tự nói chuyện với Telegram hay Zalo. Việc gửi tệp thuộc về plugin. Nếu gửi thất bại, mở **Plugins** → thẻ kênh đó → **Logs**.
+OS lõi không nói chuyện với Telegram hay Zalo. Nếu gửi thất bại, mở **Plugins → thẻ kênh → Logs**.
 
-:::note Mỗi lần gửi một ứng dụng
-Khi đính kèm tệp, hãy chọn **một** kênh đã cài (ví dụ Telegram). Không gửi tệp tới “tất cả kênh” cùng lúc.
+:::note Một app chat mỗi lần
+Khi đính tệp, chọn **một** kênh đã cài (ví dụ Telegram). Gửi một tệp tới “mọi kênh” không được hỗ trợ.
 :::
 
 ### Người nhận thấy gì
 
-| Ứng dụng | Những gì hiện trong chat |
+| App | Tới nơi là |
 |:---|:---|
-| **Telegram, Discord, Slack, WhatsApp** | Tệp đính kèm bình thường, đúng tên gốc (`report.pdf`). |
-| **Zalo** | Bot gửi tệp qua API JSON của Zalo (đường dẫn HTTPS công khai, hoặc tệp nhỏ được mã hóa trong yêu cầu). Zalo **không** dùng kiểu tải multipart như Telegram. |
+| Telegram, Discord, Slack, WhatsApp | Tệp bình thường, giữ tên (`report.pdf`). |
+| Zalo | Tệp bot đăng qua JSON API của Zalo (URL HTTPS công khai, hoặc tệp nhỏ mã hóa trong request). Zalo không dùng multipart kiểu Telegram. |
 
-### Cập nhật plugin kênh cho khớp phiên bản mới
+### Giữ plugin mới
 
-Sau khi cập nhật ActonOS, hãy cài lại plugin kênh mới nhất (`.actonpkg`) tại **Plugins**. Plugin cũ có thể:
+Sau khi cập nhật ActonOS, cài lại `.actonpkg` kênh mới nhất. Plugin cũ có thể:
 
-- Báo “đã gửi” nhưng chat không hiện tệp (hay gặp trên Zalo).
-- Gửi PDF tải về bị **lỗi font** (dữ liệu tệp bị hỏng trên đường truyền).
+- Báo đã gửi trong khi chat không thấy gì (hay gặp trên Zalo).
+- Gửi PDF **font vỡ** (byte bị hỏng lúc chuyển).
 
-Dùng gói chính thức đã build lại cho Telegram, Discord, Slack, WhatsApp và Zalo để tệp nhị phân được giữ nguyên.
+Dùng gói chính thức trong [Plugin chính thức](../plugin-sdk/official-plugins).
+
+---
+
+## Trang liên quan
+
+- [Plugins](plugins) — cài, log, cài lại.
+- [Workspace](workspace) — tệp bạn có thể gửi.
+- [Chat](ai-chat) — nhờ agent từ giao diện web.

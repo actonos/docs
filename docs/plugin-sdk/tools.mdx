@@ -1,0 +1,157 @@
+---
+id: tools
+title: Tool plugins
+sidebar_label: Tool plugins
+sidebar_position: 3
+---
+
+# Tool plugins
+
+A **tool** is a function an agent can call. The SDK reflects your Go input struct into a JSON Schema, so you do not write the schema by hand.
+
+Create a project with:
+
+```bash
+acton-plugin new my-weather-tool --type=tool
+```
+
+---
+
+## Register a typed tool
+
+```go
+package main
+
+import (
+	"github.com/actonos/plugin-sdk/sdk"
+)
+
+type QueryInput struct {
+	SearchTerm string `json:"search_term" jsonschema:"description=Keywords to search,required"`
+	MaxResults int    `json:"max_results" jsonschema:"description=Maximum results to return"`
+}
+
+func init() {
+	tool := sdk.NewTypedTool("search_docs", "Search documentation", func(ctx sdk.Context, in QueryInput) (*sdk.ToolResult, error) {
+		ctx.Log().Info("search", "term", in.SearchTerm, "limit", in.MaxResults)
+		return sdk.NewResultData("Found 2 documents", map[string]any{"count": 2}), nil
+	})
+	sdk.RegisterTool(tool)
+}
+
+func main() {
+	sdk.Serve()
+}
+```
+
+`jsonschema` tags you can use:
+
+| Tag | Effect |
+|:---|:---|
+| `description=...` | Shown to the model |
+| `required` | Required argument |
+| `enum=a\|b` | Allowed values |
+| `default=...` | Default |
+| `title=...` | Short label |
+
+---
+
+## Results
+
+| Helper | When |
+|:---|:---|
+| `sdk.NewResult(text)` | Success, text only |
+| `sdk.NewResultData(text, map[string]any{...})` | Success plus structured data the model can reuse |
+| `sdk.NewResultError(message)` | Failure the agent should explain to the user |
+
+---
+
+## Host APIs inside a tool
+
+Every handler receives `sdk.Context`:
+
+```go
+func(ctx sdk.Context, in QueryInput) (*sdk.ToolResult, error) {
+    ctx.Log().Info("start")
+
+    resp, err := ctx.HTTP().Get("https://api.example.com/search?q=" + in.SearchTerm)
+    if err != nil {
+        return sdk.NewResultError(err.Error()), nil
+    }
+
+    token, err := ctx.Vault().GetSecret("example_api_key")
+    if err != nil {
+        return sdk.NewResultError("missing API key"), nil
+    }
+    _ = token
+
+    _ = ctx.Storage().Set("last_query", in.SearchTerm)
+
+    return sdk.NewResult(resp.Body), nil
+}
+```
+
+Useful HTTP helpers: `Get`, `GetWithBearer`, `PostJSON`, `PostJSONWithBearer`, `PostBinary`, `Do`.
+
+Declare matching permissions:
+
+```json
+"permissions": {
+  "net_outbound": ["api.example.com"],
+  "secrets": ["example_api_key"],
+  "storage": true
+}
+```
+
+---
+
+## Workspace files
+
+If the tool should read or write **user** documents:
+
+```go
+meta, err := ctx.Workspace().SaveText("reports/summary.md", "# Summary\n")
+if err != nil {
+    return sdk.NewResultError(err.Error()), nil
+}
+data, _, err := ctx.Workspace().ReadBinary("report.pdf")
+```
+
+Set `"workspace": true` in `permissions` (see [Manifest](manifest)).
+
+---
+
+## Manifest `tools` array
+
+List each tool you register. The host uses this for discovery even before the module runs:
+
+```json
+"tools": [
+  {
+    "name": "search_docs",
+    "description": "Search documentation",
+    "category": "plugin"
+  }
+]
+```
+
+The runtime schema still comes from `NewTypedTool`. Keep names identical.
+
+---
+
+## Local test
+
+```bash
+acton-plugin build
+acton-plugin test --tool=search_docs --input='{"search_term":"heartbeat","max_results":5}'
+```
+
+If `--tool` is omitted and the manifest lists tools, the CLI uses the first name.
+
+---
+
+## Related pages
+
+- [Your first plugin](first-plugin) — end-to-end upload.
+- [Connectors](connectors) — `conn.AsTools()` turns SaaS actions into tools.
+- [CLI reference](cli-reference)

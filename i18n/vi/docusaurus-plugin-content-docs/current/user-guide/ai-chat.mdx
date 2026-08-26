@@ -1,58 +1,72 @@
 ---
 id: ai-chat
-title: Chat AI Đa phương thức
-sidebar_label: Chat Đa phương thức
+title: Chat
+sidebar_label: Chat
 sidebar_position: 2
 ---
 
-# Chat AI Đa phương thức & Tương tác
+# Chat
 
-Giao diện **Chat trong ActonOS** hỗ trợ trò chuyện với từng Agent hoặc nhóm Swarm, tải lên phân tích tài liệu/hình ảnh, xem thẻ thực thi công cụ trực tiếp và luồng dữ liệu thời gian thực qua Server-Sent Events (SSE).
-
----
-
-## 1. Bắt đầu Cuộc trò chuyện
-
-1. Bấm vào mục **Chat** trên thanh điều hướng bên trái.
-2. Bấm **+ Cuộc trò chuyện mới**.
-3. Chọn Agent từ menu thả xuống (ví dụ: `Trợ lý Chung`, `Agent Nghiên cứu`, `Coder Swarm`).
-4. Nhập nội dung vào khung soạn thảo và bấm **Enter** (hoặc `Shift + Enter` để xuống dòng).
+**Chat** là nơi bạn nói chuyện với agent. Bạn có thể đính tài liệu và ảnh, xem công cụ chạy trực tiếp, nhờ agent lưu vào [Workspace](workspace) hoặc gửi tệp qua app chat đã nối.
 
 ---
 
-## 2. Tải Tệp & Phân tích Đa phương thức
+## Bắt đầu hội thoại
 
-ActonOS tích hợp bộ tiền xử lý tự động trích xuất nội dung từ các định dạng tệp phổ biến:
+1. Mở **Chat** trên thanh bên.
+2. Bấm **+ New Chat** trên danh sách hội thoại.
+3. Chọn agent (ví dụ `General Assistant` hoặc `Research Agent`).
+4. Gõ tin và nhấn **Enter**. Dùng **Shift + Enter** để xuống dòng.
 
-| Loại tệp | Định dạng hỗ trợ | Phương thức xử lý |
+:::tip Chưa có agent?
+Tạo trong [Agent Studio](agent-studio), hoặc làm [hướng dẫn 5 phút](../getting-started/quickstart-tutorial).
+:::
+
+---
+
+## Đính tệp và ảnh
+
+Bấm biểu tượng kẹp giấy, hoặc kéo thả vào cửa sổ chat.
+
+| Loại | Định dạng | Hệ thống làm gì |
 |:---|:---|:---|
-| **Văn bản & Mã nguồn** | `.txt`, `.md`, `.py`, `.go`, `.js`, `.ts`, `.json`, `.yaml`, `.sql` | Trích xuất văn bản UTF-8 với highlight cú pháp |
-| **Tài liệu văn phòng** | `.pdf`, `.docx`, `.doc` | Chuyển đổi thành định dạng Markdown có phân trang |
-| **Bảng tính & Dữ liệu**| `.csv`, `.tsv`, `.xlsx`, `.xls` | Chuyển đổi thành bảng dữ liệu Markdown kèm phân tích lược đồ |
-| **Hình ảnh** | `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg` | Tối ưu hóa kích thước cho các mô hình thị giác (Claude 3.7 / GPT-4o / Gemini 2.0) |
+| Văn bản và mã | `.txt`, `.md`, `.py`, `.go`, `.js`, `.ts`, `.json`, `.yaml`, `.sql` | Đọc như text. |
+| Tài liệu | `.pdf`, `.docx`, `.doc` | Chuyển sang Markdown, có đánh dấu trang. |
+| Bảng tính | `.csv`, `.tsv`, `.xlsx`, `.xls` | Chuyển thành bảng Markdown. |
+| Ảnh | `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg` | Chuẩn bị cho mô hình có vision. |
 
-Để đính kèm tệp:
-- Bấm vào biểu tượng 📎 **Kẹp ghim** trong khung soạn thảo.
-- Hoặc **kéo và thả** tệp trực tiếp vào cửa sổ chat.
-
-Tệp đính kèm trong chat chỉ phục vụ **cuộc trò chuyện này**. Muốn giữ tài liệu để dùng sau, hãy nhờ agent lưu vào [Workspace](workspace) (ví dụ: “Lưu thành `brief.pdf` trong workspace”). Tệp trên Workspace giữ nguyên tên gốc, nên sau đó bạn có thể nói “Mở `brief.pdf`” hoặc “Gửi `brief.pdf` sang Telegram.”
-
-### Gửi tệp workspace sang ứng dụng chat
-
-Nếu đã cài Telegram, Discord, Slack, WhatsApp hoặc Zalo, bạn có thể nhờ trong khung chat:
+Tệp đính trong chat thuộc **hội thoại này**. Để giữ lâu, nói:
 
 ```
-Gửi report.pdf trong workspace sang Telegram.
+Lưu cái này thành brief.pdf trong workspace.
 ```
 
-Agent tìm tệp theo tên rồi chuyển cho plugin của kênh đó. Xem [Gửi tệp sang chat](channels#sending-files-to-chat).
+Tệp Workspace giữ nguyên tên, nên sau này bạn nói “Mở `brief.pdf`” hoặc “Gửi `brief.pdf` sang Telegram.”
 
 ---
 
-## 3. Thẻ Thực thi Công cụ Trực tiếp (Live Tool Cards)
+## Xem công cụ chạy
 
-Khi một Agent gọi công cụ bên ngoài (ví dụ: chạy script Python hoặc duyệt web), một **Thẻ Thực thi Công cụ** sẽ xuất hiện ngay trong dòng thời gian:
+Khi agent tìm web, chạy script, hoặc ghi tệp, một **thẻ công cụ** hiện trên dòng thời gian. Mở ra để xem tham số, thời gian, kết quả.
 
-- **Chỉ báo Trạng thái**: Cho biết công cụ đang `Chạy`, `Hoàn tất` hoặc `Gặp lỗi`.
-- **Kiểm tra Tham số**: Bấm mở rộng thẻ để xem chi tiết tham số đầu vào dạng JSON và dữ liệu đầu ra trả về.
-- **Nút Xác nhận Nhanh**: Nếu công cụ đòi hỏi phê duyệt, thẻ sẽ chuyển màu vàng kèm nút **Phê duyệt** và **Từ chối** trực tiếp.
+Bạn không cần hiểu tên công cụ. Nếu lỗi, thẻ hiện thông báo; bạn diễn đạt lại yêu cầu hoặc duyệt việc đang dừng từ [Dashboard](dashboard).
+
+---
+
+## Gửi tệp Workspace sang app chat
+
+Nếu đã cài Telegram, Discord, Slack, WhatsApp hoặc Zalo, hãy nói trong Chat:
+
+```
+Gửi report.pdf từ workspace sang Telegram.
+```
+
+Agent tìm tệp theo tên rồi giao cho plugin kênh đó. Xem [Gửi tệp sang chat](channels#sending-files-to-chat).
+
+---
+
+## Trang liên quan
+
+- [Workspace](workspace) — tệp lưu lâu, giữ nguyên tên.
+- [Kênh chat](channels) — nối Telegram và app khác.
+- [Agent Studio](agent-studio) — đổi công cụ và mô hình của agent.

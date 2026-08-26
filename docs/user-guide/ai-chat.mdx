@@ -1,45 +1,61 @@
 ---
 id: ai-chat
-title: Multimodal AI Chat
-sidebar_label: Multimodal Chat
+title: Chat
+sidebar_label: Chat
 sidebar_position: 2
 ---
 
-# Multimodal AI Chat & Interactions
+# Chat
 
-The **ActonOS Chat Interface** provides an interactive conversational environment supporting single-agent dialogues, multi-agent collaborations, document and image analysis, live tool execution cards, and real-time streaming deltas via Server-Sent Events (SSE).
-
----
-
-## 1. Starting a Conversation
-
-1. Navigate to **Chat** in the left sidebar.
-2. In the top-left conversation rail, click **+ New Chat**.
-3. Select the target agent from the **Agent Selector** dropdown (e.g., `General Assistant`, `Research Agent`, `Coder Swarm`).
-4. Type your message into the rich prompt editor and press **Enter** (or `Shift + Enter` for multi-line inputs).
+**Chat** is the main place you talk to an agent. You can attach documents and images, watch tools run live, and ask the agent to save work into [Workspace](workspace) or send a file through a connected chat app.
 
 ---
 
-## 2. Multimodal Attachments & Document Ingestion
+## Start a conversation
 
-ActonOS features a client-side document and image preprocessor that parses attachments before ingestion:
+1. Open **Chat** in the left sidebar.
+2. Click **+ New Chat** in the conversation list.
+3. Pick an agent from the selector (for example `General Assistant` or `Research Agent`).
+4. Type a message and press **Enter**. Use **Shift + Enter** for a new line.
 
-| File Type | Supported Formats | Processing Method |
+:::tip No agent yet?
+Create one in [Agent Studio](agent-studio), or follow the [5-minute quickstart](../getting-started/quickstart-tutorial).
+:::
+
+---
+
+## Attach files and images
+
+Click the paperclip, or drag files onto the chat window.
+
+| Kind | Formats | What happens |
 |:---|:---|:---|
-| **Text & Code** | `.txt`, `.md`, `.py`, `.go`, `.js`, `.ts`, `.json`, `.yaml`, `.sql` | UTF-8 plain text extraction with syntax highlighting |
-| **Documents** | `.pdf`, `.docx`, `.doc` | Extracted into clean structured Markdown text with page markers |
-| **Tabular Data** | `.csv`, `.tsv`, `.xlsx`, `.xls` | Converted into Markdown data tables with schema extraction |
-| **Visual Media** | `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg` | Resized & optimized for vision models (Claude 3.7 / GPT-4o / Gemini 2.0 Flash) |
+| Text and code | `.txt`, `.md`, `.py`, `.go`, `.js`, `.ts`, `.json`, `.yaml`, `.sql` | Read as text. |
+| Documents | `.pdf`, `.docx`, `.doc` | Converted to Markdown with page markers. |
+| Spreadsheets | `.csv`, `.tsv`, `.xlsx`, `.xls` | Converted to Markdown tables. |
+| Images | `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg` | Prepared for vision-capable models. |
 
-To attach files:
-- Click the 📎 **Paperclip icon** in the composer.
-- Or simply **drag and drop** files directly onto the chat window.
+Chat attachments belong to **this conversation**. To keep a file for later, say:
 
-Chat attachments are for **this conversation**. To keep a document for later, ask the agent to save it to the [Workspace](workspace) (for example: “Save this as `brief.pdf` in the workspace”). Workspace files keep their original names, so you can later say “Open `brief.pdf`” or “Send `brief.pdf` to Telegram.”
+```
+Save this as brief.pdf in the workspace.
+```
 
-### Send a workspace file to a chat app
+Workspace files keep their original names, so you can later say “Open `brief.pdf`” or “Send `brief.pdf` to Telegram.”
 
-If Telegram, Discord, Slack, WhatsApp, or Zalo is installed, you can ask in chat:
+---
+
+## Watch tools run
+
+When an agent searches the web, runs a script, or writes a file, a **tool card** appears in the timeline. Expand it to see the arguments, duration, and result.
+
+You do not need to understand the tool name. If something fails, the card shows the error; you can rephrase the request or approve a paused action from the [Dashboard](dashboard).
+
+---
+
+## Send a Workspace file to a chat app
+
+If Telegram, Discord, Slack, WhatsApp, or Zalo is installed, ask in Chat:
 
 ```
 Send report.pdf from the workspace to Telegram.
@@ -49,28 +65,8 @@ The agent finds the file by name and hands it to that channel’s plugin. See [S
 
 ---
 
-## 3. Real-Time Tool Execution Cards
+## Related pages
 
-When an agent invokes external tools (e.g., executing a Python script or browsing a website), ActonOS renders an interactive **Tool Execution Card** directly in the message timeline:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ ⚡ native_browser_navigate                                   │
-│ Target: https://github.com/actonos/actonos                   │
-├─────────────────────────────────────────────────────────────┤
-│ Status: Completed in 1.42s · Extracted 2,840 bytes           │
-│ [▶ Click to inspect JSON input & output parameters]         │
-└─────────────────────────────────────────────────────────────┘
-```
-
-- **Live Status Indicator**: Shows whether the tool is `Executing`, `Completed`, or `Failed`.
-- **Parameter Inspection**: Click the disclosure chevron to review the exact JSON arguments passed to the tool and the returned output payload.
-- **Safety Flags**: If a tool requires human confirmation, the card turns amber with direct **Approve** and **Reject** controls.
-
----
-
-## 4. Message Branching & Context Management
-
-- **Copy Code Blocks**: One-click copy buttons on all code snippets with automatic language detection.
-- **Regenerate / Fork**: Click the regenerate button on any agent response to switch to a different model in the Cascade router or adjust the prompt.
-- **Context Compaction**: For long multi-turn sessions, ActonOS automatically creates semantic snapshots in `context_snapshots` to preserve token budgets while maintaining critical conversational memory.
+- [Workspace](workspace) — lasting files with original names.
+- [Channels](channels) — connect Telegram and other chat apps.
+- [Agent Studio](agent-studio) — change the agent’s tools and model.

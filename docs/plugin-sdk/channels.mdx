@@ -1,0 +1,191 @@
+---
+id: channels
+title: Channel plugins
+sidebar_label: Channel plugins
+sidebar_position: 4
+---
+
+# Channel plugins
+
+A **channel** plugin connects a messaging app to ActonOS. The host calls your adapter to **send** (text, typing, reactions, files) and **poll** (or you stream with `ctx.WS()`).
+
+```bash
+acton-plugin new my-chat --type=channel
+```
+
+Official adapters (Telegram, Discord, Slack, WhatsApp, Zalo) are documented in [Official plugins](official-plugins). Copy their envelope — do not invent a parallel message format.
+
+---
+
+## Adapter contract
+
+Implement `sdk.ChannelAdapter` (or embed `sdk.BaseChannel`):
+
+```go
+type ChannelAdapter interface {
+    Name() string
+    DisplayName() string
+    RequiresPairing() bool
+    SendMessage(ctx sdk.Context, msg sdk.OutboundMessage) error
+    PollMessages(ctx sdk.Context) ([]sdk.InboundMessage, error)
+}
+```
+
+Register once in `init`:
+
+```go
+func init() {
+    ch := &MyChannel{
+        BaseChannel: sdk.BaseChannel{
+            ChannelName:        "mychat",
+            ChannelDisplayName: "My Chat",
+            PairingRequired:    true,
+        },
+    }
+    sdk.RegisterChannel(ch)
+}
+```
+
+---
+
+## Account schema
+
+Root `config_schema` is `{ poll_interval_seconds, accounts[] }`. Each account follows `spec/CHANNEL_ACCOUNT_SCHEMA.json`:
+
+| Field | Required | Notes |
+|:---|:---|:---|
+| `account_id` | yes | `^[a-z0-9_-]+$` |
+| `display_name` | | UI label |
+| credential | yes | Platform-specific (`bot_token`, or WhatsApp `access_token` + `phone_number_id`) |
+| `default_agent` | yes | `x-ui-widget: agent-selector` |
+| `listen_target` | | Optional conversation filter (`listen_channel_id` is an alias) |
+| `enable_typing_indicator` | | default `true` |
+| `enable_ack_reaction` | | default `true` |
+| `enable_reply_quote` | | default `true` |
+| `ack_reaction_emoji` | | default `👀` |
+
+Embed `sdk.ChannelAccount` in your account struct. A legacy root-level token is still read as `account_id=default`.
+
+---
+
+## Inbound and outbound envelope
+
+**Inbound** (`sdk.InboundMessage`): `kind`, `message_id`, `chat_id`, `thread_id`, `timestamp`, `reaction`, plus sender fields.
+
+**Outbound** (`sdk.OutboundMessage`): `kind` (`text` \| `typing` \| `reaction` \| `media`), `chat_id`, `reply_to_id`, `thread_id`, `reaction`, `action`, `typing`, `file_name`, `mime_type`, `file_data`.
+
+| Host intent | How it arrives | Typical mapping |
+|:---|:---|:---|
+| Typing | `kind=typing` or `typing=true` or empty content | Discord `POST /typing`, Telegram/Zalo `sendChatAction`, WhatsApp typing indicator, Slack no-op |
+| Ack / react | `kind=reaction` + `reaction` + `reply_to_id` | Platform reaction APIs |
+| Quote reply | `reply_to_id` when quote is enabled | Discord `message_reference`, Telegram `reply_to_message_id`, Slack `thread_ts` |
+| File | `file_name` + `file_data` (raw bytes; JSON is base64) | See [Sending files](#sending-files) |
+
+Helpers:
+
+- `sdk.NewInboundMessage(channel, account, senderID, senderName, content)` — also extracts `@agent` mentions
+- `sdk.ApplyInboundEnvelope(&msg, chatID, messageID, threadID, timestamp)`
+- `msg.WantsTyping()`, `msg.IsTypingOnly()`, `msg.AttachedFile()`
+- `sdk.NewOutboundFile(...)`
+
+```go
+func (c *MyChannel) PollMessages(ctx sdk.Context) ([]sdk.InboundMessage, error) {
+    msg := sdk.NewInboundMessage("mychat", "bot_primary", "123456", "Alice", "@coder please fix this bug")
+    sdk.ApplyInboundEnvelope(&msg, "888", "42", "", "")
+    return []sdk.InboundMessage{msg}, nil
+}
+```
+
+---
+
+## Send path
+
+```go
+func (c *MyChannel) SendMessage(ctx sdk.Context, msg sdk.OutboundMessage) error {
+    token, err := ctx.Vault().GetSecret("channel_token")
+    if err != nil {
+        return err
+    }
+
+    if msg.WantsTyping() {
+        // POST typing to the platform API
+        if msg.IsTypingOnly() {
+            return nil
+        }
+    }
+
+    if name, _, data, ok := msg.AttachedFile(); ok {
+        contentType, body, err := sdk.EncodeMultipart(map[string]string{
+            "to": sdk.FirstNonEmpty(msg.ChatID, msg.Recipient),
+        }, "file", name, data)
+        if err != nil {
+            return err
+        }
+        _, err = ctx.HTTP().PostBinary("https://api.mychat.com/upload", contentType, body)
+        return err
+    }
+
+    _, err = ctx.HTTP().PostJSONWithBearer("https://api.mychat.com/send", token, map[string]any{
+        "to":   sdk.FirstNonEmpty(msg.ChatID, msg.Recipient),
+        "text": msg.Content,
+    })
+    return err
+}
+```
+
+Read config with `ctx.Config().Bind(&cfg)`. Vault keys for multi-account bots look like `discord_bot_tokens.` + `acc.AccountID`.
+
+---
+
+## Sending files {#sending-files}
+
+When a user says “send `report.pdf` to Telegram”, **ActonOS does not upload the file**. The host loads it from Workspace and passes raw bytes to `acton_channel_send`. Your plugin must talk to the chat app.
+
+`sdk.OutboundMessage` fields:
+
+| Field | Meaning |
+|:---|:---|
+| `FileName` | Original name (`report.pdf`) |
+| `MIMEType` | Content type |
+| `FileData` | Raw bytes (base64 on the JSON wire) |
+| `Content` | Optional caption |
+| `Kind` | `media` when a file is attached |
+
+Use `msg.AttachedFile()` → `(name, mime, data)`.
+
+:::danger Do not put PDF bytes in a JSON string
+`json.Marshal` on invalid UTF-8 replaces bytes with `U+FFFD`. Recipients then see **broken fonts** in the downloaded PDF. Use `sdk.EncodeMultipart` + `ctx.HTTP().PostBinary` (sends `body_base64` to the host).
+:::
+
+| Platform | Upload style |
+|:---|:---|
+| Telegram, Discord, Slack, WhatsApp | Multipart + `PostBinary` |
+| Zalo Bot API | JSON over HTTPS. The file field is a **public HTTPS URL** (or a small `data:` URI). Multipart bodies are ignored. Treat HTTP 200 with `"ok": false` as **failure**. |
+
+If the plugin reports success but the user never sees the file, you are likely using the wrong API — or swallowing `ok: false`.
+
+---
+
+## WebSocket channels
+
+Discord Gateway and similar APIs use `ctx.WS()`:
+
+```go
+conn, err := ctx.WS().Dial("wss://gateway.discord.gg/?v=10&encoding=json", nil)
+if err != nil {
+    return err
+}
+defer conn.Close()
+_ = conn.SendJSON(map[string]any{"op": 1})
+payload, ok, err := conn.Poll()
+```
+
+Whitelist both REST and Gateway hosts in `net_outbound`.
+
+---
+
+## Related pages
+
+- [Manifest](manifest) — `channels[]` and `config_schema`.
+- [Official plugins](official-plugins) — production adapters to copy.
+- [User guide: Channels](../user-guide/channels) — pairing PIN and file sending from the operator side.

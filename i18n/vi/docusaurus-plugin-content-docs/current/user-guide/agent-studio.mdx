@@ -1,77 +1,104 @@
 ---
 id: agent-studio
-title: Agent Studio & Cấu hình Swarm
+title: Agent Studio
 sidebar_label: Agent Studio
 sidebar_position: 3
 ---
 
-# Agent Studio & Cấu hình Swarm
+# Agent Studio
 
-**Agent Studio** là không gian làm việc trực quan giúp tạo, cấu hình và quản trị các tác nhân AI và nhóm tác nhân tự trị (Multi-Agent Swarms) trong ActonOS.
+**Agent Studio** là nơi bạn tạo agent: tên, tính cách, mô hình, công cụ, và (nếu muốn) swarm agent con.
 
-```mermaid
-graph LR
-    A["Nhận diện Agent<br/>Tên · Avatar · Mô tả"] --> B["System Prompt<br/>Persona & Chỉ thị hành vi"]
-    B --> C["Bộ định tuyến Cascade<br/>Mô hình chính · Dự phòng · Temp"]
-    C --> D["Quản trị & Phân quyền<br/>Giới hạn vòng lặp · Đường dẫn · Phê duyệt"]
-    D --> E["Cấp quyền Công cụ<br/>Native · MCP · WASM · Skills"]
-    E --> F["Kênh chat & Ủy quyền<br/>Trigger đầu vào · Nhóm Agent con"]
-    F --> G["Lưu Manifest Agent<br/>(SQLite)"]
-```
+Mở **Agents** trên thanh bên, hoặc nhấn **`Ctrl + K`** rồi gõ `Create Agent`.
 
 ---
 
-## 1. Nhận diện Agent & Persona
+## Tạo agent
 
-- **Tên & Định danh (Slug)**: Tên định danh duy nhất (ví dụ: `devops-architect`, `data-analyst`).
-- **Avatar & Biểu tượng**: Hình ảnh hiển thị trong Chat, Kênh thông báo và Bảng điều khiển.
-- **Mô tả**: Tóm tắt vai trò để con người và các Agent khác hiểu nhiệm vụ của nó.
+1. Bấm **+ New Agent**.
+2. Điền danh tính:
+   - **Tên** — hiện trong Chat (ví dụ `Research Assistant`).
+   - **Slug** — id ổn định (ví dụ `research-bot`).
+   - **Mô tả** — vai trò ngắn, hữu ích cho bạn và cho agent khác trong swarm.
+3. Viết **system prompt** nêu việc cần làm và giới hạn.
+4. Chọn mô hình, công cụ, mức phê duyệt.
+5. Bấm **Save Agent Manifest**.
 
----
-
-## 2. Thiết kế System Prompt Chuẩn mực
-
-System prompt định hình phong cách suy luận và quy tắc làm việc của Agent:
+Prompt thực tế trông như sau:
 
 ```markdown
-# Vai trò & Mục tiêu
-Bạn là chuyên gia DevOps chịu trách nhiệm giám sát dịch vụ ActonOS, phân tích sức khỏe container và tạo script triển khai.
+# Vai trò
+Bạn là trợ lý nghiên cứu trên ActonOS.
+Tìm nguồn, kiểm tra sự thật, viết tóm tắt Markdown rõ ràng.
 
-# Quy tắc Vận hành
-1. Luôn kiểm tra lệnh ở chế độ dry-run trước khi áp dụng cấu hình.
-2. Giữ script tạm trong thư mục tạm riêng. Xuất tài liệu hoàn chỉnh vào Workspace của người dùng với tên gốc (ví dụ `diagnostics.md`).
-3. Nếu thao tác cần khởi động lại dịch vụ hệ thống, hãy yêu cầu phê duyệt từ người dùng.
+# Giới hạn
+1. Ưu tiên tệp Workspace mà người dùng đã đặt tên (ví dụ go_126_summary.md).
+2. Xin phê duyệt trước khi restart dịch vụ hoặc xóa tệp.
+3. Nếu tìm kiếm thất bại, nói thật thay vì đoán.
 ```
 
+:::tip Biến trong prompt
+Bạn có thể chèn:
+
+- `{{system.time}}` — giờ và múi giờ hiện tại
+- `{{system.runtime_mode}}` — `baremetal` hoặc `docker`
+- `{{workspace.root}}` — đường dẫn Workspace
+:::
+
 ---
 
-## 3. Bộ định tuyến Mô hình (LLM Cascade Router)
+## Mô hình
 
-ActonOS tích hợp bộ định tuyến mô hình thông minh nhằm tối ưu độ tin cậy và chi phí:
+ActonOS gọi **mô hình chính** trước. Nếu bị giới hạn tốc độ hoặc lỗi, nó chuyển sang fallback.
 
-| Thiết lập | Mô tả | Ví dụ |
+| Mục | Việc nó làm | Giá trị điển hình |
 |:---|:---|:---|
-| **Mô hình Chính** | Mô hình được ưu tiên gọi đầu tiên | `anthropic:claude-3-7-sonnet` |
-| **Mô hình Dự phòng 1** | Tự động chuyển sang khi mô hình chính chạm rate limit hoặc lỗi | `openai:gpt-4o` |
-| **Mô hình Dự phòng 2** | Mô hình chi phí thấp hoặc chạy cục bộ | `google:gemini-2.0-flash` hoặc `ollama:qwen2.5-coder` |
-| **Temperature** | Độ biến thiên sáng tạo (0.0 = chính xác, 1.0 = ngẫu hứng) | `0.2` (dùng cho lập trình/phân tích) |
+| Mô hình chính | Suy luận hàng ngày | `anthropic:claude-3-7-sonnet` |
+| Fallback 1 | Khi mô hình chính lỗi | `openai:gpt-4o` |
+| Fallback 2 | Rẻ hoặc chạy local | `ollama:qwen2.5-coder` |
+| Temperature | `0` chặt, `1` sáng tạo hơn | `0.2` cho code và phân tích |
+| Max tokens | Trần mỗi bước trả lời | `4096` |
 
 ---
 
-## 4. Phân quyền Công cụ & Giới hạn Ngân sách
+## Công cụ và an toàn
 
-- **Phân quyền Công cụ**: Chọn từng công cụ hoặc dùng cú pháp wildcard:
-  - `*` - Cho phép toàn bộ công cụ.
-  - `native_*` - Chỉ cho phép các công cụ lõi hệ thống.
-  - `mcp_github_*` - Chỉ cho phép các công cụ thuộc MCP GitHub.
-- **Mức phê duyệt**:
-  - `Low`: Chạy các công cụ đã cấp quyền mà không hỏi.
-  - `Medium`: Được ghi Workspace; lệnh shell, xóa, cron và thay đổi tiện ích vẫn cần duyệt.
-  - `High`: Xác nhận mọi thao tác nhạy cảm trước khi chạy.
-- **Giới hạn Vòng lặp (Iteration Budget)**: Số bước suy luận tối đa cho một tác vụ (mặc định: `25`).
+Chỉ giao công cụ agent thật sự cần:
+
+- `*` — mọi công cụ đã cài
+- `native_*` — chỉ công cụ dựng sẵn
+- `mcp_github_*` — chỉ công cụ MCP GitHub
+
+**Mức phê duyệt:**
+
+| Mức | Hành vi |
+|:---|:---|
+| Low | Công cụ được phép chạy không hỏi. |
+| Medium | Ghi Workspace được chạy. Shell, xóa, cron, đổi extension vẫn cần bạn. |
+| High | Xác nhận mọi hành động nhạy cảm. |
+
+Ngoài ra:
+
+- **Đường dẫn Workspace cho phép** — ví dụ `docs/*` và `reports/*`.
+- **Ngân sách vòng lặp** — số bước suy luận tối đa mỗi việc (mặc định `25`).
 
 ---
 
-## 5. Cơ chế Ủy quyền Đa tác nhân (Swarm Delegation)
+## Swarm (tùy chọn)
 
-Kích hoạt tính năng **Ủy quyền Tác nhân (Agent Delegation)** cho phép một Agent cha phân rã công việc và giao cho các Agent con chuyên môn hóa chạy song song qua các Goroutine độc lập.
+Agent cha có thể giao việc cho chuyên gia:
+
+1. Mở **Swarm & Delegation**.
+2. Bật **Enable Agent Delegation**.
+3. Chọn agent con được phép (ví dụ `Researcher` và `Code Writer`).
+4. Đặt **delegation budget** (độ sâu gọi lồng, ví dụ `3`).
+
+Agent cha vẫn giữ mục tiêu; con chạy bước của mình trong sandbox rồi trả kết quả.
+
+---
+
+## Trang liên quan
+
+- [Chat](ai-chat) — nói với agent vừa lưu.
+- [Nhiệm vụ](missions) — việc dài có checkpoint.
+- [Công cụ và skill](tools-and-skills) — những công cụ bạn có thể cấp.

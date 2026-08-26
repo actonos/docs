@@ -19,6 +19,10 @@
     "message": "Hướng dẫn người dùng",
     "description": "The label of footer link with label=User Guides linking to /docs/user-guide/dashboard"
   },
+  "link.item.label.Plugin SDK": {
+    "message": "Plugin SDK",
+    "description": "The label of footer link with label=Plugin SDK linking to /docs/plugin-sdk/overview"
+  },
   "link.item.label.Advanced Architecture": {
     "message": "Kiến trúc nâng cao",
     "description": "The label of footer link with label=Advanced Architecture linking to /docs/advanced-architecture/dual-runtime-hal"

@@ -1,69 +1,67 @@
 ---
 id: missions
-title: Nhiệm vụ Tự trị & Đồ thị DAG
-sidebar_label: Nhiệm vụ Tự trị
+title: Nhiệm vụ
+sidebar_label: Nhiệm vụ
 sidebar_position: 4
 ---
 
-# Nhiệm vụ Tự trị & Đồ thị DAG
+# Nhiệm vụ
 
-Động cơ **Nhiệm vụ (Missions)** cho phép các Agent trong ActonOS tự động thực hiện các mục tiêu phức tạp, nhiều giai đoạn trong thời gian dài mà vẫn đảm bảo tính toàn vẹn trạng thái và sự kiểm soát của con người.
+**Nhiệm vụ** là việc dài: có mục tiêu viết ra, kế hoạch các bước, và checkpoint. Dùng khi một tin chat không đủ — ví dụ “kiểm tra dự án này, ghi `security_audit.md`, rồi mở issue GitHub.”
+
+---
+
+## Khởi chạy nhiệm vụ
+
+1. Mở **Missions** trên thanh bên.
+2. Bấm **+ Launch Mission**.
+3. Điền:
+   - **Mục tiêu** — kết quả bạn muốn, kể cả tên tệp.
+   - **Agent** — người điều phối (ví dụ `Security Engineer`).
+   - **Ưu tiên** — Low, Standard, High hoặc Critical.
+   - **Thông báo** — kênh chat tùy chọn khi xong.
+4. Bắt đầu.
+
+ActonOS tách mục tiêu thành đồ thị bước: bước độc lập chạy song song; bước phụ thuộc thì chờ. Giao diện hiện Pending, Running, Completed, Blocked hoặc Failed.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> TaoKeHoach: Người dùng gửi Mục tiêu (Goal)
-    TaoKeHoach --> KiemTraDAG: Phân rã thành đồ thị DAG
-    KiemTraDAG --> ChayTungBuoc: Kiểm tra phụ thuộc & không bị vòng lặp
-    
-    state ChayTungBuoc {
-        [*] --> GoiCongCu: Bước suy luận ReAct
-        GoiCongCu --> KiemTraPheDuyet: Cần phê duyệt?
-        KiemTraPheDuyet --> TamDung: Có (Chờ người duyệt)
-        TamDung --> TiepTucChay: Người dùng Bấm Duyệt
-        KiemTraPheDuyet --> ChayTrucTiep: Không (Tự trị)
-        ChayTrucTiep --> DanhGiaKetQua
-        TiepTucChay --> DanhGiaKetQua
-    }
-    
-    ChayTungBuoc --> BuocTiepTheo: Bước hiện tại thành công
-    BuocTiepTheo --> ChayTungBuoc: Còn các bước tiếp theo
-    ChayTungBuoc --> KiemTraNgen: Không tiến triển sau 3 chu kỳ
-    KiemTraNgen --> CanhBaoNgen: Báo động [STALL WARNING]
-    ChayTungBuoc --> HoanThanhNhiemVu: Toàn bộ DAG hoàn tất
-    HoanThanhNhiemVu --> [*]
+    [*] --> Plan: Bạn gửi mục tiêu
+    Plan --> Run: Kế hoạch hợp lệ
+    Run --> Pause: Bước cần phê duyệt
+    Pause --> Run: Bạn duyệt
+    Run --> Next: Bước thành công
+    Next --> Run: Còn bước khác
+    Run --> Stall: Không tiến sau 3 vòng
+    Stall --> Warn: Cảnh báo stall
+    Run --> Done: Hết bước
+    Done --> [*]
 ```
 
 ---
 
-## 1. Khởi tạo Mục tiêu Nhiệm vụ
+## Nếu máy khởi động lại
 
-1. Bấm vào mục **Nhiệm vụ (Missions)** trên thanh điều hướng.
-2. Bấm nút **+ Khởi chạy Nhiệm vụ**.
-3. Nhập thông tin nhiệm vụ:
-   - **Chỉ thị Mục tiêu**: Mô tả mục tiêu cấp cao (ví dụ: `Quét mã nguồn trong workspace tìm lỗ hổng bảo mật, lưu báo cáo thành security_audit.md, và mở một Issue trên GitHub tóm tắt kết quả`).
-   - **Agent Phụ trách**: Chọn Agent điều phối chính (ví dụ: `Kỹ sư Bảo mật`).
-   - **Mức độ Ưu tiên**: `Thấp`, `Tiêu chuẩn`, `Cao` hoặc `Khẩn cấp`.
-   - **Kênh Thông báo**: Tùy chọn gửi tin nhắn báo cáo về Telegram hoặc Discord khi xong.
+Mỗi bước xong đều được lưu. Sau mất điện hoặc restart container, nhiệm vụ chạy tiếp từ checkpoint, không làm lại từ đầu.
+
+Nếu công cụ cần duyệt, nhiệm vụ đóng băng (tin nhắn, bộ đếm, hành động đang chờ). Duyệt từ [Dashboard](dashboard) hoặc [Thông báo](notifications) thì đúng bước đó chạy tiếp.
 
 ---
 
-## 2. Thực thi Đồ thị Phụ thuộc DAG
+## Cảnh báo stall
 
-Khi bắt đầu, bộ lập kế hoạch `Planner` phân rã mục tiêu thành đồ thị không chu trình (DAG):
-- **Kiểm tra Tính hợp lệ**: Loại bỏ các bước lặp vô nghĩa và các phụ thuộc vòng tròn.
-- **Thực thi Song song & Tuần tự**: Các bước độc lập chạy đồng thời; các bước phụ thuộc sẽ chờ dữ liệu đầu ra từ bước trước.
+Nếu agent lặp cùng tiến độ hoặc cùng công cụ **ba vòng** mà kế hoạch không tiến, ActonOS cảnh báo stall.
 
----
+Bạn có thể:
 
-## 3. Lưu Điểm Kiểm tra (Checkpointing) & Khôi phục
-
-Mọi trạng thái chuyển giao được lưu vào cơ sở dữ liệu `agent_runs.checkpoint_json`:
-- **Chống Mất Dữ liệu**: Nếu mất điện hoặc máy chủ khởi động lại, ActonOS tự động chạy tiếp từ điểm dừng gần nhất mà không thực hiện lại các thao tác đã hoàn thành.
-- **Tạm dừng Chờ Duyệt**: Khi cần phê duyệt, trạng thái được đóng băng an toàn. Khi được phê duyệt, Agent sẽ tiếp tục chạy từ đúng điểm này.
+- Gửi tin điều hướng trong Chat.
+- Tạm dừng nhiệm vụ.
+- Sửa công cụ hoặc mục tiêu rồi chạy tiếp.
 
 ---
 
-## 4. Tự động Phát hiện Nghẽn (Stall Detection)
+## Trang liên quan
 
-- Nếu Agent bị lặp lại cùng một tiến độ (`[PROGRESS: X%]`) hoặc gọi lặp lại một công cụ thất bại 3 chu kỳ liên tiếp, hệ thống sẽ phát cảnh báo **`[STALL WARNING]`**.
-- Cảnh báo xuất hiện trên màn hình điều hành để người quản trị kịp thời can thiệp hoặc điều chỉnh câu lệnh.
+- [Agent Studio](agent-studio) — chọn agent điều phối và công cụ.
+- [Dashboard](dashboard) — duyệt bước đang dừng.
+- [Vận hành trực tiếp](operations) — xem nhật ký khi chạy.
