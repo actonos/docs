@@ -9,16 +9,32 @@ sidebar_position: 10
 
 Agent chỉ làm thêm việc khi bạn cấp **công cụ**. ActonOS có vài cách thêm. Không cần dùng hết.
 
-| Loại | Khi nào dùng | Ở đâu |
+| Loại | Khi nào dùng | Chỗ trên UI |
 |:---|:---|:---|
-| Công cụ dựng sẵn | Tìm web, duyệt, tệp, shell, thông báo | Luôn có |
+| Công cụ dựng sẵn (native) | Tìm web, duyệt, tệp, shell, thông báo | **Extensions → Native Tools** |
+| Máy chủ MCP | MCP bạn đã chạy sẵn | **Native Tools → Connect MCP** |
 | Plugin | Công cụ tùy chỉnh, app chat, SaaS | [Plugins](plugins) |
-| Máy chủ MCP | MCP bạn đã chạy sẵn | Cài đặt Tool / MCP |
-| Skill | Thư mục `skill.json` + script | `/data/skills/<name>/` |
+| Skill | `skill.json` + script, hoặc skill cộng đồng | **Extensions → Skills** |
 
 ---
 
-## Công cụ dựng sẵn
+## Trang Native Tools
+
+Mở **Extensions → Native Tools**. Trang này liệt kê **công cụ dựng sẵn** và **công cụ MCP** đã đăng ký. Skill có trang riêng, nên không hiện ở đây.
+
+Bạn có thể:
+
+- Lọc **All**, **Native**, hoặc **MCP**.
+- Tìm theo tên hoặc mô tả.
+- Bấm **Test** trên một công cụ để chạy một lần với tham số JSON.
+- Bấm **Connect MCP** để thêm máy chủ (`stdio`, Streamable HTTP, hoặc SSE). Bí mật vào vault dưới `mcp.env.<id>`.
+- Bật hoặc tắt máy chủ MCP đã nối mà không cần xóa.
+
+Chi tiết: [Tích hợp MCP](../developer-reference/mcp-integration).
+
+Bật từng công cụ theo agent trong [Agent Studio](agent-studio).
+
+### Công cụ dựng sẵn
 
 Đi kèm ActonOS:
 
@@ -28,15 +44,27 @@ Agent chỉ làm thêm việc khi bạn cấp **công cụ**. ActonOS có vài c
 - **Shell** — `native_exec` trong sandbox. Tệp Workspace có theo tên gốc dưới `user-workspace/` (`ACTONOS_USER_WORKSPACE`).
 - **Thông báo chat** — `native_channel_notify` gửi text **hoặc tệp Workspace** qua plugin kênh đã cài. Chọn đúng một kênh khi đính tệp.
 
-Bật công cụ theo từng agent trong [Agent Studio](agent-studio).
-
 ---
 
-## Máy chủ MCP
+## Trang Skills
 
-Nếu bạn đã chạy MCP (stdio, HTTP hoặc SSE), thêm trong cài đặt MCP. ActonOS nói cùng giao thức. Biến môi trường bí mật lưu vault dưới `mcp.env.<id>`.
+Mở **Extensions → Skills**.
 
-Chi tiết: [Tích hợp MCP](../developer-reference/mcp-integration).
+- **Installed** — skill đã có trên máy. Bật/tắt, xem, hoặc gỡ.
+- **Community Hub** — duyệt và cài gói skill cộng đồng một cú bấm.
+- **Create Skill** — thêm skill thư mục từ giao diện.
+
+Skill bạn tự viết trên đĩa:
+
+```
+/data/skills/my_custom_skill/
+├── skill.json
+└── run.sh          # hoặc run.py
+```
+
+ActonOS theo dõi thư mục đó. Thêm, sửa, xóa skill thì đăng ký lại không cần restart.
+
+Định dạng: [Skill tùy chỉnh](../developer-reference/custom-skills-guide).
 
 ---
 
@@ -46,24 +74,8 @@ Một `.actonpkg` có thể mang công cụ, kênh chat, connector SaaS, hoặc 
 
 ---
 
-## Skill dạng thư mục
-
-Với công cụ script nhỏ, tạo:
-
-```
-/data/skills/my_custom_skill/
-├── skill.json
-└── run.sh          # hoặc run.py
-```
-
-ActonOS theo dõi thư mục đó. Thêm, sửa, xóa skill thì đăng ký lại không cần restart. Bạn cũng cài skill catalog từ [Tool Hub](tool-hub).
-
-Định dạng: [Skill tùy chỉnh](../developer-reference/custom-skills-guide).
-
----
-
 ## Trang liên quan
 
-- [Tool Hub](tool-hub) — catalog một cú bấm.
-- [Plugins](plugins) — gói WASM.
+- [Plugins](plugins) — gói WASM và catalog plugin.
 - [Workspace](workspace) — tệp công cụ native mở theo tên.
+- [Agent Studio](agent-studio) — cấp công cụ cho agent.

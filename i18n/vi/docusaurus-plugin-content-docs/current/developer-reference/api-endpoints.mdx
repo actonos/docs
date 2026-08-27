@@ -211,19 +211,19 @@ Xóa một bản ghi khóa bí mật khỏi Vault.
 
 ---
 
-## 9. Công cụ & Chợ Tiện ích (Tools & Hub)
+## 9. Công cụ, MCP và catalog Skills
 
 ### `GET /api/tools`
-Liệt kê tất cả công cụ hoạt động qua các danh mục Native, MCP, WASM Plugin và Skill-as-a-Folder.
+Liệt kê công cụ đã đăng ký (native, MCP, plugin WASM, skill thư mục). Trang **Native Tools** ẩn nhóm `skill`; những skill đó hiện trên **Skills**.
 
 ### `POST /api/tools/mcp` | `DELETE /api/tools/mcp/{serverID}`
-Đăng ký hoặc ngắt kết nối máy chủ MCP (`stdio` hoặc `sse`). Các thao tác rủi ro cao trả về mã `202 Accepted` chờ duyệt.
+Đăng ký hoặc ngắt kết nối máy chủ MCP (`stdio`, Streamable HTTP, hoặc `sse`). Thao tác rủi ro cao trả về `202 Accepted` chờ duyệt.
 
 ### `GET /api/tools/hub/catalog`
-Lấy danh mục các công cụ từ Chợ tiện ích Cộng đồng.
+Lấy catalog skill cộng đồng hiện trên **Extensions → Skills → Community Hub**.
 
 ### `POST /api/tools/hub/install` | `POST /api/tools/hub/uninstall`
-Cài đặt hoặc gỡ cài đặt một gói kỹ năng cộng đồng.
+Cài hoặc gỡ một gói skill cộng đồng.
 
 ---
 

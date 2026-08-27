@@ -7,18 +7,34 @@ sidebar_position: 10
 
 # Tools and skills
 
-Agents only do extra work when you give them **tools**. ActonOS has three ways to add them. You do not need all three.
+Agents only do extra work when you give them **tools**. ActonOS has several ways to add them. You do not need all of them.
 
-| Kind | When to use it | Where it lives |
+| Kind | When to use it | Where in the UI |
 |:---|:---|:---|
-| Built-in tools | Search, browse, files, shell, notify | Always available |
+| Built-in (native) tools | Search, browse, files, shell, notify | **Extensions → Native Tools** |
+| MCP servers | An MCP server you already run | **Native Tools → Connect MCP** |
 | Plugins | Custom tools, chat apps, SaaS | [Plugins](plugins) |
-| MCP servers | An existing MCP server you already run | Tool / MCP settings |
-| Skills | A small `skill.json` + script | `/data/skills/<name>/` |
+| Skills | A `skill.json` + script, or a community skill | **Extensions → Skills** |
 
 ---
 
-## Built-in tools
+## Native Tools page
+
+Open **Extensions → Native Tools**. This page lists **built-in tools** and **MCP tools** already registered. Skills have their own page and are filtered out here.
+
+You can:
+
+- Filter **All**, **Native**, or **MCP**.
+- Search by name or description.
+- Click **Test** on a tool to run it once with JSON arguments.
+- Click **Connect MCP** to add a server (`stdio`, Streamable HTTP, or SSE). Secrets go into the vault as `mcp.env.<id>`.
+- Enable or disable a connected MCP server without deleting it.
+
+Details: [MCP integration](../developer-reference/mcp-integration).
+
+Turn individual tools on per agent in [Agent Studio](agent-studio).
+
+### Built-in tools
 
 These ship with ActonOS:
 
@@ -28,15 +44,27 @@ These ship with ActonOS:
 - **Shell** — `native_exec` in a sandbox. Workspace files are available by original name under `user-workspace/` (`ACTONOS_USER_WORKSPACE`).
 - **Chat notify** — `native_channel_notify` sends text **or a Workspace file** through an installed channel plugin. Pick one specific channel when attaching a file.
 
-Turn tools on per agent in [Agent Studio](agent-studio).
-
 ---
 
-## MCP servers
+## Skills page
 
-If you already run an MCP server (stdio, HTTP, or SSE), add it in the MCP settings. ActonOS speaks the same protocol. Environment secrets are stored in the vault as `mcp.env.<id>`.
+Open **Extensions → Skills**.
 
-Details: [MCP integration](../developer-reference/mcp-integration).
+- **Installed** — skills already on this machine. Toggle them on or off, inspect, or uninstall.
+- **Community Hub** — browse and one-click install community skill packages.
+- **Create Skill** — add a new folder skill from the UI.
+
+For a skill you write yourself, the on-disk layout is:
+
+```
+/data/skills/my_custom_skill/
+├── skill.json
+└── run.sh          # or run.py
+```
+
+ActonOS watches that folder. Add, edit, or delete a skill and it registers without a restart.
+
+Authoring format: [Custom skills](../developer-reference/custom-skills-guide).
 
 ---
 
@@ -46,24 +74,8 @@ A `.actonpkg` can expose tools, a chat channel, a SaaS connector, or a mix. Inst
 
 ---
 
-## Folder skills
-
-For a small script-based tool, create:
-
-```
-/data/skills/my_custom_skill/
-├── skill.json
-└── run.sh          # or run.py
-```
-
-ActonOS watches that folder. Add, edit, or delete a skill and it registers without a restart. You can also install catalog skills from [Tool Hub](tool-hub).
-
-Authoring format: [Custom skills](../developer-reference/custom-skills-guide).
-
----
-
 ## Related pages
 
-- [Tool Hub](tool-hub) — one-click catalog.
-- [Plugins](plugins) — WASM packages.
+- [Plugins](plugins) — WASM packages and plugin catalog.
 - [Workspace](workspace) — files the native tools open by name.
+- [Agent Studio](agent-studio) — grant tools to an agent.

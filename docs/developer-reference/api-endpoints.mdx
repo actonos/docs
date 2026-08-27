@@ -211,19 +211,19 @@ Deletes a secret record from the Vault.
 
 ---
 
-## 9. Tools & Marketplace Hub
+## 9. Tools, MCP, and Skills catalog
 
 ### `GET /api/tools`
-Lists all active tools across Native, MCP, WASM Plugins, and Skill-as-a-Folder categories.
+Lists registered tools (native, MCP, WASM plugins, and folder skills). The **Native Tools** page hides the `skill` category; those appear on **Skills**.
 
 ### `POST /api/tools/mcp` | `DELETE /api/tools/mcp/{serverID}`
-Register or disconnect an MCP server (`stdio` or `sse`). High-risk operations return a `202 Accepted` pending approval request.
+Register or disconnect an MCP server (`stdio`, Streamable HTTP, or `sse`). High-risk operations return a `202 Accepted` pending approval request.
 
 ### `GET /api/tools/hub/catalog`
-Fetches the live Community Tool Hub catalog.
+Fetches the community **Skills** catalog shown on **Extensions → Skills → Community Hub**.
 
 ### `POST /api/tools/hub/install` | `POST /api/tools/hub/uninstall`
-Installs or uninstalls a verified community skill package.
+Installs or uninstalls a community skill package.
 
 ---
 

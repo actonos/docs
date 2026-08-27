@@ -49,7 +49,7 @@ ActonOS requires minimal outbound internet connectivity to communicate with LLM 
 | Port / Protocol | Direction | Purpose | Required? |
 |:---|:---|:---|:---|
 | `8080/TCP` | Inbound (Local LAN) | HTTP Web Dashboard & REST/WebSocket API | **Yes** (unless reverse proxied) |
-| `443/TCP` | Outbound | HTTPS connection to LLM APIs, OAuth providers, and Tool Hub | **Yes** |
+| `443/TCP` | Outbound | HTTPS connection to LLM APIs, OAuth providers, and plugin/skill catalogs | **Yes** |
 | `41641/UDP` | Inbound / Outbound | Direct WireGuard peer connections for Tailscale `tsnet` | Optional (falls back to DERP relay) |
 | `53/UDP & 53/TCP` | Inbound | Captive Portal DNS redirection on Bare-metal Wi-Fi hotspot | Bare-metal only |
 | `67/UDP & 68/UDP` | Inbound | DHCP server for Captive Portal setup hotspot | Bare-metal only |

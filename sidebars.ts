@@ -30,7 +30,6 @@ const sidebars: SidebarsConfig = {
         'user-guide/channels',
         'user-guide/connectors',
         'user-guide/tools-and-skills',
-        'user-guide/tool-hub',
         'user-guide/workspace',
         'user-guide/terminal',
         'user-guide/notifications',

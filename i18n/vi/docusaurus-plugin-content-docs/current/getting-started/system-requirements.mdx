@@ -47,7 +47,7 @@ Các dòng MiniPC giá rẻ sử dụng chip **Intel N100** (như Beelink EQ12, 
 | Cổng / Giao thức | Hướng | Mục đích | Bắt buộc? |
 |:---|:---|:---|:---|
 | `8080/TCP` | Đến (LAN nội bộ) | Bảng điều khiển Web & REST/WebSocket API | **Có** (trừ khi dùng reverse proxy) |
-| `443/TCP` | Đi | Kết nối HTTPS đến API LLM, OAuth và Tool Hub | **Có** |
+| `443/TCP` | Đi | Kết nối HTTPS đến API LLM, OAuth và catalog plugin/skill | **Có** |
 | `41641/UDP` | Đến / Đi | Kết nối ngang hàng WireGuard cho Tailscale `tsnet` | Tùy chọn (tự chuyển tiếp qua relay) |
 | `53/UDP & 53/TCP` | Đến | Điều hướng DNS cho Captive Portal trên Wi-Fi Hotspot | Chỉ Bare-metal |
 | `67/UDP & 68/UDP` | Đến | Cấp phát IP DHCP cho thiết bị kết nối vào Hotspot | Chỉ Bare-metal |
